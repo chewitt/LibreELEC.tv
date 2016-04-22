@@ -17,7 +17,7 @@
 ################################################################################
 
 PKG_NAME="atvclient"
-PKG_VERSION="50faf80"
+PKG_VERSION="9e8d74b"
 PKG_REV="1"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
