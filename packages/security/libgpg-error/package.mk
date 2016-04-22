@@ -46,7 +46,7 @@ pre_configure_target() {
       GPGERROR_TARGET=linux-gnueabi
       ;;
     i386)
-      GPGERROR_TUPLE=i486-pc-linux-gnu
+      GPGERROR_TUPLE=i686-pc-linux-gnu
       GPGERROR_TARGET=linux-gnu
       ;;
     x86_64)
