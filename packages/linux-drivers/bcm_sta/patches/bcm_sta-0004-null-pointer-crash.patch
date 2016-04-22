@@ -1,3 +1,15 @@
+--- a/x86-32/src/wl/sys/wl_linux.c
++++ b/x86-32/src/wl/sys/wl_linux.c
+@@ -2160,8 +2160,8 @@ wl_start(struct sk_buff *skb, struct net
+ 	wlif = WL_DEV_IF(dev);
+ 	wl = WL_INFO(dev);
+ 
++	skb->prev = NULL;
+ 	if (WL_ALL_PASSIVE_ENAB(wl) || (WL_RTR() && WL_CONFIG_SMP())) {
+-		skb->prev = NULL;
+ 
+ 		TXQ_LOCK(wl);
+
 --- a/x86-64/src/wl/sys/wl_linux.c
 +++ b/x86-64/src/wl/sys/wl_linux.c
 @@ -2160,8 +2160,8 @@ wl_start(struct sk_buff *skb, struct net
@@ -9,3 +21,5 @@
 -		skb->prev = NULL;
  
  		TXQ_LOCK(wl);
+
+
