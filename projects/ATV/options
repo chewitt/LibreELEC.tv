@@ -1,0 +1,98 @@
+################################################################################
+# setup system defaults
+################################################################################
+
+  # The TARGET_CPU variable controls which processor should be targeted for
+  # generated code.
+    case $TARGET_ARCH in
+      i386)
+        # (AMD CPUs)    k8 k8-sse3 opteron opteron-sse3 athlon64 athlon64-sse3
+        #               athlon-fx athlon-mp athlon-xp athlon-4
+        #               athlon-tbird athlon k6-3 k6-2 k6 geode
+        # (Intel CPUs)  atom core2 nocona prescott pentium4[m] pentium3[m]
+        #               pentium-m pentium2 pentiumpro pentium-mmx pentium
+        #               i686 i586 i486 i386
+        # (VIA CPUs)    c3 c3-2
+        #
+        TARGET_CPU="i686"
+        ;;
+    esac
+
+  # Bootloader to use (syslinux / u-boot)
+    BOOTLOADER="atv-bootloader"
+
+  # u-boot version to use (default)
+    UBOOT_VERSION="default"
+
+  # Configuration for u-boot
+    UBOOT_CONFIG=""
+
+  # Target Configfile for u-boot
+    UBOOT_CONFIGFILE=""
+
+  # Kernel target for u-boot (default 'uImage' if BOOTLOADER=u-boot) (uImage / zImage)
+    KERNEL_UBOOT_TARGET=""
+
+  # Kernel extra targets to build
+    KERNEL_UBOOT_EXTRA_TARGET=""
+
+  # Additional kernel make parameters (for example to specify the u-boot loadaddress)
+    KERNEL_MAKE_EXTRACMD=""
+
+  # Kernel to use. values can be:
+  # default:  default mainline kernel
+    LINUX="default"
+
+
+################################################################################
+# setup build defaults
+################################################################################
+
+  # Build optimizations (size/normal)
+    OPTIMIZATIONS="size"
+
+  # Project CFLAGS
+    PROJECT_CFLAGS="-mmmx -msse -msse2 -mfpmath=sse"
+
+  # LTO (Link Time Optimization) support
+    LTO_SUPPORT="yes"
+
+  # GOLD (Google Linker) support
+    GOLD_SUPPORT="yes"
+
+  # SquashFS compression method (gzip / lzo / xz)
+    SQUASHFS_COMPRESSION="gzip"
+
+
+################################################################################
+# setup project defaults
+################################################################################
+
+  # build and install ALSA Audio support (yes / no)
+    ALSA_SUPPORT="yes"
+
+  # OpenGL(X) implementation to use (no / mesa)
+    OPENGL="mesa"
+
+  # OpenGL-ES implementation to use (no / bcm2835-driver / gpu-viv-bin-mx6q)
+    OPENGLES="no"
+
+  # include uvesafb support (yes / no)
+    UVESAFB_SUPPORT="no"
+
+  # Displayserver to use (x11 / no)
+    DISPLAYSERVER="x11"
+
+  # KODI Player implementation to use (default / bcm2835-driver / libfslvpuwrap)
+    KODIPLAYER_DRIVER="default"
+
+  # Modules to install in initramfs for early boot
+    INITRAMFS_MODULES=""
+
+  # additional Firmware to use (dvb-firmware, misc-firmware, wlan-firmware)
+  # Space separated list is supported,
+  # e.g. FIRMWARE="dvb-firmware misc-firmware wlan-firmware"
+    FIRMWARE="dvb-firmware misc-firmware wlan-firmware"
+
+  # Use Broadcom CrystalHD Decoder Card for video acceleration
+    CRYSTALHD="yes"

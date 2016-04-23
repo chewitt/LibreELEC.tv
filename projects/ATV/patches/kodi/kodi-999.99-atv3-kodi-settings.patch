@@ -1,0 +1,26 @@
+--- a/system/settings/settings.xml	2015-08-11 07:08:38.000000000 +0400
++++ b/system/settings/settings.xml	2015-08-15 15:26:48.901857858 +0400
+@@ -97,7 +97,7 @@
+       <group id="2">
+         <setting id="lookandfeel.enablerssfeeds" type="boolean" label="13305" help="36111">
+           <level>0</level>
+-          <default>true</default>
++          <default>false</default>
+           <control type="toggle" />
+         </setting>
+         <setting id="lookandfeel.rssedit" type="string" parent="lookandfeel.enablerssfeeds" label="21450" help="36112">
+@@ -2736,12 +2745,12 @@
+         <setting id="input.enablemouse" type="boolean" label="21369" help="36377">
+           <level>0</level>
+           <control type="toggle" />
+-          <default>true</default>
++          <default>false</default>
+         </setting>
+         <setting id="input.enablejoystick" type="boolean" label="35100" help="36378">
+           <requirement>HAS_SDL_JOYSTICK</requirement>
+           <level>0</level>
+-          <default>true</default>
++          <default>false</default>
+           <control type="toggle" />
+         </setting>
+       </group>
