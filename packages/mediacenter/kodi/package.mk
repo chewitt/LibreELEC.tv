@@ -222,6 +222,13 @@ else
   KODI_VAAPI="--disable-vaapi"
 fi
 
+if [ "$CRYSTALHD" = yes ]; then
+  PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET crystalhd"
+  KODI_CRYSTALHD="--enable-crystalhd"
+else
+  KODI_CRYSTALHD="--disable-crystalhd"
+fi
+
 export CXX_FOR_BUILD="$HOST_CXX"
 export CC_FOR_BUILD="$HOST_CC"
 export CXXFLAGS_FOR_BUILD="$HOST_CXXFLAGS"
@@ -243,6 +250,7 @@ PKG_CONFIGURE_OPTS_TARGET="gl_cv_func_gettimeofday_clobber=no \
                            $KODI_OPENMAX \
                            $KODI_VDPAU \
                            $KODI_VAAPI \
+                           $KODI_CRYSTALHD \
                            --disable-vtbdecoder \
                            --disable-tegra \
                            --disable-profiling \
