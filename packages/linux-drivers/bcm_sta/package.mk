@@ -45,6 +45,7 @@ fi
 make_target() {
   cd $DRIVER_ARCH
     KBUILD_NOPEDANTIC=1 make V=1 CC=$CC -C $(kernel_path) M=`pwd` BINARCH=$TARGET_KERNEL_ARCH
+    $STRIP --strip-debug wl.ko
 }
 
 makeinstall_target() {
