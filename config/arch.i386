@@ -5,6 +5,8 @@
 
 # determine architecture's family
   TARGET_SUBARCH=i686
+  TARGET_GCC_ARCH=i686
+  TARGET_KERNEL_ARCH=x86
 
 # setup ARCH specific *FLAGS
   TARGET_CFLAGS="-march=$TARGET_CPU -m32"
