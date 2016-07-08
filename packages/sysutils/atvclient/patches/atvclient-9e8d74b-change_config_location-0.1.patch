@@ -1,12 +1,17 @@
-diff -Naur atvclient-0.1/src/atvclient.cpp atvclient-0.1.patch/src/atvclient.cpp
---- atvclient-0.1/src/atvclient.cpp	2010-10-09 15:44:27.000000000 +0200
-+++ atvclient-0.1.patch/src/atvclient.cpp	2010-10-09 16:01:29.774444638 +0200
-@@ -161,7 +161,7 @@
- static CPacketNOTIFICATION remote_unpaired("Remote unpaired", "You can now control XBMC with any Apple remote.", NULL, NULL);
+--- a/src/atvclient.cpp	2016-07-08 07:58:32.009306901 +0400
++++ b/src/atvclient.cpp	2016-07-08 08:02:22.641302448 +0400
+@@ -168,11 +168,11 @@ static int sockfd;
+ static CPacketBUTTON* button_map[0xff];
+ static CPacketBUTTON* multi_map[0xff];
+ 
+-static CPacketNOTIFICATION remote_paired("Remote paired", "You can now only control XBMC using the control you're holding. To unpair, hold down menu and rewind for 6 seconds.", NULL, NULL);
+-static CPacketNOTIFICATION remote_unpaired("Remote unpaired", "You can now control XBMC with any Apple remote.", NULL, NULL);
++static CPacketNOTIFICATION remote_paired("Remote paired", "You can now only control Kodi using the control you're holding. To unpair, hold down menu and rewind for 6 seconds.", NULL, NULL);
++static CPacketNOTIFICATION remote_unpaired("Remote unpaired", "You can now control Kodi with any Apple remote.", NULL, NULL);
  static CPacketNOTIFICATION remote_pair_failed("Remote already paired", "This AppleTV was paired to another remote. To unpair, hold down menu and rewind for 6 seconds.", NULL, NULL);
  
 -const char* remoteIdFile = "/etc/atvremoteid";
 +const char* remoteIdFile = "/storage/.cache/atvremoteid";
- static int pairedRemoteId = 0; 
+ static int pairedRemoteId = 0;
  
- /* figure out kernel name corresponding to usb device */
+ // new globals to support NEC mode
