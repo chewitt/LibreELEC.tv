@@ -17,12 +17,13 @@
 ################################################################################
 
 PKG_NAME="crystalhd"
-PKG_VERSION="3cb6786"
+PKG_VERSION="1667312"
 PKG_REV="1"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
-PKG_SITE="http://git.linuxtv.org/jarod/crystalhd.git"
-PKG_URL="$DISTRO_SRC/$PKG_NAME-$PKG_VERSION.tar.xz"
+PKG_SITE="https://github.com/dbason/crystalhd"
+PKG_URL="https://github.com/dbason/crystalhd/archive/$PKG_VERSION.tar.gz"
+#PKG_URL="$DISTRO_SRC/$PKG_NAME-$PKG_VERSION.tar.xz"
 PKG_DEPENDS_TARGET="toolchain linux"
 PKG_NEED_UNPACK="$LINUX_DEPENDS"
 PKG_PRIORITY="optional"
