@@ -1,0 +1,15 @@
+--- a/codegenerator.mk	2015-10-21 01:52:08.000000000 +0400
++++ b/codegenerator.mk	2016-01-08 08:28:53.385572328 +0400
+@@ -48,9 +48,11 @@
+           groovy.ui.GroovyMain $(TOPDIR)/tools/codegenerator/Generator.groovy $< $(INTERFACES_DIR)/python/PythonSwig.cpp.template $@ $(DOXY_XML_PATH)
+ 	rm $<
+ 
++SWIG_TEMP_OUTPUT_XML = /tmp/swig_output.xml
+ $(GENDIR)/%.xml: %.i $(SWIG) $(JAVA) $(GENERATE_DEPS)
+ 	mkdir -p $(GENDIR)
+-	$(SWIG) -w401 -c++ -o $@ -xml -I$(TOPDIR)/xbmc -xmllang python $<
++	$(SWIG) -w401 -c++ -o $(SWIG_TEMP_OUTPUT_XML) -xml -I$(TOPDIR)/xbmc -xmllang python $< 
++	mv $(SWIG_TEMP_OUTPUT_XML) $@
+ 
+ codegenerated: $(DOXYGEN) $(SWIG) $(JAVA) $(GENERATED) $(GENERATED_JSON) $(GENERATED_ADDON_JSON)
+ 
