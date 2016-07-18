@@ -227,20 +227,30 @@ fi
 # make target dir
   mkdir -p $TARGET_IMG
     rm -rf $TARGET_IMG/$IMAGE_NAME.kernel
+    rm -rf $TARGET_IMG/$IMAGE_NAME.mach_kernel
 
 # copy kernel to target dir
   if [ "$BOOTLOADER" = "bcm2835-bootloader" ]; then
     echo "injecting DeviceTreeBlobs to kernel..."
     perl $BUILD/linux-$(kernel_version)/scripts/mkknlimg $BUILD/linux-$(kernel_version)/arch/$TARGET_KERNEL_ARCH/boot/$KERNEL_TARGET $TARGET_IMG/$IMAGE_NAME.kernel
+    chmod 0644 $TARGET_IMG/$IMAGE_NAME.kernel
     echo "...done"
+  elif [ "$BOOTLOADER" = "atv-bootloader" ]; then
+    cp -PR $BUILD/atv-bootloader-*/mach_kernel $TARGET_IMG/$IMAGE_NAME.mach_kernel
+    chmod 0644 $TARGET_IMG/$IMAGE_NAME.mach_kernel
   else
     cp -PR $BUILD/linux-$(kernel_version)/arch/$TARGET_KERNEL_ARCH/boot/$KERNEL_TARGET $TARGET_IMG/$IMAGE_NAME.kernel
-  fi
-  chmod 0644 $TARGET_IMG/$IMAGE_NAME.kernel
+    chmod 0644 $TARGET_IMG/$IMAGE_NAME.kernel
+ fi
 
 # create squashfs file
   if [ -z "$SQUASHFS_COMPRESSION" ]; then
     SQUASHFS_COMPRESSION="gzip"
+  fi
+
+# remove compression on ATV images
+  if [ "$SQUASHFS_COMPRESSION" = "gzip" -a "$BOOTLOADER" = "atv-bootloader" ]; then
+    SQUASHFS_COMPRESSION="gzip -noD -noF -noI -noX -no-duplicates -b 262144"
   fi
 
   echo "rm -rf $TARGET_IMG/$IMAGE_NAME.system" >> $FAKEROOT_SCRIPT
@@ -309,7 +319,7 @@ fi
         fi
 
         cp $ROOT/README* $RELEASE_DIR
-        cp $ROOT/CHANGELOG* $RELEASE_DIR
+        #cp $ROOT/CHANGELOG* $RELEASE_DIR
         echo "$TARGET_VERSION" > $RELEASE_DIR/RELEASE
 
         if [ -n "$MEDIACENTER" ] ; then
@@ -321,11 +331,21 @@ fi
 
       mkdir -p $RELEASE_DIR/target
         cp $TARGET_IMG/$IMAGE_NAME.system $RELEASE_DIR/target/SYSTEM
-        cp $TARGET_IMG/$IMAGE_NAME.kernel $RELEASE_DIR/target/KERNEL
+
+        if [ -f $TARGET_IMG/$IMAGE_NAME.mach_kernel ]; then
+          cp $TARGET_IMG/$IMAGE_NAME.mach_kernel $RELEASE_DIR/target/MACH_KERNEL
+        else
+          cp $TARGET_IMG/$IMAGE_NAME.kernel $RELEASE_DIR/target/KERNEL
+        fi
+
     # create md5sum's
       ( cd $RELEASE_DIR;
         md5sum -t target/SYSTEM > target/SYSTEM.md5;
-        md5sum -t target/KERNEL > target/KERNEL.md5;
+        if [ -f target/MACH_KERNEL ]; then
+          md5sum -t target/MACH_KERNEL > target/MACH_KERNEL.md5;
+        else
+          md5sum -t target/KERNEL > target/KERNEL.md5;
+        fi
       )
 
     # create target directory
@@ -338,7 +358,17 @@ fi
       tar cf $TARGET_IMG/$IMAGE_NAME.tar -C target $IMAGE_NAME
 
     # create image files if requested
-      if [[ ( "$1" = "amlpkg" || "$1" = "noobs" || "$1" = "mkimage" ) && -n "$BOOTLOADER" ]]; then
+      if [ "$1" = "mkimage" -a "$BOOTLOADER" = "atv-bootloader" ]; then
+        # variables used in image script must be passed
+        sudo env \
+          ROOT="$ROOT" \
+          BUILD="$BUILD" \
+          RELEASE_DIR="$RELEASE_DIR" \
+          TARGET_IMG="$TARGET_IMG" \
+          IMAGE_NAME="$IMAGE_NAME" \
+          $SCRIPTS/mkimage-atv
+
+      elif [[ ( "$1" = "amlpkg" || "$1" = "noobs" || "$1" = "mkimage" ) && -n "$BOOTLOADER" ]]; then
         # projects can set KERNEL_NAME (kernel.img)
         if [ -z "$KERNEL_NAME" ] ; then
           KERNEL_NAME="KERNEL"
@@ -374,6 +404,11 @@ fi
 
       # cleanup release dir
       rm -rf $RELEASE_DIR
+
+      if [ "$BOOTLOADER" = "atv-bootloader" ]; then
+        # gzip image
+        gzip -f target/$IMAGE_NAME.tar
+      fi
 
     # create WeTek Play (Amlogic) ZIP update and auto-install packages if requested
       if [ "$1" = "amlpkg" ]; then
