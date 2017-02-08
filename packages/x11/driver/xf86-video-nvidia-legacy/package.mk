@@ -19,10 +19,11 @@
 PKG_NAME="xf86-video-nvidia-legacy"
 PKG_VERSION="304.131"
 PKG_REV="1"
-PKG_ARCH="x86_64"
+PKG_ARCH="i386 x86_64"
 PKG_LICENSE="nonfree"
 PKG_SITE="http://www.nvidia.com/"
-PKG_URL="http://us.download.nvidia.com/XFree86/Linux-x86_64/$PKG_VERSION/NVIDIA-Linux-x86_64-$PKG_VERSION-no-compat32.run"
+[ "$TARGET_ARCH" = "i386" ] && PKG_URL="http://us.download.nvidia.com/XFree86/Linux-x86/$PKG_VERSION/NVIDIA-Linux-x86-$PKG_VERSION.run"
+[ "$TARGET_ARCH" = "x86_64" ] && PKG_URL="http://us.download.nvidia.com/XFree86/Linux-x86_64/$PKG_VERSION/NVIDIA-Linux-x86_64-$PKG_VERSION-no-compat32.run"
 PKG_DEPENDS_TARGET="toolchain util-macros linux xorg-server libvdpau"
 PKG_NEED_UNPACK="$LINUX_DEPENDS"
 PKG_PRIORITY="optional"
@@ -80,8 +81,10 @@ makeinstall_target() {
     ln -s /var/lib/nvidia-xconfig $INSTALL/usr/bin/nvidia-xconfig
     cp nvidia-xconfig $INSTALL/usr/bin/nvidia-legacy-xconfig
 
-  mkdir -p $INSTALL/usr/lib/vdpau
-    cp libvdpau_nvidia.so* $INSTALL/usr/lib/vdpau/libvdpau_nvidia-legacy.so.1
-    ln -sf /var/lib/libvdpau_nvidia.so $INSTALL/usr/lib/vdpau/libvdpau_nvidia.so
-    ln -sf /var/lib/libvdpau_nvidia.so.1 $INSTALL/usr/lib/vdpau/libvdpau_nvidia.so.1
+  if [ "$VDPAU_SUPPORT" = "yes" ]; then
+    mkdir -p $INSTALL/usr/lib/vdpau
+      cp libvdpau_nvidia.so* $INSTALL/usr/lib/vdpau/libvdpau_nvidia-legacy.so.1
+      ln -sf /var/lib/libvdpau_nvidia.so $INSTALL/usr/lib/vdpau/libvdpau_nvidia.so
+      ln -sf /var/lib/libvdpau_nvidia.so.1 $INSTALL/usr/lib/vdpau/libvdpau_nvidia.so.1
+  fi
 }

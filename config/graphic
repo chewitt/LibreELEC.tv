@@ -37,8 +37,10 @@ get_graphicdrivers() {
 
     if [ "$drv" = "nvidia-legacy" ]; then
       XORG_DRIVERS="$XORG_DRIVERS nvidia-legacy"
-      VDPAU_SUPPORT="yes"
-    fi
+      if [ "$PROJECT" != "ATV" ]; then
+        VDPAU_SUPPORT="yes"
+      fi  
+  fi
 
     if [ "$drv" = "r200" ]; then
       DRI_DRIVERS="$DRI_DRIVERS,r200"
