@@ -389,7 +389,7 @@
   }
 
   hfsdiskprep() {
-     for DEVICE in $(/bin/busybox blkid /dev/sd* | sed -e "s,\",,g"| grep $boot); do
+     for DEVICE in $(/bin/busybox blkid /dev/sd* | grep $boot | sed -e "s|:||g"); do
        for device in $(/bin/busybox blkid $DEVICE); do
          case $device in
            TYPE=*)
@@ -606,6 +606,7 @@
       [ -n $LOOP ] && losetup -d $LOOP &>/dev/null
     fi
 
+    [ -f "$UPDATE_TAR_GZ" ] && rm -f "$UPDATE_TAR_GZ" &>/dev/null
     [ -f "$UPDATE_TAR" ] && rm -f "$UPDATE_TAR" &>/dev/null
     [ -f "$UPDATE_IMG_GZ" ] && rm -f "$UPDATE_IMG_GZ" &>/dev/null
     [ -f "$UPDATE_IMG" ] && rm -f "$UPDATE_IMG" &>/dev/null
@@ -619,13 +620,18 @@
   }
 
   check_update() {
+
+    set -x
+
     progress "Checking for updates"
+    UPDATE_TAR_GZ=`ls -1 "$UPDATE_DIR"/*.tar.gz 2>/dev/null | head -n 1`
     UPDATE_TAR=`ls -1 "$UPDATE_DIR"/*.tar 2>/dev/null | head -n 1`
     UPDATE_IMG_GZ=`ls -1 "$UPDATE_DIR"/*.img.gz 2>/dev/null | head -n 1`
     UPDATE_IMG=`ls -1 "$UPDATE_DIR"/*.img 2>/dev/null | head -n 1`
+    UPDATE_PNG=`ls -1 "$UPDATE_DIR"/BootLogo.png 2>/dev/null | head -n 1`
 
     if ! [ -f "$UPDATE_DIR/$UPDATE_KERNEL" -a -f "$UPDATE_DIR/$UPDATE_SYSTEM" ] &&
-       ! [ -f "$UPDATE_TAR" -o -f "$UPDATE_IMG_GZ" -o -f "$UPDATE_IMG" ]; then
+       ! [ -f "$UPDATE_TAR_GZ" -o -f "$UPDATE_TAR" -o -f "$UPDATE_IMG_GZ" -o -f "$UPDATE_IMG" ]; then
       return 0
     fi
 
@@ -644,7 +650,16 @@
     echo "Please do not reboot or turn off your @DISTRONAME@ device!"
     echo ""
 
-    if [ -f "$UPDATE_TAR" ] ; then
+    if [ -f "$UPDATE_TAR_GZ" ]; then
+      echo "Found new .tar.gz archive"
+      StartProgress spinner "Extracting contents of archive... "
+        mkdir -p $UPDATE_DIR/.tmp &>/dev/null
+        tar -xzf "$UPDATE_TAR_GZ" -C $UPDATE_DIR/.tmp &>/dev/null
+        mv $UPDATE_DIR/.tmp/*/target/* $UPDATE_DIR &>/dev/null
+        sync
+        StopProgress "done"
+
+    elif [ -f "$UPDATE_TAR" ] ; then
       echo "Found new .tar archive"
       StartProgress spinner "Extracting contents of archive... "
         mkdir -p $UPDATE_DIR/.tmp &>/dev/null
@@ -652,6 +667,7 @@
         mv $UPDATE_DIR/.tmp/*/target/* $UPDATE_DIR &>/dev/null
         sync
         StopProgress "done"
+
     elif [ -f "$UPDATE_IMG_GZ" -o -f "$UPDATE_IMG" ] ; then
       mkdir -p $UPDATE_DIR/.tmp/mnt &>/dev/null
       IMG_FILE="$UPDATE_DIR/.tmp/update.img"
@@ -718,8 +734,19 @@
 
     sync
 
+    if [ -f "/flash/com.apple.Boot.plist" -a -f "/flash/boot.efi" ]; then
+      UPDATE_KERNEL="MACH_KERNEL"
+    fi
+
     if [ ! -f "$UPDATE_DIR/$UPDATE_KERNEL" -o ! -f "$UPDATE_DIR/$UPDATE_SYSTEM" ] ; then
       echo "Missing ${UPDATE_KERNEL} or ${UPDATE_SYSTEM}!"
+
+      echo ""
+      echo "UPDATE_KERNEL = $UPDATE_KERNEL"
+      echo "UPDATE_SYSTEM = $UPDATE_SYSTEM"
+
+      ls -l "$UPDATE_DIR"
+
       do_cleanup
       StartProgress countdown "Normal startup in 10s... " 10 "NOW"
       return 0
@@ -810,6 +837,10 @@
       update_file "Kernel" "$UPDATE_KERNEL" "/flash/$IMAGE_KERNEL"
     fi
     update_file "System" "$UPDATE_SYSTEM" "/flash/$IMAGE_SYSTEM"
+    if [ -f $UPDATE_PNG ]; then
+      update_file "BootLogo" "$UPDATE_PNG" "/flash/BootLogo.png"
+    fi
+
     update_bootloader
     do_cleanup
     do_reboot

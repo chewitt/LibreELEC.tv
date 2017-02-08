@@ -17,7 +17,7 @@
 ################################################################################
 
 PKG_NAME="atvboot"
-PKG_VERSION="1c30dab"
+PKG_VERSION="a165bc6"
 PKG_REV="1"
 PKG_ARCH="i386 x86_64"
 PKG_LICENSE="GPL"
