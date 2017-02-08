@@ -60,7 +60,7 @@
 # for a list of additinoal drivers see packages/linux-drivers
 # Space separated list is supported,
 # e.g. ADDITIONAL_DRIVERS="DRIVER1 DRIVER2"
-  ADDITIONAL_DRIVERS="RTL8192CU RTL8192DU RTL8192EU RTL8188EU RTL8812AU dvbhdhomerun bcm_sta"
+  ADDITIONAL_DRIVERS="RTL8192CU RTL8192DU RTL8192EU RTL8188EU RTL8812AU bcm_sta"
 
 # build and install bluetooth support (yes / no)
   BLUETOOTH_SUPPORT="yes"
@@ -204,5 +204,6 @@
 
 # Default size of system partition, in MB, eg. 512
   SYSTEM_SIZE=512
+
 # Default system partition offset, in sectors, eg. 2048
   SYSTEM_PART_START=2048
