@@ -1,0 +1,11 @@
+--- a/include/EGL_platform/platform_dummy/eglplatform.h	2018-02-15 10:12:06.140959253 +0100
++++ b/include/EGL_platform/platform_dummy/eglplatform.h	2018-02-15 10:12:23.469120150 +0100
+@@ -27,7 +27,7 @@
+ 
+ #include <KHR/khrplatform.h>
+ 
+-typedef struct wl_egl_window *NativeWindowType;
++typedef void *NativeWindowType;
+ typedef void *NativePixmapType;
+ typedef void *NativeDisplayType;
+ 

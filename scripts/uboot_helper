@@ -9,7 +9,7 @@ devices = {
     },
   },
   'Amlogic_GX' : {
-    'OdroidC2' : {
+    'Odroid_C2' : {
       'odroid-c2' : { 'dtb' : 'meson-gxbb-odroidc2.dtb', 'config' : 'odroid-c2_defconfig' },
     },
     'P212' : {
@@ -18,7 +18,7 @@ devices = {
     'LePotato' : {
       'libretech-cc' : { 'dtb' : 'meson-gxl-s905x-libretech-cc.dtb', 'config' : 'libretech-cc_defconfig' },
     },
-    'KhadasVIM' : {
+    'Khadas_VIM' : {
       'khadas-vim' : { 'dtb' : 'meson-gxl-s905x-khadas-vim.dtb', 'config' : 'khadas-vim_defconfig' },
     },
   },

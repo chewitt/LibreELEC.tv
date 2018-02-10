@@ -1,0 +1,55 @@
+#!/bin/bash
+
+################################################################################
+#      This file is part of LibreELEC - https://libreelec.tv
+#      Copyright (C) 2017-present Team LibreELEC
+#
+#  LibreELEC is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  LibreELEC is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with LibreELEC.  If not, see <http://www.gnu.org/licenses/>.
+################################################################################
+
+. config/options $1
+
+echo "Generating u-boot.bin"
+DESTDIR="$LE_TMP/fip"
+FIPDIR="$(get_build_dir amlogic-boot-fip)/fip"
+FUSEDIR="$(get_build_dir amlogic-boot-fip)/sd_fuse"
+
+mkdir -p $DESTDIR
+
+$FIPDIR/fip_create --bl30  $FIPDIR/gxb/bl30.bin \
+		   --bl301 $FIPDIR/gxb/bl301.bin \
+		   --bl31 $FIPDIR/gxb/bl31.bin \
+		   --bl33 $(get_build_dir $BOOTLOADER)/u-boot.bin \
+		   $DESTDIR/fip.bin
+
+$FIPDIR/fip_create --dump $DESTDIR/fip.bin
+
+cat $FIPDIR/gxb/bl2.package $DESTDIR/fip.bin > $DESTDIR/boot_new.bin
+
+$FIPDIR/gxb/aml_encrypt_gxb --bootsig --input $DESTDIR/boot_new.bin \
+			    --output $DESTDIR/u-boot.img
+
+dd if=$DESTDIR/u-boot.img of=$DESTDIR/u-boot.gxbb bs=512 skip=96
+
+echo "Writing u-boot to $(basename $DISK)"
+dd if="$FUSEDIR/bl1.bin.hardkernel" of="$DISK" conv=fsync,notrunc bs=1 count=442 >"$SAVE_ERROR" 2>&1 || show_error
+dd if="$FUSEDIR/bl1.bin.hardkernel" of="$DISK" conv=fsync,notrunc bs=512 skip=1 seek=1 >"$SAVE_ERROR" 2>&1 || show_error
+dd if="$DESTDIR/u-boot.gxbb" of="$DISK" conv=fsync,notrunc bs=512 seek=97 >"$SAVE_ERROR" 2>&1 || show_error
+echo "Installing dtb"
+LINUX="$(get_build_dir linux)"
+DTB="$($ROOT/$SCRIPTS/uboot_helper $PROJECT $DEVICE $UBOOT_SYSTEM dtb)"
+
+cp -a $LINUX/arch/$TARGET_KERNEL_ARCH/boot/dts/amlogic/$DTB "$LE_TMP/"
+
+mcopy -s "$LE_TMP/$DTB" ::
