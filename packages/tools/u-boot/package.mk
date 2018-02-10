@@ -25,9 +25,14 @@ case "$PROJECT" in
     PKG_DEPENDS_TARGET+=" rkbin"
     PKG_NEED_UNPACK+=" $(get_pkg_directory rkbin)"
     ;;
+  Amlogic_GX)
+    PKG_VERSION="2018.07-rc2"
+    PKG_SHA256="03bd17bd0cf1d74d2f49454ef90bf17764ae5340053007cbc6eb630cf7c54863"
+    PKG_URL="http://ftp.denx.de/pub/u-boot/u-boot-$PKG_VERSION.tar.bz2"
+    ;;
   *)
-    PKG_VERSION="2017.09"
-    PKG_SHA256="b2d15f2cf5f72e706025cde73d67247c6da8cd35f7e10891eefe7d9095089744"
+    PKG_VERSION="2018.01"
+    PKG_SHA256="938f597394b33e82e5af8c98bd5ea1a238f61892aabef36384adbf7ca5b52dda"
     PKG_URL="http://ftp.denx.de/pub/u-boot/u-boot-$PKG_VERSION.tar.bz2"
     ;;
 esac
