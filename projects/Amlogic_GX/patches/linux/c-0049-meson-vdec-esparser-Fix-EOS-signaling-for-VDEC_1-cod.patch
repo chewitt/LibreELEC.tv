@@ -1,0 +1,39 @@
+From db119ffe1023cca6303c83d34d2c60c85973f143 Mon Sep 17 00:00:00 2001
+From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
+Date: Fri, 15 Jun 2018 13:08:27 +0200
+Subject: [PATCH 49/50] meson: vdec: esparser: Fix EOS signaling for VDEC_1
+ codecs
+
+This allows the decoder to purge the last few frames when userspace
+issues CMD_STOP. The fix only seems to work for VDEC_1 codecs (H.264,
+MPEG 1/2/4..), but not for VDEC_HEVC.
+---
+ drivers/media/platform/meson/vdec/esparser.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/media/platform/meson/vdec/esparser.c b/drivers/media/platform/meson/vdec/esparser.c
+index 1082b13..8c6a599 100644
+--- a/drivers/media/platform/meson/vdec/esparser.c
++++ b/drivers/media/platform/meson/vdec/esparser.c
+@@ -172,15 +172,15 @@ int esparser_queue_eos(struct vdec_session *sess)
+ 	dma_addr_t eos_paddr;
+ 	int ret;
+ 
+-	eos_vaddr = dma_alloc_coherent(dev, sizeof(eos_tail_data) + 512, &eos_paddr, GFP_KERNEL);
++	eos_vaddr = dma_alloc_coherent(dev, EOS_TAIL_BUF_SIZE + 512, &eos_paddr, GFP_KERNEL);
+ 	if (!eos_vaddr)
+ 		return -ENOMEM;
+ 
+ 	sess->should_stop = 1;
+ 
+ 	memcpy(eos_vaddr, eos_tail_data, sizeof(eos_tail_data));
+-	ret = esparser_write_data(core, eos_paddr, sizeof(eos_tail_data));
+-	dma_free_coherent(dev, sizeof(eos_tail_data) + 512,
++	ret = esparser_write_data(core, eos_paddr, EOS_TAIL_BUF_SIZE);
++	dma_free_coherent(dev, EOS_TAIL_BUF_SIZE + 512,
+ 			  eos_vaddr, eos_paddr);
+ 
+ 	return ret;
+-- 
+2.7.4
+

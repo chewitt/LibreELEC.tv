@@ -1,0 +1,132 @@
+From 74ac90a1aefe96a6b9e658d0aefd23f2eeed6596 Mon Sep 17 00:00:00 2001
+From: Maxime Jourdan <raptorteak@gmail.com>
+Date: Thu, 15 Mar 2018 13:32:33 +0100
+Subject: [PATCH 01/50] clock: meson8b: add clocks necessary for VDEC1
+
+---
+ drivers/clk/meson/meson8b.c              | 55 ++++++++++++++++++++++++++++++++
+ drivers/clk/meson/meson8b.h              |  7 +++-
+ include/dt-bindings/clock/meson8b-clkc.h |  2 ++
+ 3 files changed, 63 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/clk/meson/meson8b.c b/drivers/clk/meson/meson8b.c
+index d0524ec..66e0df8 100644
+--- a/drivers/clk/meson/meson8b.c
++++ b/drivers/clk/meson/meson8b.c
+@@ -640,6 +640,55 @@ static struct clk_regmap meson8b_cpu_clk = {
+ 	},
+ };
+ 
++/* VDEC clocks */
++
++static u32 mux_table_vdec[] = {0, 1, 2, 3};
++static const char * const meson8b_vdec_parent_names[] = {
++	"fclk_div4", "fclk_div3", "fclk_div5", "fclk_div7"
++};
++
++static struct clk_mux meson8b_vdec_1_sel = {
++	.reg = (void *)HHI_VDEC_CLK_CNTL,
++	.mask = 0x3,
++	.shift = 9,
++	.lock = &meson_clk_lock,
++	.table = mux_table_vdec,
++	.hw.init = &(struct clk_init_data){
++		.name = "vdec_1_sel",
++		.ops = &clk_mux_ops,
++		.parent_names = meson8b_vdec_parent_names,
++		.num_parents = ARRAY_SIZE(meson8b_vdec_parent_names),
++		.flags = CLK_SET_RATE_NO_REPARENT,
++	},
++};
++
++static struct clk_divider meson8b_vdec_1_div = {
++	.reg = (void *)HHI_VDEC_CLK_CNTL,
++	.shift = 0,
++	.width = 7,
++	.lock = &meson_clk_lock,
++	.hw.init = &(struct clk_init_data){
++		.name = "vdec_1_div",
++		.ops = &clk_divider_ops,
++		.parent_names = (const char *[]){ "vdec_1_sel" },
++		.num_parents = 1,
++		.flags = CLK_SET_RATE_PARENT,
++	},
++};
++
++static struct clk_gate meson8b_vdec_1 = {
++	.reg = (void *)HHI_VDEC_CLK_CNTL,
++	.bit_idx = 8,
++	.lock = &meson_clk_lock,
++	.hw.init = &(struct clk_init_data) {
++		.name = "vdec_1",
++		.ops = &clk_gate_ops,
++		.parent_names = (const char *[]){ "vdec_1_div" },
++		.num_parents = 1,
++		.flags = CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED,
++	},
++};
++
+ /* Everything Else (EE) domain gates */
+ 
+ static MESON_GATE(meson8b_ddr, HHI_GCLK_MPEG0, 0);
+@@ -835,6 +884,9 @@ static struct clk_hw_onecell_data meson8b_hw_onecell_data = {
+ 		[CLKID_FCLK_DIV4_DIV]	    = &meson8b_fclk_div4_div.hw,
+ 		[CLKID_FCLK_DIV5_DIV]	    = &meson8b_fclk_div5_div.hw,
+ 		[CLKID_FCLK_DIV7_DIV]	    = &meson8b_fclk_div7_div.hw,
++		[CLKID_VDEC_1_SEL]	    = &meson8b_vdec_1_sel.hw,
++		[CLKID_VDEC_1_DIV]          = &meson8b_vdec_1_div.hw,
++		[CLKID_VDEC_1]         	    = &meson8b_vdec_1.hw,
+ 		[CLK_NR_CLKS]		    = NULL,
+ 	},
+ 	.num = CLK_NR_CLKS,
+@@ -940,6 +992,9 @@ static struct clk_regmap *const meson8b_clk_regmaps[] = {
+ 	&meson8b_fclk_div4,
+ 	&meson8b_fclk_div5,
+ 	&meson8b_fclk_div7,
++	&meson8b_vdec_1,
++	&meson8b_vdec_1_sel,
++	&meson8b_vdec_1_div,
+ };
+ 
+ static const struct meson8b_clk_reset_line {
+diff --git a/drivers/clk/meson/meson8b.h b/drivers/clk/meson/meson8b.h
+index 6e414bd..4830766 100644
+--- a/drivers/clk/meson/meson8b.h
++++ b/drivers/clk/meson/meson8b.h
+@@ -40,6 +40,10 @@
+ #define HHI_VID_CLK_CNTL		0x17c /* 0x5f offset in data sheet */
+ #define HHI_VID_DIVIDER_CNTL		0x198 /* 0x66 offset in data sheet */
+ #define HHI_SYS_CPU_CLK_CNTL0		0x19c /* 0x67 offset in data sheet */
++#define HHI_VDEC_CLK_CNTL		0x1e0
++#define HHI_VDEC2_CLK_CNTL		0x1e4
++#define HHI_VDEC3_CLK_CNTL		0x1e8
++#define HHI_VDEC4_CLK_CNTL		0x1ec
+ #define HHI_MPLL_CNTL			0x280 /* 0xa0 offset in data sheet */
+ #define HHI_SYS_PLL_CNTL		0x300 /* 0xc0 offset in data sheet */
+ #define HHI_VID_PLL_CNTL		0x320 /* 0xc8 offset in data sheet */
+@@ -83,8 +87,9 @@
+ #define CLKID_FCLK_DIV4_DIV	107
+ #define CLKID_FCLK_DIV5_DIV	108
+ #define CLKID_FCLK_DIV7_DIV	109
++#define CLKID_VDEC_1_DIV	111
+ 
+-#define CLK_NR_CLKS		110
++#define CLK_NR_CLKS		113
+ 
+ /*
+  * include the CLKID and RESETID that have
+diff --git a/include/dt-bindings/clock/meson8b-clkc.h b/include/dt-bindings/clock/meson8b-clkc.h
+index dea9d46..f3bea2a 100644
+--- a/include/dt-bindings/clock/meson8b-clkc.h
++++ b/include/dt-bindings/clock/meson8b-clkc.h
+@@ -102,5 +102,7 @@
+ #define CLKID_MPLL0		93
+ #define CLKID_MPLL1		94
+ #define CLKID_MPLL2		95
++#define CLKID_VDEC_1_SEL	110
++#define CLKID_VDEC_1		112
+ 
+ #endif /* __MESON8B_CLKC_H */
+-- 
+2.7.4
+
