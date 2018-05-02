@@ -1,0 +1,8 @@
+if test ${bls} = android; then setenv bls "libreelec"; saveenv; run storeboot; fi;
+setenv env_addr "0x10400000"
+setenv bootargs ddr_size=${ddr_size} ${bootargs}
+if fatload mmc 0 ${loadaddr} kernel.img; then if fatload mmc 0 ${env_addr} uEnv.ini; then env import -t ${env_addr} ${filesize}; setenv bootargs ${boot_env} ${bootargs}; fi; if fatload mmc 0 ${dtb_mem_addr} dtb.img; then bootm ${loadaddr}; else store dtb read ${dtb_mem_addr}; bootm ${loadaddr}; fi; fi;
+if fatload usb 0 ${loadaddr} kernel.img; then if fatload usb 0 ${env_addr} uEnv.ini; then env import -t ${env_addr} ${filesize}; setenv bootargs ${boot_env} ${bootargs}; fi; if fatload usb 0 ${dtb_mem_addr} dtb.img; then bootm ${loadaddr}; else store dtb read ${dtb_mem_addr}; bootm ${loadaddr}; fi; fi;
+if fatload usb 1 ${loadaddr} kernel.img; then if fatload usb 1 ${env_addr} uEnv.ini; then env import -t ${env_addr} ${filesize}; setenv bootargs ${boot_env} ${bootargs}; fi; if fatload usb 1 ${dtb_mem_addr} dtb.img; then bootm ${loadaddr}; else store dtb read ${dtb_mem_addr}; bootm ${loadaddr}; fi; fi;
+if fatload usb 2 ${loadaddr} kernel.img; then if fatload usb 2 ${env_addr} uEnv.ini; then env import -t ${env_addr} ${filesize}; setenv bootargs ${boot_env} ${bootargs}; fi; if fatload usb 2 ${dtb_mem_addr} dtb.img; then bootm ${loadaddr}; else store dtb read ${dtb_mem_addr}; bootm ${loadaddr}; fi; fi;
+if fatload usb 3 ${loadaddr} kernel.img; then if fatload usb 3 ${env_addr} uEnv.ini; then env import -t ${env_addr} ${filesize}; setenv bootargs ${boot_env} ${bootargs}; fi; if fatload usb 3 ${dtb_mem_addr} dtb.img; then bootm ${loadaddr}; else store dtb read ${dtb_mem_addr}; bootm ${loadaddr}; fi; fi;
