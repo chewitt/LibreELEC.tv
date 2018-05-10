@@ -1,5 +1,5 @@
   # Configuration for u-boot
-    UBOOT_SYSTEM="libretech-cc"
+    UBOOT_SYSTEM="LePotato"
 
   # Kernel extra targets to build
     KERNEL_UBOOT_EXTRA_TARGET="amlogic/meson-gxl-s905x-libretech-cc.dtb"

@@ -63,7 +63,7 @@ if [ "$DEVEL_VERSION" = "devel" ] ; then
   IMAGE_NAME="$DISTRONAME-$LIBREELEC_ARCH-$OS_VERSION-$LIBREELEC_VERSION"
 fi
 
-if [ -n "$UBOOT_SYSTEM" ]; then
+if [ -n "$UBOOT_SYSTEM" ] && [ "$UBOOT_SYSTEM" != "${DEVICE:-$PROJECT}" ]; then
   IMAGE_NAME="$IMAGE_NAME-$UBOOT_SYSTEM"
 fi
 
