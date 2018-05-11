@@ -35,8 +35,8 @@ case "$LINUX" in
     PKG_BUILD_PERF="no"
     ;;
   amlogic-mainline)
-    PKG_VERSION="11454943b264b548e714d8edf932ebf306e5f808" # 4.16.1
-    PKG_SHA256="f56bfeeffb56df161abcaac22bedee278831472a5f9d8e877d1dd840d735d080"
+    PKG_VERSION="9d3cce1e8b8561fed5f383d22a4d6949db4eadbe" # 4.18-rc5
+    PKG_SHA256="e8aa02aa71d7bf0eb1b04869d392c41d31ca7e7a999d5f2e775b238a4a7d1447"
     PKG_URL="https://github.com/torvalds/linux/archive/$PKG_VERSION.tar.gz"
     PKG_SOURCE_DIR="$PKG_NAME-$PKG_VERSION*"
     PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET u-boot-tools-aml:host"
