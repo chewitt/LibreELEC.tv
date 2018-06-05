@@ -154,14 +154,14 @@ configure_target() {
               --disable-dxva2 \
               --enable-runtime-cpudetect \
               $PKG_FFMPEG_TABLES \
-              --disable-encoders \
+              --enable-encoders \
               --enable-encoder=ac3 \
               --enable-encoder=aac \
               --enable-encoder=wmav2 \
               --enable-encoder=mjpeg \
               --enable-encoder=png \
               --enable-hwaccels \
-              --disable-muxers \
+              --enable-muxers \
               --enable-muxer=spdif \
               --enable-muxer=adts \
               --enable-muxer=asf \
@@ -171,8 +171,8 @@ configure_target() {
               --enable-parsers \
               --enable-bsfs \
               --enable-protocol=http \
-              --disable-indevs \
-              --disable-outdevs \
+              --enable-indevs \
+              --enable-outdevs \
               --enable-filters \
               --disable-avisynth \
               --enable-bzlib \
