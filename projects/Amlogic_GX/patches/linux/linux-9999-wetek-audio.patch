@@ -1,0 +1,20 @@
+--- a/arch/arm64/boot/dts/amlogic/meson-gxbb-wetek.dtsi 2018-06-06 08:09:26.970866789 +0100
++++ b/arch/arm64/boot/dts/amlogic/meson-gxbb-wetek.dtsi 2018-06-06 08:12:17.642339887 +0100
+@@ -108,7 +108,7 @@
+ 
+ 	sound {
+ 		compatible = "simple-audio-card";
+-		simple-audio-card,name = "meson-gx-audio";
++		simple-audio-card,name = "HDMI";
+ 
+ 		assigned-clocks = <&clkc CLKID_MPLL2>,
+ 				  <&clkc CLKID_MPLL0>,
+@@ -121,7 +121,7 @@
+ 		simple-audio-card,dai-link@0 {
+ 			/* HDMI Output */
+ 			format = "i2s";
+-			mclk-fs = <256>;
++			mclk-fs = <128>;
+ 			bitclock-master = <&i2s_dai>;
+ 			frame-master = <&i2s_dai>;
+ 
