@@ -1,0 +1,107 @@
+#!/bin/bash
+
+if [ -f  .git/config ]; then
+  DIR="/home/chewitt/LibreELEC.chewitt"
+else
+  echo "not in git root folder, exiting.."
+  exit 1
+fi
+
+do_narmstrong(){
+  # DRM OVERLAY PATCHES
+  rm projects/Amlogic_GX/patches/linux/a-* 2&>/dev/null
+  cd ~/linux.narmstrong
+  rm *.patch 2&>/dev/null
+  git checkout amlogic/v4.18/drm-overlay
+  git fetch origin v4.18/drm-overlay
+  git reset --hard origin/v4.18/drm-overlay
+  git format-patch --start-number 0001 7daf201d7fe8334e2d2364d4e8ed3394ec9af819 #4.18-rc2
+  for filename in *.patch; do mv "$filename" "a-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic_GX/patches/linux/
+}
+
+do_upstream(){
+  # LINUX PATCHES
+  rm projects/Amlogic_GX/patches/linux/b-* 2&>/dev/null
+  cd ~/linux.narmstrong
+  rm *.patch 2&>/dev/null
+  git checkout linux-4.18-le-amlogic-gx
+  git fetch origin linux-4.18-le-amlogic-gx
+  git reset --hard origin/linux-4.18-le-amlogic-gx
+  git format-patch --start-number 0001 021c91791a5e7e85c567452f1be3e4c2c6cb6063 #4.18-rc3
+  for filename in *.patch; do mv "$filename" "b-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic_GX/patches/linux/
+}
+
+do_elyotna(){
+  # V4L2 MEM2MEM VDEC PATCHES
+  rm projects/Amlogic_GX/patches/linux/c-* 2&>/dev/null
+  cd ~/linux.elyotna
+  rm *.patch 2&>/dev/null
+  git checkout 4.18/amlogic-v4l2-m2m
+  #git fetch origin 4.18/amlogic-v4l2-m2m
+  #git reset --hard origin/4.18/amlogic-v4l2-m2m
+  git format-patch --start-number 0001 1e4b044d22517cae7047c99038abb444423243ca #4.18-rc4
+  for filename in *.patch; do mv "$filename" "c-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic_GX/patches/linux/
+}
+
+do_kwiboo(){
+  # HDMI AUDIO PATCHES
+  rm projects/Amlogic_GX/patches/linux/d-* 2&>/dev/null
+  cd ~/linux.kwiboo
+  rm *.patch 2&>/dev/null
+  git checkout hdmi-audio-4.18
+  git fetch origin hdmi-audio-4.18
+  git reset --hard origin/hdmi-audio-4.18
+  git format-patch --start-number 0001 1e4b044d22517cae7047c99038abb444423243ca #4.18-rc4
+  rm 0001*
+  for filename in *.patch; do mv "$filename" "d-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic_GX/patches/linux/
+}
+
+do_erstrom(){
+  # ath10k-sdio PATCHES
+  rm projects/Amlogic_GX/patches/linux/e-* 2&>/dev/null
+  cd ~/linux.erstrom
+  rm *.patch 2&>/dev/null
+  git checkout v4.17-ath-201805251019-ath10k-high-latency-tx-bundling
+  git fetch origin v4.17-ath-201805251019-ath10k-high-latency-tx-bundling
+  git reset --hard origin/v4.17-ath-201805251019-ath10k-high-latency-tx-bundling
+  git format-patch --start-number 0001 29dcea88779c856c7dc92040a0c01233263101d4 #4.17.0
+  rm 0001*
+  rm 0002*
+  rm 0003*
+  rm 0004*
+  rm 0005*
+  for filename in *.patch; do mv "$filename" "e-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic_GX/patches/linux/
+}
+
+case $1 in
+  narmstrong)
+    do_narmstrong
+    ;;
+  upstream)
+    do_upstream
+    ;;
+  elyotna|ely)
+    do_elyotna
+    ;;
+  kwiboo)
+    do_kwiboo
+    ;;
+  erstrom|ath10k)
+    do_erstrom
+    ;;
+  all|*)
+    do_narmstrong
+    do_upstream
+    do_elyotna
+    do_kwiboo
+    do_erstrom
+esac
+
+cd $DIR
+
+exit
