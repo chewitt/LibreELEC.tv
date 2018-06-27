@@ -21,6 +21,9 @@ devices = {
     'Khadas_VIM' : {
       'khadas-vim' : { 'dtb' : 'meson-gxl-s905x-khadas-vim.dtb', 'config' : 'khadas-vim_defconfig' },
     },
+    'NanoPi_K2' : {
+      'NanoPi_K2' : { 'dtb' : 'meson-gxbb-nanopi-k2.dtb', 'config' : 'nanopi-k2_defconfig' },
+    },
   },
   'Rockchip' : {
     'MiQi' : { 'rk3288' : { 'dtb' : 'rk3288-miqi.dtb', 'config' : 'miqi-rk3288_config' }, },

@@ -44,6 +44,12 @@ case "$DEVICE" in
     PKG_URL="https://github.com/BayLibre/u-boot/releases/download/v2017.11-libretech-cc/khadas-vim_fip_${PKG_VERSION}.tar.gz"
     PKG_SOURCE_DIR="fip"
     ;;
+  "NanoPi_K2")
+    PKG_VERSION="20170412"
+    PKG_SHA256="4b5778098ca2a4f7ade06db7752ec9f77775d67e438d6fba0c669a4959ff7200"
+    PKG_URL="https://github.com/BayLibre/u-boot/releases/download/v2017.11-libretech-cc/nanopi-k2_fip_${PKG_VERSION}.tar.gz"
+    PKG_SOURCE_DIR="fip"
+    ;;
   "Odroid_C2")
     PKG_VERSION="s905_6.0.1_v3.7"
     PKG_SHA256="3ee700fd3a6439997060ac6d21217b0adba3a801876707fae70988f8ce6c3fef"
