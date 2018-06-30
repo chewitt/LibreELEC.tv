@@ -1,0 +1,41 @@
+diff --git a/arch/arm64/boot/dts/amlogic/Makefile b/arch/arm64/boot/dts/amlogic/Makefile
+index 6de2e7f5a9cc..1b46affd376d 100644
+--- a/arch/arm64/boot/dts/amlogic/Makefile
++++ b/arch/arm64/boot/dts/amlogic/Makefile
+@@ -18,6 +18,7 @@  dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905x-p212.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905d-p230.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905d-p231.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905w-p281.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905w-tx3-mini.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxm-khadas-vim2.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxm-nexbox-a1.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxm-q200.dtb
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts b/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts
+new file mode 100644
+index 000000000000..08aca8346b72
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts
+@@ -0,0 +1,22 @@ 
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright (c) 2018 Martin Blumenstingl <martin.blumenstingl@googlemail.com>.
++ * Based on meson-gxl-s905d-p231.dts:
++ * - Copyright (c) 2016 Endless Computers, Inc.
++ *   Author: Carlo Caione <carlo@endlessm.com>
++ */
++
++/dts-v1/;
++
++#include "meson-gxl-s905w.dtsi"
++#include "meson-gx-p23x-q20x.dtsi"
++
++/ {
++	compatible = "oranth,tx3-mini", "amlogic,s905w", "amlogic,meson-gxl";
++	model = "Oranth Tanix TX3 Mini";
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x0 0x0 0x40000000>; /* 1 GiB or 2 GiB */
++	};
++};
+

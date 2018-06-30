@@ -1,0 +1,12 @@
+diff --git a/Documentation/devicetree/bindings/arm/amlogic.txt b/Documentation/devicetree/bindings/arm/amlogic.txt
+index 33c672284963..79b8ebe08444 100644
+--- a/Documentation/devicetree/bindings/arm/amlogic.txt
++++ b/Documentation/devicetree/bindings/arm/amlogic.txt
+@@ -84,6 +84,7 @@  Board compatible values (alphabetically, grouped by SoC):
+   - "amlogic,p231" (Meson gxl s905d)
+ 
+   - "amlogic,p281" (Meson gxl s905w)
++  - "oranth,tx3-mini" (Meson gxl s905w)
+ 
+   - "amlogic,q200" (Meson gxm s912)
+   - "amlogic,q201" (Meson gxm s912)
