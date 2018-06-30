@@ -1,0 +1,24 @@
+diff --git a/Documentation/devicetree/bindings/arm/amlogic.txt b/Documentation/devicetree/bindings/arm/amlogic.txt
+index 69880560c0f0..33c672284963 100644
+--- a/Documentation/devicetree/bindings/arm/amlogic.txt
++++ b/Documentation/devicetree/bindings/arm/amlogic.txt
+@@ -41,6 +41,10 @@  Boards with the Amlogic Meson GXL S905D SoC shall have the following properties:
+   Required root node property:
+     compatible: "amlogic,s905d", "amlogic,meson-gxl";
+ 
++Boards with the Amlogic Meson GXL S905W SoC shall have the following properties:
++  Required root node property:
++    compatible: "amlogic,s905w", "amlogic,meson-gxl";
++
+ Boards with the Amlogic Meson GXM S912 SoC shall have the following properties:
+   Required root node property:
+     compatible: "amlogic,s912", "amlogic,meson-gxm";
+@@ -79,6 +83,8 @@  Board compatible values (alphabetically, grouped by SoC):
+   - "amlogic,p230" (Meson gxl s905d)
+   - "amlogic,p231" (Meson gxl s905d)
+ 
++  - "amlogic,p281" (Meson gxl s905w)
++
+   - "amlogic,q200" (Meson gxm s912)
+   - "amlogic,q201" (Meson gxm s912)
+   - "khadas,vim2" (Meson gxm s912)
