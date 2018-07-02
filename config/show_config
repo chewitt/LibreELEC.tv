@@ -2,15 +2,15 @@ show_config() {
   # load graphic configuration
     get_graphicdrivers
 
-  dashes="==========================="
-  config_message="$config_message\n $dashes$dashes$dashes"
-  config_message="$config_message\n Configuration for $DISTRONAME ($([ "$OFFICIAL" = "yes" ] && echo "official" || echo "community"))"
-  config_message="$config_message\n $dashes$dashes$dashes"
+  dashes="====================="
+  config_message="$config_message\n $dashes$dashes$dashes$dashes"
+  config_message="$config_message\n Configuration for image: $DISTRONAME-${DEVICE:-$PROJECT}.$ARCH-$LIBREELEC_VERSION ($([ "$OFFICIAL" = "yes" ] && echo "official" || echo "community"))"
+  config_message="$config_message\n $dashes$dashes$dashes$dashes"
 
   # Build options
 
-  config_message="$config_message\n\n Buildoptions:"
-  config_message="$config_message\n $dashes$dashes"
+  config_message="$config_message\n\n Build options:"
+  config_message="$config_message\n $dashes$dashes$dashes"
 
   config_message="$config_message\n - CPU (ARCH):\t\t\t\t $TARGET_CPU ($TARGET_ARCH)"
   config_message="$config_message\n - FLOAT:\t\t\t\t $TARGET_FLOAT"
@@ -27,7 +27,7 @@ show_config() {
   # Graphic configuration
 
   config_message="$config_message\n\n Graphic configuration:"
-  config_message="$config_message\n $dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes"
 
   if [ "$DISPLAYSERVER" = "x11" ] ; then
     config_message="$config_message\n - Xorg Graphic Drivers:\t\t $GRAPHIC_DRIVERS"
@@ -41,7 +41,7 @@ show_config() {
   # Hardware decoder support
 
   config_message="$config_message\n\n Hardware decoder configuration:"
-  config_message="$config_message\n $dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes"
 
   config_message="$config_message\n - Kodi Player driver:\t\t\t $KODIPLAYER_DRIVER"
   config_message="$config_message\n - VAAPI Support:\t\t\t $VAAPI_SUPPORT"
@@ -50,7 +50,7 @@ show_config() {
   # Input device configuration
 
   config_message="$config_message\n\n Input device configuration:"
-  config_message="$config_message\n $dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes"
 
   config_message="$config_message\n - Remote support:\t\t\t $REMOTE_SUPPORT"
   config_message="$config_message\n - ATV Remote support:\t\t\t $ATVCLIENT_SUPPORT"
@@ -61,7 +61,7 @@ show_config() {
   # Misc. hardware configuration
 
   config_message="$config_message\n\n Misc. hardware configuration:"
-  config_message="$config_message\n $dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes"
 
   config_message="$config_message\n - ALSA support:\t\t\t $ALSA_SUPPORT"
   config_message="$config_message\n - Pulseaudio support:\t\t\t $PULSEAUDIO_SUPPORT"
@@ -88,7 +88,7 @@ show_config() {
   # Network service configuration
 
   config_message="$config_message\n\n Network service configuration:"
-  config_message="$config_message\n $dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes"
 
   config_message="$config_message\n - Avahi (Zeroconf) support:\t\t $AVAHI_DAEMON"
   config_message="$config_message\n - NFS mounting support:\t\t $NFS_SUPPORT"
@@ -100,7 +100,7 @@ show_config() {
   # OS configuration
 
   config_message="$config_message\n\n OS configuration:"
-  config_message="$config_message\n $dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes"
 
   config_message="$config_message\n - OEM Support:\t\t\t\t $OEM_SUPPORT"
   config_message="$config_message\n - Default ROOT Password:\t\t $ROOT_PASSWORD"
@@ -118,7 +118,7 @@ show_config() {
   # Misc. Filesystems
 
   config_message="$config_message\n\n Misc. Filesystems:"
-  config_message="$config_message\n $dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes"
 
   config_message="$config_message\n - Swap Support:\t\t\t $SWAP_SUPPORT"
   if [ "$SWAP_SUPPORT" = "yes" ]; then
@@ -131,7 +131,7 @@ show_config() {
   # Kodi configuration
 
   config_message="$config_message\n\n Kodi configuration:"
-  config_message="$config_message\n $dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes"
 
   config_message="$config_message\n - Kodi version:\t\t\t $MEDIACENTER"
   config_message="$config_message\n - Kodi Blu-Ray support:\t\t $KODI_BLURAY_SUPPORT"
@@ -162,9 +162,9 @@ show_config() {
   fi
 
   config_message="$config_message\n"
-  config_message="$config_message\n $dashes$dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes$dashes"
   config_message="$config_message\n End Configuration for $DISTRONAME"
-  config_message="$config_message\n $dashes$dashes$dashes"
+  config_message="$config_message\n $dashes$dashes$dashes$dashes"
   config_message="$config_message\n\n\n"
 
   echo -e "$config_message"
