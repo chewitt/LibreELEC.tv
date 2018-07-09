@@ -1,0 +1,21 @@
+--- a/arch/arm64/boot/dts/amlogic/meson-gxm-khadas-vim2.dts	2018-07-19 10:20:46.417380334 +0100
++++ b/arch/arm64/boot/dts/amlogic/meson-gxm-khadas-vim2.dts	2018-07-19 15:01:41.569067802 +0100
+@@ -87,7 +87,7 @@
+ 
+ 	sound {
+ 		compatible = "simple-audio-card";
+-		simple-audio-card,name = "meson-gx-audio";
++		simple-audio-card,name = "HDMI";
+ 
+ 		assigned-clocks = <&clkc CLKID_MPLL2>,
+ 				  <&clkc CLKID_MPLL0>,
+@@ -100,7 +100,7 @@
+ 		simple-audio-card,dai-link@0 {
+ 			/* HDMI Output */
+ 			format = "i2s";
+-			mclk-fs = <256>;
++			mclk-fs = <128>;
+ 			bitclock-master = <&i2s_dai>;
+ 			frame-master = <&i2s_dai>;
+ 
+
