@@ -1,4 +1,4 @@
-From cffb61329b32e8b567d42518431f620f74e7e4ec Mon Sep 17 00:00:00 2001
+From fd9399b7486488ee1aa7914d83ca2c603b0e3ac7 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <raptorteak@gmail.com>
 Date: Thu, 15 Mar 2018 13:39:41 +0100
 Subject: [PATCH 02/50] soc: meson: add power controller for vdec

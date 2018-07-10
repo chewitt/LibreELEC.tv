@@ -1,4 +1,4 @@
-From d2166b0e89d50c8a5bad92f837d77f0669491142 Mon Sep 17 00:00:00 2001
+From 9b2ec99ba838da25d98f5e3bbc03d986362dd6b5 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Sat, 7 Apr 2018 22:23:33 +0200
 Subject: [PATCH 26/50] Remove duplicate HEVC V4L2 pixfmt

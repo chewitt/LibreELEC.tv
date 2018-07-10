@@ -1,4 +1,4 @@
-From 47a033893d924c7fb21039c881b1476cf41fc02f Mon Sep 17 00:00:00 2001
+From b005c01b1c0abaed9523923c1cb2136cc280d232 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Thu, 5 Apr 2018 16:47:17 +0200
 Subject: [PATCH 22/50] meson: vdec: h264: Fix SEI data handling

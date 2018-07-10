@@ -1,4 +1,4 @@
-From 5aa05e0e442d2c6fb8602496e559fb3ee70e64e1 Mon Sep 17 00:00:00 2001
+From 02d821cd899b7599abda01e400d83ae8929e0a5b Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <raptorteak@gmail.com>
 Date: Thu, 15 Mar 2018 13:47:47 +0100
 Subject: [PATCH 03/50] media: meson: add V4L2 M2M video decoder
@@ -24,10 +24,10 @@ Very broken. Very WiP.
  create mode 100644 drivers/media/platform/meson/vdec/vdec.h
 
 diff --git a/drivers/media/platform/Kconfig b/drivers/media/platform/Kconfig
-index c7a1cf8..96b688d 100644
+index 2728376..ed629e2 100644
 --- a/drivers/media/platform/Kconfig
 +++ b/drivers/media/platform/Kconfig
-@@ -495,6 +495,16 @@ config VIDEO_QCOM_VENUS
+@@ -482,6 +482,16 @@ config VIDEO_QCOM_VENUS
  	  on various Qualcomm SoCs.
  	  To compile this driver as a module choose m here.
  

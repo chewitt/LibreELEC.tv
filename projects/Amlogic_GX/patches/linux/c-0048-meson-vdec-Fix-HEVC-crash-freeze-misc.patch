@@ -1,4 +1,4 @@
-From 1a667bb8bf1512bf7be36c616e32861545846a26 Mon Sep 17 00:00:00 2001
+From 61e19547f9b2d5e27cce664e928fd1e33f9cde32 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Fri, 15 Jun 2018 09:58:43 +0200
 Subject: [PATCH 48/50] meson: vdec:Fix HEVC crash & freeze + misc

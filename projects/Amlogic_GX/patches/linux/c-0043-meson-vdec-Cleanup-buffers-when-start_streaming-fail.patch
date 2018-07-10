@@ -1,4 +1,4 @@
-From 22f917b78f16e0575297ed73a0c9c594f7d04df7 Mon Sep 17 00:00:00 2001
+From e59db89407176fb1806e22cc32bd9860d3be127c Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Mon, 11 Jun 2018 05:08:38 +0200
 Subject: [PATCH 43/50] meson: vdec: Cleanup buffers when start_streaming fails

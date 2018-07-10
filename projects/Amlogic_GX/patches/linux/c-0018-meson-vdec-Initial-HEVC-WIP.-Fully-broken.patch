@@ -1,4 +1,4 @@
-From 714e0678c0db0f83063479e54a5586d826047a42 Mon Sep 17 00:00:00 2001
+From ded6a65588a92f47da4460e05d9983fc1ae3a6db Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Tue, 3 Apr 2018 15:04:40 +0200
 Subject: [PATCH 18/50] meson: vdec: Initial HEVC WIP. Fully broken.
@@ -27,8 +27,7 @@ and ultimately we want dfs.
 * Define vdec_formats differently for each compatible entry
 ---
  arch/arm64/boot/dts/amlogic/meson-gxl.dtsi    |  10 +-
- drivers/clk/meson/gxbb.c                      |  51 ++
- drivers/clk/meson/gxbb.h                      |   3 +-
+ drivers/clk/meson/gxbb.c                      |  42 ++
  drivers/media/platform/meson/vdec/Makefile    |   2 +-
  drivers/media/platform/meson/vdec/esparser.c  |  48 +-
  drivers/media/platform/meson/vdec/h264.c      |  29 +-
@@ -39,10 +38,10 @@ and ultimately we want dfs.
  drivers/media/platform/meson/vdec/vdec_1.c    | 128 ++++-
  drivers/media/platform/meson/vdec/vdec_hevc.c | 139 +++++
  drivers/media/platform/meson/vdec/vdec_hevc.h |   8 +
- include/dt-bindings/clock/gxbb-clkc.h         |   2 +
+ include/dt-bindings/clock/gxbb-clkc.h         |   1 -
  include/uapi/linux/videodev2.h                |   1 +
  vh265_mc                                      | Bin 0 -> 16384 bytes
- 16 files changed, 1519 insertions(+), 159 deletions(-)
+ 15 files changed, 1506 insertions(+), 159 deletions(-)
  create mode 100644 drivers/media/platform/meson/vdec/hevc.c
  create mode 100644 drivers/media/platform/meson/vdec/hevc.h
  create mode 100644 drivers/media/platform/meson/vdec/hevc_regs.h
@@ -50,31 +49,11 @@ and ultimately we want dfs.
  create mode 100644 drivers/media/platform/meson/vdec/vdec_hevc.h
  create mode 100644 vh265_mc
 
-diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-index 94a1dfa..0d414f9 100644
---- a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-+++ b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-@@ -787,9 +787,11 @@
- };
- 
- &pwrc_vdec {
--	clocks = <&clkc CLKID_VPU_INTR>, <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_VDEC_1>;
--	clock-names = "vpu_intr", "dos_parser", "vdec_1";
-+	clocks = <&clkc CLKID_VPU_INTR>, <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_VDEC_1>, <&clkc CLKID_VDEC_HEVC>;
-+	clock-names = "vpu_intr", "dos_parser", "vdec_1", "vdec_hevc";
- 
--	assigned-clocks = <&clkc CLKID_VDEC_1>;
--	assigned-clock-rates = <648000000>;
-+	assigned-clocks = <&clkc CLKID_VDEC_1>,
-+			  <&clkc CLKID_VDEC_HEVC>;
-+	assigned-clock-rates = <648000000>,
-+			       <648000000>;
- };
 diff --git a/drivers/clk/meson/gxbb.c b/drivers/clk/meson/gxbb.c
-index f08066d..2422d06 100644
+index 2406584..4a9c727 100644
 --- a/drivers/clk/meson/gxbb.c
 +++ b/drivers/clk/meson/gxbb.c
-@@ -1592,6 +1592,48 @@ static struct clk_gate gxbb_vdec_1 = {
+@@ -1626,6 +1626,48 @@ static struct clk_regmap gxbb_vdec_hevc = {
  	},
  };
  
@@ -123,51 +102,6 @@ index f08066d..2422d06 100644
  /* Everything Else (EE) domain gates */
  static MESON_GATE(gxbb_ddr, HHI_GCLK_MPEG0, 0);
  static MESON_GATE(gxbb_dos, HHI_GCLK_MPEG0, 1);
-@@ -1838,6 +1880,9 @@ static struct clk_hw_onecell_data gxbb_hw_onecell_data = {
- 		[CLKID_VDEC_1_SEL]	    = &gxbb_vdec_1_sel.hw,
- 		[CLKID_VDEC_1_DIV]          = &gxbb_vdec_1_div.hw,
- 		[CLKID_VDEC_1]         	    = &gxbb_vdec_1.hw,
-+		[CLKID_VDEC_HEVC_SEL]	    = &gxbb_vdec_hevc_sel.hw,
-+		[CLKID_VDEC_HEVC_DIV]	    = &gxbb_vdec_hevc_div.hw,
-+		[CLKID_VDEC_HEVC]	    = &gxbb_vdec_hevc.hw,
- 		[NR_CLKS]		    = NULL,
- 	},
- 	.num = NR_CLKS,
-@@ -1997,6 +2042,9 @@ static struct clk_hw_onecell_data gxl_hw_onecell_data = {
- 		[CLKID_VDEC_1_SEL]	    = &gxbb_vdec_1_sel.hw,
- 		[CLKID_VDEC_1_DIV]          = &gxbb_vdec_1_div.hw,
- 		[CLKID_VDEC_1]         	    = &gxbb_vdec_1.hw,
-+		[CLKID_VDEC_HEVC_SEL]	    = &gxbb_vdec_hevc_sel.hw,
-+		[CLKID_VDEC_HEVC_DIV]	    = &gxbb_vdec_hevc_div.hw,
-+		[CLKID_VDEC_HEVC]	    = &gxbb_vdec_hevc.hw,
- 		[NR_CLKS]		    = NULL,
- 	},
- 	.num = NR_CLKS,
-@@ -2158,6 +2206,9 @@ static struct clk_regmap *const gx_clk_regmaps[] = {
- 	&gxbb_vdec_1_sel,
- 	&gxbb_vdec_1_div,
- 	&gxbb_vdec_1,
-+	&gxbb_vdec_hevc_sel,
-+	&gxbb_vdec_hevc_div,
-+	&gxbb_vdec_hevc,
- };
- 
- struct clkc_data {
-diff --git a/drivers/clk/meson/gxbb.h b/drivers/clk/meson/gxbb.h
-index 32045ee..ae21d23 100644
---- a/drivers/clk/meson/gxbb.h
-+++ b/drivers/clk/meson/gxbb.h
-@@ -205,8 +205,9 @@
- #define CLKID_FCLK_DIV5_DIV	  149
- #define CLKID_FCLK_DIV7_DIV	  150
- #define CLKID_VDEC_1_DIV	  152
-+#define CLKID_VDEC_HEVC_DIV	  155
- 
--#define NR_CLKS			  154
-+#define NR_CLKS			  157
- 
- /* include the CLKIDs that have been made part of the DT binding */
- #include <dt-bindings/clock/gxbb-clkc.h>
 diff --git a/drivers/media/platform/meson/vdec/Makefile b/drivers/media/platform/meson/vdec/Makefile
 index b0f4687..4a4ac15 100644
 --- a/drivers/media/platform/meson/vdec/Makefile
@@ -2062,17 +1996,17 @@ index 0000000..af94bf0
 +#endif
 \ No newline at end of file
 diff --git a/include/dt-bindings/clock/gxbb-clkc.h b/include/dt-bindings/clock/gxbb-clkc.h
-index 3bec26e..ae7f6be 100644
+index da0db40..7a892be 100644
 --- a/include/dt-bindings/clock/gxbb-clkc.h
 +++ b/include/dt-bindings/clock/gxbb-clkc.h
-@@ -127,5 +127,7 @@
+@@ -125,7 +125,6 @@
+ #define CLKID_VAPB_1		138
+ #define CLKID_VAPB_SEL		139
  #define CLKID_VAPB		140
- #define CLKID_VDEC_1_SEL	151
+-#define CLKID_VDEC_1_SEL	151
  #define CLKID_VDEC_1		153
-+#define CLKID_VDEC_HEVC_SEL	154
-+#define CLKID_VDEC_HEVC	156
+ #define CLKID_VDEC_HEVC		156
  
- #endif /* __GXBB_CLKC_H */
 diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
 index 600877b..6560ac0 100644
 --- a/include/uapi/linux/videodev2.h

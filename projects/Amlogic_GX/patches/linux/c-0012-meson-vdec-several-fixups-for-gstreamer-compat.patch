@@ -1,4 +1,4 @@
-From b5b42bb0c650050781a8810e6168ed95bd7de90f Mon Sep 17 00:00:00 2001
+From d8a34ce688f5f0d0646139ce444395851494d857 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Fri, 30 Mar 2018 18:24:07 +0200
 Subject: [PATCH 12/50] meson: vdec: several fixups for gstreamer compat

@@ -1,4 +1,4 @@
-From 9c4025b54645e5584af54a328bec62bc863ca7cf Mon Sep 17 00:00:00 2001
+From 9867e85a2ff5661ccf1d33a5bf4f8c12fac8fbba Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Sun, 8 Apr 2018 03:46:40 +0200
 Subject: [PATCH 27/50] meson: vdec: Rework the input/output logic

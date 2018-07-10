@@ -1,4 +1,4 @@
-From aa037f4729866c815b647a10792685a697419ca6 Mon Sep 17 00:00:00 2001
+From 750f3c34d9439650ab40dd8bcc755eef8dd93bc0 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Mon, 9 Apr 2018 16:28:36 +0200
 Subject: [PATCH 30/50] meson: vdec: hevc: Fetch and process RPM

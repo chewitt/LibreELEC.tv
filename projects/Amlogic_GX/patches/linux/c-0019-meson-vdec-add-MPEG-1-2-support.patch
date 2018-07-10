@@ -1,4 +1,4 @@
-From 3f729c8bdce91d7c197f4e98e173515d0f698394 Mon Sep 17 00:00:00 2001
+From 536b7443411a45490c1c073ba00e942732e9426b Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Wed, 4 Apr 2018 04:46:44 +0200
 Subject: [PATCH 19/50] meson: vdec: add MPEG 1/2 support

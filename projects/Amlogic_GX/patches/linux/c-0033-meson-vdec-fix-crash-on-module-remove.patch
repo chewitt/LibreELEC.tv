@@ -1,4 +1,4 @@
-From f483f989fbb9640d57c7bad250a67d6fe7bad9a2 Mon Sep 17 00:00:00 2001
+From 4d86e95b995c73b11c45130f19e8542781afa3a3 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Sat, 14 Apr 2018 22:07:24 +0200
 Subject: [PATCH 33/50] meson: vdec: fix crash on module remove

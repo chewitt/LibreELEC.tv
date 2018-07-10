@@ -1,4 +1,4 @@
-From f750bb591037bc28201ca99fd31be4197372666a Mon Sep 17 00:00:00 2001
+From 29866db0ee03a6a0eacfd4cd23180258edf072a2 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Tue, 12 Jun 2018 10:26:20 +0200
 Subject: [PATCH 46/50] meson: vdec: add mjpeg firmware (should be in

@@ -1,4 +1,4 @@
-From ea83ad001bbeace033e4e821a31d499768f1404f Mon Sep 17 00:00:00 2001
+From a24459009592056f8ddbf4fac67aa516456e7713 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <raptorteak@gmail.com>
 Date: Mon, 26 Mar 2018 18:52:39 +0200
 Subject: [PATCH 08/50] media: meson-vdec: Many fixes & stability updates [2]
@@ -27,10 +27,10 @@ Still TODO:
  5 files changed, 271 insertions(+), 120 deletions(-)
 
 diff --git a/arch/arm/boot/dts/meson8b.dtsi b/arch/arm/boot/dts/meson8b.dtsi
-index 2897f8a..3a9d9c2 100644
+index 4600999..1d7d1e4 100644
 --- a/arch/arm/boot/dts/meson8b.dtsi
 +++ b/arch/arm/boot/dts/meson8b.dtsi
-@@ -103,11 +103,11 @@
+@@ -112,11 +112,11 @@
  			no-map;
  		};
  

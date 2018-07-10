@@ -1,4 +1,4 @@
-From c498b8075d9f3417a65ecc5bceb7dcaf602059d2 Mon Sep 17 00:00:00 2001
+From ebcd774449227ed13ddcd9e9b8630be6b9bdc62b Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Wed, 11 Apr 2018 00:19:40 +0200
 Subject: [PATCH 31/50] meson: vdec: h264: Increase the minimum amount of

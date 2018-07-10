@@ -1,4 +1,4 @@
-From 0ae1b2b7f964b765046eff092302bd2e3ba2e8d5 Mon Sep 17 00:00:00 2001
+From 1c8c2946bbac80d2a076d1eb6b4c286118f8b6da Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Fri, 8 Jun 2018 04:40:53 +0200
 Subject: [PATCH 45/50] meson: vdec: MJPEG + EOS signaling

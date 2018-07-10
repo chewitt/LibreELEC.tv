@@ -1,4 +1,4 @@
-From f05b3f8226d1cdc02c980a1efbc4761075ee119f Mon Sep 17 00:00:00 2001
+From 50fdfb6da37c34884a4212411be9ab5c4494eb81 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <raptorteak@gmail.com>
 Date: Wed, 28 Mar 2018 17:04:25 +0200
 Subject: [PATCH 10/50] media: meson-vdec: the H.264 vdec is now usable - on

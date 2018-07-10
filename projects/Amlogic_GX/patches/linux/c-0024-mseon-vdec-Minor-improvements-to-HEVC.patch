@@ -1,4 +1,4 @@
-From 17009b8e781b156a8bcb61b8b135a7267d4b9852 Mon Sep 17 00:00:00 2001
+From 5a3104b574d463dd3ab47feefff61f4d728b13f0 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Sat, 7 Apr 2018 02:07:19 +0200
 Subject: [PATCH 24/50] mseon: vdec: Minor improvements to HEVC

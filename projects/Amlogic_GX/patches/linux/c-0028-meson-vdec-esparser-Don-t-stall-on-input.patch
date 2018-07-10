@@ -1,4 +1,4 @@
-From c083de78053a72ec219d5b8d01a3fb940d6267ac Mon Sep 17 00:00:00 2001
+From 843df88143425f98ceaa2541c365248d3e3527a3 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Sun, 8 Apr 2018 18:58:21 +0200
 Subject: [PATCH 28/50] meson: vdec: esparser: Don't stall on input

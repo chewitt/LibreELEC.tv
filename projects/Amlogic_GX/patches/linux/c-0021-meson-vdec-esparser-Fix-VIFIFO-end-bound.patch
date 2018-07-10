@@ -1,4 +1,4 @@
-From aad134163c4c29875d661643e3aa3b96b67ee26f Mon Sep 17 00:00:00 2001
+From 1323640bc088b4ddae7ccfdf4da8378c79d3ef45 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Thu, 5 Apr 2018 13:55:07 +0200
 Subject: [PATCH 21/50] meson: vdec: esparser: Fix VIFIFO end bound

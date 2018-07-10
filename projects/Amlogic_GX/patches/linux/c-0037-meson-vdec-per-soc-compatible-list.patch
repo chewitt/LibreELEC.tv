@@ -1,4 +1,4 @@
-From e44731d2f0ad1c34a6e23b9f5d346629529f8648 Mon Sep 17 00:00:00 2001
+From 3fee7b58f979d97f772b74b469742dc1b3179d17 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Fri, 20 Apr 2018 07:53:25 +0200
 Subject: [PATCH 37/50] meson: vdec: per-soc compatible list
@@ -33,10 +33,10 @@ Except for vh264_mc which differs for every SoC, and should be put in separate f
  create mode 100644 drivers/media/platform/meson/vdec/vdec_platform.h
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-gx.dtsi b/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
-index 9ffdb36..cf1ad45 100644
+index 2a0b4fa..0447da6 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
 +++ b/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
-@@ -484,7 +484,7 @@
+@@ -490,7 +490,7 @@
  		};
  
  		vdec: video-decoder@0xd0050000 {
@@ -45,30 +45,6 @@ index 9ffdb36..cf1ad45 100644
  			reg = <0x0 0xc8820000 0x0 0x10000
  			       0x0 0xc110a580 0x0 0xe4
  			       0x0 0xc8838000 0x0 0x60>;
-diff --git a/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
-index e31b459..1ec33c1 100644
---- a/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
-+++ b/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
-@@ -774,6 +774,7 @@
- };
- 
- &vdec {
-+	compatible = "amlogic,meson-gxbb-vdec";
- 	power-domains = <&pwrc_vdec>;
- };
- 
-diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-index 1619b70..f6cedd8 100644
---- a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-+++ b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-@@ -783,6 +783,7 @@
- };
- 
- &vdec {
-+	compatible = "amlogic,meson-gxl-vdec";
- 	power-domains = <&pwrc_vdec>;
- };
- 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-gxm.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxm.dtsi
 index 247888d..4ce7b12 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-gxm.dtsi

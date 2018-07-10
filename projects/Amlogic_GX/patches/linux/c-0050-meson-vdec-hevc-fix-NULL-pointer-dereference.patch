@@ -1,4 +1,4 @@
-From dd62ade3f68dad46886d1db08bb3eac2e8683a4e Mon Sep 17 00:00:00 2001
+From a1f151159bbdf18167264905d0aeb9368475dd87 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Fri, 15 Jun 2018 13:09:31 +0200
 Subject: [PATCH 50/50] meson: vdec: hevc: fix NULL pointer dereference

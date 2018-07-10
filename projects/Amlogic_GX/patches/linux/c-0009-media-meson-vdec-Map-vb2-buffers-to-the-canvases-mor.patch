@@ -1,4 +1,4 @@
-From 2d8ed8a9a576e8dc962c2711d38480e626f8061d Mon Sep 17 00:00:00 2001
+From e08b6bc885cd135cfc68eb384ff4fef0095ee295 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <raptorteak@gmail.com>
 Date: Tue, 27 Mar 2018 23:40:19 +0200
 Subject: [PATCH 09/50] media: meson-vdec: Map vb2 buffers to the canvases [ +
@@ -23,10 +23,10 @@ Revert the pixfmt once more to V4L2_PIX_FMT_NV21M since we're now actually multi
  5 files changed, 232 insertions(+), 238 deletions(-)
 
 diff --git a/arch/arm/boot/dts/meson8b.dtsi b/arch/arm/boot/dts/meson8b.dtsi
-index 3a9d9c2..9da1d904 100644
+index 1d7d1e4..455c3e7 100644
 --- a/arch/arm/boot/dts/meson8b.dtsi
 +++ b/arch/arm/boot/dts/meson8b.dtsi
-@@ -368,13 +368,13 @@
+@@ -384,13 +384,13 @@
  	clock-names = "vpu_intr", "dos_parser", "vdec_1";
  
  	assigned-clocks = <&clkc CLKID_VDEC_1_SEL>,

@@ -1,4 +1,4 @@
-From 0b02eeb2a9cb795c4c2ff77ab6ffdba7132027ed Mon Sep 17 00:00:00 2001
+From c0d889ceef884327914e3e120a4722074c2f80df Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Wed, 13 Jun 2018 10:56:34 +0200
 Subject: [PATCH 47/50] meson: vdec: handle DOS clock gate
@@ -13,32 +13,6 @@ Also, whether it is or not, this code should have been there anyway.
  drivers/media/platform/meson/vdec/vdec.h    |  1 +
  4 files changed, 24 insertions(+), 5 deletions(-)
 
-diff --git a/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
-index 5594b3e..c2cafd9 100644
---- a/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
-+++ b/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
-@@ -775,6 +775,6 @@
- 
- &vdec {
- 	compatible = "amlogic,meson-gxbb-vdec";
--	clocks = <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_VDEC_1>, <&clkc CLKID_VDEC_HEVC>;
--	clock-names = "dos_parser", "vdec_1", "vdec_hevc";
-+	clocks = <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_DOS>, <&clkc CLKID_VDEC_1>, <&clkc CLKID_VDEC_HEVC>;
-+	clock-names = "dos_parser", "dos", "vdec_1", "vdec_hevc";
- };
-diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-index 87e3a6c..2b0e405 100644
---- a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-+++ b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-@@ -784,6 +784,6 @@
- 
- &vdec {
- 	compatible = "amlogic,meson-gxl-vdec";
--	clocks = <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_VDEC_1>, <&clkc CLKID_VDEC_HEVC>;
--	clock-names = "dos_parser", "vdec_1", "vdec_hevc";
-+	clocks = <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_DOS>, <&clkc CLKID_VDEC_1>, <&clkc CLKID_VDEC_HEVC>;
-+	clock-names = "dos_parser", "dos", "vdec_1", "vdec_hevc";
- };
 diff --git a/drivers/media/platform/meson/vdec/vdec.c b/drivers/media/platform/meson/vdec/vdec.c
 index c745fdd..104f55a 100644
 --- a/drivers/media/platform/meson/vdec/vdec.c

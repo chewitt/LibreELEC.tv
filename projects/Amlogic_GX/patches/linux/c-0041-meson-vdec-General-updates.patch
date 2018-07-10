@@ -1,4 +1,4 @@
-From ccc78218c7603a819ac245c4ad01b42a1307a3be Mon Sep 17 00:00:00 2001
+From de4d4731c6ccbb3ad9d90fea14b61ee3f5bf03af Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Thu, 26 Apr 2018 00:03:35 +0200
 Subject: [PATCH 41/50] meson: vdec: General updates
@@ -15,8 +15,6 @@ And also general cleanups overall..
  arch/arm64/boot/dts/amlogic/meson-gx.dtsi      |   9 +-
  arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi    |  15 +-
  arch/arm64/boot/dts/amlogic/meson-gxl.dtsi     |  15 +-
- drivers/clk/meson/gxbb.c                       |  18 +-
- drivers/clk/meson/gxbb.h                       |   2 +
  drivers/media/platform/meson/vdec/codec_h264.c |   4 +-
  drivers/media/platform/meson/vdec/codec_hevc.c | 389 +++++++++++--------------
  drivers/media/platform/meson/vdec/vdec.c       |  47 ++-
@@ -27,14 +25,14 @@ And also general cleanups overall..
  drivers/media/platform/meson/vdec/vdec_hevc.h  |  14 +
  drivers/soc/amlogic/Makefile                   |   1 -
  drivers/soc/amlogic/meson-pwrc-vdec.c          | 152 ----------
- 15 files changed, 360 insertions(+), 471 deletions(-)
+ 13 files changed, 348 insertions(+), 463 deletions(-)
  delete mode 100644 drivers/soc/amlogic/meson-pwrc-vdec.c
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-gx.dtsi b/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
-index cf1ad45..88a5cb5 100644
+index 0447da6..2480527 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
 +++ b/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
-@@ -347,12 +347,6 @@
+@@ -353,12 +353,6 @@
  					amlogic,hhi-sysctrl = <&sysctrl>;
  				};
  
@@ -47,7 +45,7 @@ index cf1ad45..88a5cb5 100644
  				clkc_AO: clock-controller {
  					compatible = "amlogic,meson-gx-aoclkc";
  					#clock-cells = <1>;
-@@ -492,10 +486,9 @@
+@@ -498,10 +492,9 @@
  
  			interrupts = <GIC_SPI 44 IRQ_TYPE_EDGE_RISING
  				      GIC_SPI 32 IRQ_TYPE_EDGE_RISING>;
@@ -59,144 +57,6 @@ index cf1ad45..88a5cb5 100644
  		};
  
  		vpu: vpu@d0100000 {
-diff --git a/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
-index 1ec33c1..5594b3e 100644
---- a/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
-+++ b/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
-@@ -775,17 +775,6 @@
- 
- &vdec {
- 	compatible = "amlogic,meson-gxbb-vdec";
--	power-domains = <&pwrc_vdec>;
--};
--
--&pwrc_vdec {
--	clocks = <&clkc CLKID_VPU_INTR>, <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_VDEC_1>, <&clkc CLKID_VDEC_HEVC>;
--	clock-names = "vpu_intr", "dos_parser", "vdec_1", "vdec_hevc";
--
--	assigned-clocks = <&clkc CLKID_VDEC_1_SEL>,
--			  <&clkc CLKID_VDEC_1>;
--	assigned-clock-parents = <&clkc CLKID_FCLK_DIV3>,
--				 <0>;
--	assigned-clock-rates = <0>,
--			       <666666666>;
-+	clocks = <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_VDEC_1>, <&clkc CLKID_VDEC_HEVC>;
-+	clock-names = "dos_parser", "vdec_1", "vdec_hevc";
- };
-diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-index f6cedd8..87e3a6c 100644
---- a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-+++ b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-@@ -784,17 +784,6 @@
- 
- &vdec {
- 	compatible = "amlogic,meson-gxl-vdec";
--	power-domains = <&pwrc_vdec>;
--};
--
--&pwrc_vdec {
--	clocks = <&clkc CLKID_VPU_INTR>, <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_VDEC_1>, <&clkc CLKID_VDEC_HEVC>;
--	clock-names = "vpu_intr", "dos_parser", "vdec_1", "vdec_hevc";
--
--	assigned-clocks = <&clkc CLKID_VDEC_1_SEL>,
--			  <&clkc CLKID_VDEC_1>;
--	assigned-clock-parents = <&clkc CLKID_FCLK_DIV3>,
--				 <0>;
--	assigned-clock-rates = <0>,
--			       <666666666>;
-+	clocks = <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_VDEC_1>, <&clkc CLKID_VDEC_HEVC>;
-+	clock-names = "dos_parser", "vdec_1", "vdec_hevc";
- };
-diff --git a/drivers/clk/meson/gxbb.c b/drivers/clk/meson/gxbb.c
-index 8edd1ff..a893b1e 100644
---- a/drivers/clk/meson/gxbb.c
-+++ b/drivers/clk/meson/gxbb.c
-@@ -1554,13 +1554,14 @@ static struct clk_regmap gxbb_vdec_1_sel = {
- 		.offset = HHI_VDEC_CLK_CNTL,
- 		.mask = 0x3,
- 		.shift = 9,
-+		.flags = CLK_MUX_ROUND_CLOSEST,
- 	},
- 	.hw.init = &(struct clk_init_data){
- 		.name = "vdec_1_sel",
- 		.ops = &clk_regmap_mux_ops,
- 		.parent_names = gxbb_vdec_parent_names,
- 		.num_parents = ARRAY_SIZE(gxbb_vdec_parent_names),
--		.flags = CLK_SET_RATE_NO_REPARENT,
-+		.flags = CLK_SET_RATE_PARENT,
- 	},
- };
- 
-@@ -1589,7 +1590,7 @@ static struct clk_regmap gxbb_vdec_1 = {
- 		.ops = &clk_regmap_gate_ops,
- 		.parent_names = (const char *[]){ "vdec_1_div" },
- 		.num_parents = 1,
--		.flags = CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED,
-+		.flags = CLK_SET_RATE_PARENT,
- 	},
- };
- 
-@@ -1598,13 +1599,14 @@ static struct clk_regmap gxbb_vdec_hevc_sel = {
- 		.offset = HHI_VDEC2_CLK_CNTL,
- 		.mask = 0x3,
- 		.shift = 25,
-+		.flags = CLK_MUX_ROUND_CLOSEST,
- 	},
- 	.hw.init = &(struct clk_init_data){
- 		.name = "vdec_hevc_sel",
- 		.ops = &clk_regmap_mux_ops,
- 		.parent_names = gxbb_vdec_parent_names,
- 		.num_parents = ARRAY_SIZE(gxbb_vdec_parent_names),
--		.flags = CLK_SET_RATE_NO_REPARENT,
-+		.flags = CLK_SET_RATE_PARENT,
- 	},
- };
- 
-@@ -1633,7 +1635,7 @@ static struct clk_regmap gxbb_vdec_hevc = {
- 		.ops = &clk_regmap_gate_ops,
- 		.parent_names = (const char *[]){ "vdec_hevc_div" },
- 		.num_parents = 1,
--		.flags = CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED,
-+		.flags = CLK_SET_RATE_PARENT,
- 	},
- };
- 
-@@ -1881,8 +1883,8 @@ static struct clk_hw_onecell_data gxbb_hw_onecell_data = {
- 		[CLKID_FCLK_DIV5_DIV]	    = &gxbb_fclk_div5_div.hw,
- 		[CLKID_FCLK_DIV7_DIV]	    = &gxbb_fclk_div7_div.hw,
- 		[CLKID_VDEC_1_SEL]	    = &gxbb_vdec_1_sel.hw,
--		[CLKID_VDEC_1_DIV]          = &gxbb_vdec_1_div.hw,
--		[CLKID_VDEC_1]         	    = &gxbb_vdec_1.hw,
-+		[CLKID_VDEC_1_DIV]	    = &gxbb_vdec_1_div.hw,
-+		[CLKID_VDEC_1]		    = &gxbb_vdec_1.hw,
- 		[CLKID_VDEC_HEVC_SEL]	    = &gxbb_vdec_hevc_sel.hw,
- 		[CLKID_VDEC_HEVC_DIV]	    = &gxbb_vdec_hevc_div.hw,
- 		[CLKID_VDEC_HEVC]	    = &gxbb_vdec_hevc.hw,
-@@ -2043,8 +2045,8 @@ static struct clk_hw_onecell_data gxl_hw_onecell_data = {
- 		[CLKID_FCLK_DIV5_DIV]	    = &gxbb_fclk_div5_div.hw,
- 		[CLKID_FCLK_DIV7_DIV]	    = &gxbb_fclk_div7_div.hw,
- 		[CLKID_VDEC_1_SEL]	    = &gxbb_vdec_1_sel.hw,
--		[CLKID_VDEC_1_DIV]          = &gxbb_vdec_1_div.hw,
--		[CLKID_VDEC_1]         	    = &gxbb_vdec_1.hw,
-+		[CLKID_VDEC_1_DIV]	    = &gxbb_vdec_1_div.hw,
-+		[CLKID_VDEC_1]		    = &gxbb_vdec_1.hw,
- 		[CLKID_VDEC_HEVC_SEL]	    = &gxbb_vdec_hevc_sel.hw,
- 		[CLKID_VDEC_HEVC_DIV]	    = &gxbb_vdec_hevc_div.hw,
- 		[CLKID_VDEC_HEVC]	    = &gxbb_vdec_hevc.hw,
-diff --git a/drivers/clk/meson/gxbb.h b/drivers/clk/meson/gxbb.h
-index ae21d23..b3ef54f 100644
---- a/drivers/clk/meson/gxbb.h
-+++ b/drivers/clk/meson/gxbb.h
-@@ -204,7 +204,9 @@
- #define CLKID_FCLK_DIV4_DIV	  148
- #define CLKID_FCLK_DIV5_DIV	  149
- #define CLKID_FCLK_DIV7_DIV	  150
-+#define CLKID_VDEC_1_SEL	  151
- #define CLKID_VDEC_1_DIV	  152
-+#define CLKID_VDEC_HEVC_SEL	  154
- #define CLKID_VDEC_HEVC_DIV	  155
- 
- #define NR_CLKS			  157
 diff --git a/drivers/media/platform/meson/vdec/codec_h264.c b/drivers/media/platform/meson/vdec/codec_h264.c
 index af7f046..b7daea1 100644
 --- a/drivers/media/platform/meson/vdec/codec_h264.c

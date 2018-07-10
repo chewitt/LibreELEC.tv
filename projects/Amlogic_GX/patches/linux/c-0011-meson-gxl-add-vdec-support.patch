@@ -1,4 +1,4 @@
-From f9970f02db625fde49f78128d5331289c3dc12c5 Mon Sep 17 00:00:00 2001
+From 6653a8f0b61883e74b3d9c0f9ad041dc8e695522 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Thu, 29 Mar 2018 21:02:32 +0200
 Subject: [PATCH 11/50] meson: gxl: add vdec support
@@ -16,23 +16,21 @@ It *might* have broken support for S805/odroid-c1, untested.
 
 Known bugs: This support seems to disable the VPU (drm) during boot.
 ---
- arch/arm64/boot/dts/amlogic/meson-gx.dtsi    |  21 ++++++++++
- arch/arm64/boot/dts/amlogic/meson-gxl.dtsi   |  18 +++++++++
- drivers/clk/meson/gxbb.c                     |  58 +++++++++++++++++++++++++++
- drivers/clk/meson/gxbb.h                     |   3 +-
- drivers/media/platform/meson/vdec/esparser.c |  34 +++++++++++-----
- drivers/media/platform/meson/vdec/vdec.c     |  40 +++++++-----------
+ arch/arm64/boot/dts/amlogic/meson-gx.dtsi    |  21 ++++++++++++++
+ arch/arm64/boot/dts/amlogic/meson-gxl.dtsi   |  18 ++++++++++++
+ drivers/media/platform/meson/vdec/esparser.c |  34 +++++++++++++++++------
+ drivers/media/platform/meson/vdec/vdec.c     |  40 ++++++++++-----------------
  drivers/soc/amlogic/meson-pwrc-vdec.c        |   3 ++
  gxtvbb_vh264_mc                              | Bin 0 -> 36864 bytes
- include/dt-bindings/clock/gxbb-clkc.h        |   2 +
- 9 files changed, 143 insertions(+), 36 deletions(-)
+ include/dt-bindings/clock/gxbb-clkc.h        |   1 +
+ 7 files changed, 82 insertions(+), 35 deletions(-)
  create mode 100644 gxtvbb_vh264_mc
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-gx.dtsi b/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
-index 3c31e21..9ffdb36 100644
+index b8dc4db..2a0b4fa 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
 +++ b/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
-@@ -347,6 +347,12 @@
+@@ -353,6 +353,12 @@
  					amlogic,hhi-sysctrl = <&sysctrl>;
  				};
  
@@ -45,7 +43,7 @@ index 3c31e21..9ffdb36 100644
  				clkc_AO: clock-controller {
  					compatible = "amlogic,meson-gx-aoclkc";
  					#clock-cells = <1>;
-@@ -477,6 +483,21 @@
+@@ -483,6 +489,21 @@
  			};
  		};
  
@@ -67,137 +65,6 @@ index 3c31e21..9ffdb36 100644
  		vpu: vpu@d0100000 {
  			compatible = "amlogic,meson-gx-vpu";
  			reg = <0x0 0xd0100000 0x0 0x100000>,
-diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-index dba365e..ac91a3d 100644
---- a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-+++ b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
-@@ -781,3 +781,21 @@
- 	compatible = "amlogic,meson-gxl-vpu", "amlogic,meson-gx-vpu";
- 	power-domains = <&pwrc_vpu>;
- };
-+
-+&vdec {
-+	power-domains = <&pwrc_vdec>;
-+};
-+
-+&pwrc_vdec {
-+	clocks = <&clkc CLKID_VPU_INTR>, <&clkc CLKID_DOS_PARSER>, <&clkc CLKID_VDEC_1>;
-+	clock-names = "vpu_intr", "dos_parser", "vdec_1";
-+
-+	assigned-clocks = <&clkc CLKID_VDEC_1_SEL>,
-+			  <&clkc CLKID_VDEC_1>;
-+
-+	assigned-clock-parents = <&clkc CLKID_FCLK_DIV4>,
-+				 <0>;
-+
-+	assigned-clock-rates = <0>,
-+			       <318750000>;
-+};
-diff --git a/drivers/clk/meson/gxbb.c b/drivers/clk/meson/gxbb.c
-index b1e4d95..f08066d 100644
---- a/drivers/clk/meson/gxbb.c
-+++ b/drivers/clk/meson/gxbb.c
-@@ -1543,6 +1543,55 @@ static struct clk_regmap gxbb_vapb = {
- 	},
- };
- 
-+/* VDEC clocks */
-+
-+static u32 mux_table_vdec[] = {0, 1, 2, 3};
-+static const char * const gxbb_vdec_parent_names[] = {
-+	"fclk_div4", "fclk_div3", "fclk_div5", "fclk_div7"
-+};
-+
-+static struct clk_mux gxbb_vdec_1_sel = {
-+	.reg = (void *)HHI_VDEC_CLK_CNTL,
-+	.mask = 0x3,
-+	.shift = 9,
-+	.lock = &meson_clk_lock,
-+	.table = mux_table_vdec,
-+	.hw.init = &(struct clk_init_data){
-+		.name = "vdec_1_sel",
-+		.ops = &clk_mux_ops,
-+		.parent_names = gxbb_vdec_parent_names,
-+		.num_parents = ARRAY_SIZE(gxbb_vdec_parent_names),
-+		.flags = CLK_SET_RATE_NO_REPARENT,
-+	},
-+};
-+
-+static struct clk_divider gxbb_vdec_1_div = {
-+	.reg = (void *)HHI_VDEC_CLK_CNTL,
-+	.shift = 0,
-+	.width = 7,
-+	.lock = &meson_clk_lock,
-+	.hw.init = &(struct clk_init_data){
-+		.name = "vdec_1_div",
-+		.ops = &clk_divider_ops,
-+		.parent_names = (const char *[]){ "vdec_1_sel" },
-+		.num_parents = 1,
-+		.flags = CLK_SET_RATE_PARENT,
-+	},
-+};
-+
-+static struct clk_gate gxbb_vdec_1 = {
-+	.reg = (void *)HHI_VDEC_CLK_CNTL,
-+	.bit_idx = 8,
-+	.lock = &meson_clk_lock,
-+	.hw.init = &(struct clk_init_data) {
-+		.name = "vdec_1",
-+		.ops = &clk_gate_ops,
-+		.parent_names = (const char *[]){ "vdec_1_div" },
-+		.num_parents = 1,
-+		.flags = CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED,
-+	},
-+};
-+
- /* Everything Else (EE) domain gates */
- static MESON_GATE(gxbb_ddr, HHI_GCLK_MPEG0, 0);
- static MESON_GATE(gxbb_dos, HHI_GCLK_MPEG0, 1);
-@@ -1786,6 +1835,9 @@ static struct clk_hw_onecell_data gxbb_hw_onecell_data = {
- 		[CLKID_FCLK_DIV4_DIV]	    = &gxbb_fclk_div4_div.hw,
- 		[CLKID_FCLK_DIV5_DIV]	    = &gxbb_fclk_div5_div.hw,
- 		[CLKID_FCLK_DIV7_DIV]	    = &gxbb_fclk_div7_div.hw,
-+		[CLKID_VDEC_1_SEL]	    = &gxbb_vdec_1_sel.hw,
-+		[CLKID_VDEC_1_DIV]          = &gxbb_vdec_1_div.hw,
-+		[CLKID_VDEC_1]         	    = &gxbb_vdec_1.hw,
- 		[NR_CLKS]		    = NULL,
- 	},
- 	.num = NR_CLKS,
-@@ -1942,6 +1994,9 @@ static struct clk_hw_onecell_data gxl_hw_onecell_data = {
- 		[CLKID_FCLK_DIV4_DIV]	    = &gxbb_fclk_div4_div.hw,
- 		[CLKID_FCLK_DIV5_DIV]	    = &gxbb_fclk_div5_div.hw,
- 		[CLKID_FCLK_DIV7_DIV]	    = &gxbb_fclk_div7_div.hw,
-+		[CLKID_VDEC_1_SEL]	    = &gxbb_vdec_1_sel.hw,
-+		[CLKID_VDEC_1_DIV]          = &gxbb_vdec_1_div.hw,
-+		[CLKID_VDEC_1]         	    = &gxbb_vdec_1.hw,
- 		[NR_CLKS]		    = NULL,
- 	},
- 	.num = NR_CLKS,
-@@ -2100,6 +2155,9 @@ static struct clk_regmap *const gx_clk_regmaps[] = {
- 	&gxbb_fclk_div4,
- 	&gxbb_fclk_div5,
- 	&gxbb_fclk_div7,
-+	&gxbb_vdec_1_sel,
-+	&gxbb_vdec_1_div,
-+	&gxbb_vdec_1,
- };
- 
- struct clkc_data {
-diff --git a/drivers/clk/meson/gxbb.h b/drivers/clk/meson/gxbb.h
-index 9febf3f..32045ee 100644
---- a/drivers/clk/meson/gxbb.h
-+++ b/drivers/clk/meson/gxbb.h
-@@ -204,8 +204,9 @@
- #define CLKID_FCLK_DIV4_DIV	  148
- #define CLKID_FCLK_DIV5_DIV	  149
- #define CLKID_FCLK_DIV7_DIV	  150
-+#define CLKID_VDEC_1_DIV	  152
- 
--#define NR_CLKS			  151
-+#define NR_CLKS			  154
- 
- /* include the CLKIDs that have been made part of the DT binding */
- #include <dt-bindings/clock/gxbb-clkc.h>
 diff --git a/drivers/media/platform/meson/vdec/esparser.c b/drivers/media/platform/meson/vdec/esparser.c
 index 35ab012..2262e17 100644
 --- a/drivers/media/platform/meson/vdec/esparser.c
@@ -732,17 +599,17 @@ literal 0
 HcmV?d00001
 
 diff --git a/include/dt-bindings/clock/gxbb-clkc.h b/include/dt-bindings/clock/gxbb-clkc.h
-index 8ba99a5..3bec26e 100644
+index 7a892be..da0db40 100644
 --- a/include/dt-bindings/clock/gxbb-clkc.h
 +++ b/include/dt-bindings/clock/gxbb-clkc.h
-@@ -125,5 +125,7 @@
+@@ -125,6 +125,7 @@
  #define CLKID_VAPB_1		138
  #define CLKID_VAPB_SEL		139
  #define CLKID_VAPB		140
 +#define CLKID_VDEC_1_SEL	151
-+#define CLKID_VDEC_1		153
+ #define CLKID_VDEC_1		153
+ #define CLKID_VDEC_HEVC		156
  
- #endif /* __GXBB_CLKC_H */
 -- 
 2.7.4
 

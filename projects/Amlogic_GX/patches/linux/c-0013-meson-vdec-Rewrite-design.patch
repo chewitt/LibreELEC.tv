@@ -1,4 +1,4 @@
-From f6eccd300e0431e5d2689c0ac060f5175cd5b1b9 Mon Sep 17 00:00:00 2001
+From 5dc7a662c244f034e0e75491c080a0716f47ea1a Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Sat, 31 Mar 2018 22:28:26 +0200
 Subject: [PATCH 13/50] meson: vdec: Rewrite design

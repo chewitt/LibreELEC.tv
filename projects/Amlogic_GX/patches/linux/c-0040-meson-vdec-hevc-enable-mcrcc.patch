@@ -1,4 +1,4 @@
-From 5899b614181da6c0e9ec4a7fca1ecf7c729a2d9c Mon Sep 17 00:00:00 2001
+From 89aa926548a4fbaf968633df56cad6ada15f8c32 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Tue, 24 Apr 2018 15:25:47 +0200
 Subject: [PATCH 40/50] meson: vdec: hevc: enable mcrcc

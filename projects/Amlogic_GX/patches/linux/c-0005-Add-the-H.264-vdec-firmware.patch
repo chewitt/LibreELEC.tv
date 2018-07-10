@@ -1,4 +1,4 @@
-From 3a6178a0150b2bbdbd788ec219982d3f391eea89 Mon Sep 17 00:00:00 2001
+From 37bf06bb64c28151908e9209c0f9db09641cc19e Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <raptorteak@gmail.com>
 Date: Thu, 15 Mar 2018 14:26:27 +0100
 Subject: [PATCH 05/50] Add the H.264 vdec firmware

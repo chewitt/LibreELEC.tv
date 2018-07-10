@@ -1,4 +1,4 @@
-From cf10d78dadab9f882d7f5c2bfca0d9bbac6a6449 Mon Sep 17 00:00:00 2001
+From b046ba146aceab1f36647df61312e44822f49c23 Mon Sep 17 00:00:00 2001
 From: Maxime Jourdan <maxi.jourdan@wanadoo.fr>
 Date: Wed, 18 Apr 2018 05:44:01 +0200
 Subject: [PATCH 36/50] meson: vdec: hevc: Fix a really, really dumb mistake
