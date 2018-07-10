@@ -1,0 +1,53 @@
+From af737b0c8cb3253c93241583d6739d543afe5be6 Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Sun, 3 Jun 2018 20:31:42 +0200
+Subject: [PATCH 33/46] ath10k: replace hardcoded constant with define
+
+The hardcoded value is an upper limit of how many packets that
+can be consumed from the TX queue.
+
+Thus HTC_HOST_MAX_MSG_PER_TX_BUNDLE is a proper name for this constant.
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/htc.h | 1 +
+ drivers/net/wireless/ath/ath10k/mac.c | 4 ++--
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/htc.h b/drivers/net/wireless/ath/ath10k/htc.h
+index ad56a37..5bed3cf 100644
+--- a/drivers/net/wireless/ath/ath10k/htc.h
++++ b/drivers/net/wireless/ath/ath10k/htc.h
+@@ -51,6 +51,7 @@ struct ath10k;
+  */
+ 
+ #define HTC_HOST_MAX_MSG_PER_RX_BUNDLE        8
++#define HTC_HOST_MAX_MSG_PER_TX_BUNDLE        16
+ 
+ enum ath10k_htc_tx_flags {
+ 	ATH10K_HTC_FLAG_NEED_CREDIT_UPDATE = 0x01,
+diff --git a/drivers/net/wireless/ath/ath10k/mac.c b/drivers/net/wireless/ath/ath10k/mac.c
+index 70a0710..c2c2e22 100644
+--- a/drivers/net/wireless/ath/ath10k/mac.c
++++ b/drivers/net/wireless/ath/ath10k/mac.c
+@@ -4021,7 +4021,7 @@ void ath10k_mac_tx_push_pending(struct ath10k *ar)
+ 				   drv_priv);
+ 
+ 		/* Prevent aggressive sta/tid taking over tx queue */
+-		max = 16;
++		max = HTC_HOST_MAX_MSG_PER_TX_BUNDLE;
+ 		ret = 0;
+ 		while (ath10k_mac_tx_can_push(hw, txq) && max--) {
+ 			ret = ath10k_mac_tx_push_txq(hw, txq);
+@@ -4282,7 +4282,7 @@ static void ath10k_mac_op_wake_tx_queue(struct ieee80211_hw *hw,
+ 	struct ieee80211_txq *f_txq;
+ 	struct ath10k_txq *f_artxq;
+ 	int ret = 0;
+-	int max = 16;
++	int max = HTC_HOST_MAX_MSG_PER_TX_BUNDLE;
+ 
+ 	spin_lock_bh(&ar->txqs_lock);
+ 	if (list_empty(&artxq->list))
+-- 
+2.7.4
+

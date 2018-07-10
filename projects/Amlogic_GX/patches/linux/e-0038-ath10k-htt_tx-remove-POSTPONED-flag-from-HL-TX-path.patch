@@ -1,0 +1,28 @@
+From ec6e4a85f89e6d4a1fe34e795791e438928d75c5 Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Sun, 3 Jun 2018 20:31:46 +0200
+Subject: [PATCH 38/46] ath10k: htt_tx: remove POSTPONED flag from HL TX path
+
+This flag does not seem to have any effect for HL devices.
+qcacld only uses it in the LL TX path.
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/htt_tx.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/htt_tx.c b/drivers/net/wireless/ath/ath10k/htt_tx.c
+index 67df920..f2ef1f8 100644
+--- a/drivers/net/wireless/ath/ath10k/htt_tx.c
++++ b/drivers/net/wireless/ath/ath10k/htt_tx.c
+@@ -1260,7 +1260,6 @@ static int ath10k_htt_tx_hl(struct ath10k_htt *htt, enum ath10k_hw_txrx_mode txm
+ 	}
+ 
+ 	if (ar->hif.bus == ATH10K_BUS_SDIO) {
+-		flags1 |= HTT_DATA_TX_DESC_FLAGS1_POSTPONED;
+ 		spin_lock_bh(&htt->tx_lock);
+ 		res = ath10k_htt_tx_alloc_msdu_id(htt, msdu);
+ 		spin_unlock_bh(&htt->tx_lock);
+-- 
+2.7.4
+

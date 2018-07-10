@@ -1,0 +1,302 @@
+From 099d135732167cecc486395034ce45070a71d26c Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Tue, 5 Jun 2018 19:14:27 +0200
+Subject: [PATCH 46/46] ath10k: sdio: add TX bundling support
+
+This patch implements bundling of TX message in a similar way as
+qcacld2.0
+
+In case the sg_items array contains more than one item, a bundled
+TX frame will be created instead of queuing each message on the async_q
+separately.
+
+By concatenating several HIF messages into bigger chunks, we can
+achive much better performance on systems where the SDIO/MMC subsystem
+is a bottleneck.
+
+iperf TX tests conducted on an iMX6 Solo have shown the following
+results (with and without this patch in identical environments):
+
+Without this patch:
+
+iperf -c 192.168.1.244 -p 1234 -i 1 -t 300
+------------------------------------------------------------
+Client connecting to 192.168.1.244, TCP port 1234
+TCP window size: 43.8 KByte (default)
+------------------------------------------------------------
+[  3] local 192.168.1.139 port 58820 connected with 192.168.1.244 port 1234
+[ ID] Interval       Transfer     Bandwidth
+[  3]  0.0- 1.0 sec  3.50 MBytes  29.4 Mbits/sec
+[  3]  1.0- 2.0 sec  3.25 MBytes  27.3 Mbits/sec
+[  3]  2.0- 3.0 sec  3.25 MBytes  27.3 Mbits/sec
+[  3]  3.0- 4.0 sec  3.38 MBytes  28.3 Mbits/sec
+[  3]  4.0- 5.0 sec  3.25 MBytes  27.3 Mbits/sec
+[  3]  5.0- 6.0 sec  3.25 MBytes  27.3 Mbits/sec
+[  3]  6.0- 7.0 sec  3.25 MBytes  27.3 Mbits/sec
+[  3]  7.0- 8.0 sec  3.50 MBytes  29.4 Mbits/sec
+[  3]  8.0- 9.0 sec  3.12 MBytes  26.2 Mbits/sec
+[  3]  9.0-10.0 sec  3.25 MBytes  27.3 Mbits/sec
+[  3] 10.0-11.0 sec  3.38 MBytes  28.3 Mbits/sec
+[  3] 11.0-12.0 sec  3.25 MBytes  27.3 Mbits/sec
+[  3] 12.0-13.0 sec  3.50 MBytes  29.4 Mbits/sec
+[  3] 13.0-14.0 sec  3.25 MBytes  27.3 Mbits/sec
+[  3] 14.0-15.0 sec  3.25 MBytes  27.3 Mbits/sec
+[  3] 15.0-16.0 sec  3.38 MBytes  28.3 Mbits/sec
+[  3] 16.0-17.0 sec  3.50 MBytes  29.4 Mbits/sec
+
+With this patch:
+
+iperf -c 192.168.1.244 -p 1234 -i 1 -t 300
+------------------------------------------------------------
+Client connecting to 192.168.1.244, TCP port 1234
+TCP window size: 43.8 KByte (default)
+------------------------------------------------------------
+[  3] local 192.168.1.139 port 34490 connected with 192.168.1.244 port 1234
+[ ID] Interval       Transfer     Bandwidth
+[  3]  0.0- 1.0 sec  5.38 MBytes  45.1 Mbits/sec
+[  3]  1.0- 2.0 sec  7.50 MBytes  62.9 Mbits/sec
+[  3]  2.0- 3.0 sec  6.75 MBytes  56.6 Mbits/sec
+[  3]  3.0- 4.0 sec  6.88 MBytes  57.7 Mbits/sec
+[  3]  4.0- 5.0 sec  6.62 MBytes  55.6 Mbits/sec
+[  3]  5.0- 6.0 sec  6.88 MBytes  57.7 Mbits/sec
+[  3]  6.0- 7.0 sec  6.75 MBytes  56.6 Mbits/sec
+[  3]  7.0- 8.0 sec  6.75 MBytes  56.6 Mbits/sec
+[  3]  8.0- 9.0 sec  7.12 MBytes  59.8 Mbits/sec
+[  3]  9.0-10.0 sec  6.88 MBytes  57.7 Mbits/sec
+[  3] 10.0-11.0 sec  6.75 MBytes  56.6 Mbits/sec
+[  3] 11.0-12.0 sec  7.25 MBytes  60.8 Mbits/sec
+[  3] 12.0-13.0 sec  6.62 MBytes  55.6 Mbits/sec
+[  3] 13.0-14.0 sec  7.12 MBytes  59.8 Mbits/sec
+[  3] 14.0-15.0 sec  6.75 MBytes  56.6 Mbits/sec
+[  3] 15.0-16.0 sec  6.62 MBytes  55.6 Mbits/sec
+[  3] 16.0-17.0 sec  6.75 MBytes  56.6 Mbits/sec
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/htc.h  |   3 +-
+ drivers/net/wireless/ath/ath10k/sdio.c | 136 ++++++++++++++++++++++++++++++---
+ drivers/net/wireless/ath/ath10k/sdio.h |   4 +
+ 3 files changed, 131 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/htc.h b/drivers/net/wireless/ath/ath10k/htc.h
+index 4f63b2c..99db5ce 100644
+--- a/drivers/net/wireless/ath/ath10k/htc.h
++++ b/drivers/net/wireless/ath/ath10k/htc.h
+@@ -77,8 +77,7 @@ struct ath10k_htc_hdr {
+ 		u8 seq_no; /* for tx */
+ 		u8 control_byte1;
+ 	} __packed;
+-	u8 pad0;
+-	u8 pad1;
++	__le16 credit_pad; /* used by bundle processing in SDIO systems */
+ } __packed __aligned(4);
+ 
+ enum ath10k_ath10k_htc_msg_id {
+diff --git a/drivers/net/wireless/ath/ath10k/sdio.c b/drivers/net/wireless/ath/ath10k/sdio.c
+index d12ff7b..de66afb 100644
+--- a/drivers/net/wireless/ath/ath10k/sdio.c
++++ b/drivers/net/wireless/ath/ath10k/sdio.c
+@@ -1339,12 +1339,15 @@ static void __ath10k_sdio_write_async(struct ath10k *ar,
+ 	int ret;
+ 
+ 	skb = req->skb;
+-	ret = ath10k_sdio_write(ar, req->address, skb->data, skb->len, true);
++	if (skb)
++		ret = ath10k_sdio_write(ar, req->address, skb->data, skb->len, true);
++	else
++		ret = ath10k_sdio_write(ar, req->address, req->buf, req->buf_len, true);
+ 	if (ret)
+ 		ath10k_warn(ar, "failed to write skb to 0x%x asynchronously: %d",
+ 			    req->address, ret);
+ 
+-	if (req->htc_msg) {
++	if (req->htc_msg && skb) {
+ 		ep = &ar->htc.endpoint[req->eid];
+ 		ath10k_htc_notify_tx_completion(ep, skb);
+ 	} else if (req->comp) {
+@@ -1404,6 +1407,30 @@ static int ath10k_sdio_prep_async_req(struct ath10k *ar, u32 addr,
+ 	return 0;
+ }
+ 
++static struct ath10k_sdio_bus_request
++*ath10k_sdio_create_bundle_async_req(struct ath10k *ar,
++				     enum ath10k_htc_ep_id eid)
++{
++	struct ath10k_sdio *ar_sdio = ath10k_sdio_priv(ar);
++	struct ath10k_sdio_bus_request *bus_req;
++
++	lockdep_assert_held(&ar_sdio->wr_async_lock);
++
++	bus_req = ath10k_sdio_alloc_busreq(ar);
++	if (!bus_req) {
++		ath10k_warn(ar,
++			    "unable to allocate bus request for async request\n");
++		return ERR_PTR(-ENOMEM);
++	}
++
++	bus_req->eid = eid;
++	bus_req->htc_msg = true;
++
++	list_add_tail(&bus_req->list, &ar_sdio->wr_asyncq);
++
++	return bus_req;
++}
++
+ /* IRQ handler */
+ 
+ static void ath10k_sdio_irq_handler(struct sdio_func *func)
+@@ -1514,32 +1541,121 @@ static void ath10k_sdio_hif_power_down(struct ath10k *ar)
+ 	ar_sdio->is_disabled = true;
+ }
+ 
++static size_t ath10k_sdio_hif_tx_bundle_padding(struct ath10k_htc_ep *ep,
++						size_t skb_len, u8 *buf)
++{
++	size_t padded_len;
++	struct ath10k_htc_hdr *htc_hdr;
++
++	padded_len = (skb_len / ep->tx_credit_size + 1) *
++		ep->tx_credit_size;
++	htc_hdr = (struct ath10k_htc_hdr *)buf;
++	htc_hdr->credit_pad = __cpu_to_le16(padded_len - skb_len);
++
++	return padded_len;
++}
++
++static bool ath10k_sdio_hif_is_htt_tx_msg(enum ath10k_htc_svc_id service_id,
++					  struct sk_buff *skb)
++{
++	struct htt_cmd_hdr *htt_cmd_hdr;
++	struct htt_data_tx_desc *tx_desc;
++	u8 txmode;
++
++	if (service_id != ATH10K_HTC_SVC_ID_HTT_DATA_MSG)
++		return false;
++
++	htt_cmd_hdr = (struct htt_cmd_hdr *)
++		(skb->data + sizeof(struct ath10k_htc_hdr));
++
++	if (htt_cmd_hdr->msg_type != HTT_H2T_MSG_TYPE_TX_FRM)
++		return false;
++
++	tx_desc = (struct htt_data_tx_desc *)
++		(skb->data + sizeof(struct ath10k_htc_hdr) + sizeof(struct htt_cmd_hdr));
++	txmode = MS(tx_desc->flags0, HTT_DATA_TX_DESC_FLAGS0_PKT_TYPE);
++
++	return (txmode != ATH10K_HW_TXRX_MGMT);
++}
++
++
+ static int ath10k_sdio_hif_tx_sg(struct ath10k *ar, u8 pipe_id,
+ 				 struct ath10k_hif_sg_item *items, int n_items)
+ {
+ 	struct ath10k_sdio *ar_sdio = ath10k_sdio_priv(ar);
+ 	enum ath10k_htc_ep_id eid;
++	enum ath10k_htc_svc_id service_id;
++	struct ath10k_htc_ep *ep;
+ 	struct sk_buff *skb;
+ 	int ret, i;
++	size_t padded_len, offset;
++	u32 address;
++	struct ath10k_sdio_bus_request *bus_req;
++	bool is_htt_tx_msg;
+ 
+ 	eid = pipe_id_to_eid(pipe_id);
++	ep = &ar->htc.endpoint[eid];
++	service_id = ar->htc.endpoint[eid].service_id;
++
++	if (n_items == 1) {
++		skb = items[0].transfer_context;
++		is_htt_tx_msg = ath10k_sdio_hif_is_htt_tx_msg(service_id, skb);
++		if (is_htt_tx_msg) {
++			padded_len = ath10k_sdio_hif_tx_bundle_padding(ep,
++								       skb->len,
++								       skb->data);
++			skb->len = padded_len;
++			address = ar_sdio->mbox_addr[eid] +
++				  ar_sdio->mbox_size[eid] -
++				  skb->len;
+ 
+-	for (i = 0; i < n_items; i++) {
+-		size_t padded_len;
+-		u32 address;
+-
+-		skb = items[i].transfer_context;
++		}
+ 		padded_len = ath10k_sdio_calc_txrx_padded_len(ar_sdio,
+ 							      skb->len);
+ 		skb->len = padded_len;
+ 
+-		/* Write TX data to the end of the mbox address space */
+-		address = ar_sdio->mbox_addr[eid] + ar_sdio->mbox_size[eid] -
+-			  skb->len;
++		if (!is_htt_tx_msg)
++			/* Write TX data to the end of the mbox address space */
++			address = ar_sdio->mbox_addr[eid] +
++				  ar_sdio->mbox_size[eid] -
++				  skb->len;
++
+ 		ret = ath10k_sdio_prep_async_req(ar, address, skb,
+ 						 NULL, true, eid);
+ 		if (ret)
+ 			return ret;
++
++	} else {
++		/* Bundle transfer case */
++		spin_lock_bh(&ar_sdio->wr_async_lock);
++		bus_req = ath10k_sdio_create_bundle_async_req(ar, eid);
++		if (IS_ERR(bus_req)) {
++			spin_unlock_bh(&ar_sdio->wr_async_lock);
++			return PTR_ERR(bus_req);
++		}
++
++		for (i = 0, offset = 0; i < n_items; i++) {
++			skb = items[i].transfer_context;
++			/* Each subframe in the bundle should be padded to the
++			 * HTC credit size.
++			 */
++			padded_len = ath10k_sdio_hif_tx_bundle_padding(ep,
++								       skb->len,
++								       bus_req->buf + offset);
++
++			memcpy(bus_req->buf + offset, skb->data, skb->len);
++			offset += padded_len;
++		}
++
++		/* Write TX data to the end of the mbox address space */
++		bus_req->address = ar_sdio->mbox_addr[eid] +
++			ar_sdio->mbox_size[eid] - offset;
++		/* The entire bundle should be padded to a multiple of the mbox
++		 * size.
++		 */
++		padded_len = ath10k_sdio_calc_txrx_padded_len(ar_sdio, offset);
++		bus_req->buf_len = padded_len;
++		spin_unlock_bh(&ar_sdio->wr_async_lock);
+ 	}
+ 
+ 	queue_work(ar_sdio->workqueue, &ar_sdio->wr_async_work);
+diff --git a/drivers/net/wireless/ath/ath10k/sdio.h b/drivers/net/wireless/ath/ath10k/sdio.h
+index 327ea10..be8cdb2 100644
+--- a/drivers/net/wireless/ath/ath10k/sdio.h
++++ b/drivers/net/wireless/ath/ath10k/sdio.h
+@@ -105,6 +105,8 @@
+ #define ATH10K_SDIO_MAX_RX_MSGS \
+ 	(HTC_HOST_MAX_MSG_PER_RX_BUNDLE * HTC_HOST_MAX_MSG_PER_RX_BUNDLE)
+ 
++#define ATH10K_SDIO_MAX_BUNDLE_MESSAGE_SIZE \
++	(HTC_HOST_MAX_MSG_PER_TX_BUNDLE * 2000)
+ #define ATH10K_FIFO_TIMEOUT_AND_CHIP_CONTROL   0x00000868u
+ #define ATH10K_FIFO_TIMEOUT_AND_CHIP_CONTROL_DISABLE_SLEEP_OFF 0xFFFEFFFF
+ #define ATH10K_FIFO_TIMEOUT_AND_CHIP_CONTROL_DISABLE_SLEEP_ON 0x10000
+@@ -116,6 +118,8 @@ struct ath10k_sdio_bus_request {
+ 	u32 address;
+ 
+ 	struct sk_buff *skb;
++	u8 buf[ATH10K_SDIO_MAX_BUNDLE_MESSAGE_SIZE];
++	size_t buf_len;
+ 	enum ath10k_htc_ep_id eid;
+ 	int status;
+ 	/* Specifies if the current request is an HTC message.
+-- 
+2.7.4
+
