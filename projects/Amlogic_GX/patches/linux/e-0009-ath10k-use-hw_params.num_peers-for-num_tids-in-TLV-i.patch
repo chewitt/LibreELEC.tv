@@ -1,0 +1,40 @@
+From 5a696b59b4fb13f508021010a67d3b42c0cbc5b3 Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Sun, 3 Jun 2018 20:31:23 +0200
+Subject: [PATCH 09/46] ath10k: use hw_params.num_peers for num_tids in TLV
+ init
+
+As TARGET_TLV_NUM_TIDS is calculated like this:
+
+	#define TARGET_TLV_NUM_TIDS ((TARGET_TLV_NUM_PEERS) * 2)
+
+... it is better to use the per device hw_params.num_peers value in
+the TLV init message (if set), rather than using a hard coded value.
+
+This makes the value used in the TLV init message match the hw_param
+value.
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/wmi-tlv.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/wmi-tlv.c b/drivers/net/wireless/ath/ath10k/wmi-tlv.c
+index 9d1b0a4..70880a4 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi-tlv.c
++++ b/drivers/net/wireless/ath/ath10k/wmi-tlv.c
+@@ -1516,7 +1516,10 @@ static struct sk_buff *ath10k_wmi_tlv_op_gen_init(struct ath10k *ar)
+ 	}
+ 
+ 	cfg->num_peer_keys = __cpu_to_le32(2);
+-	cfg->num_tids = __cpu_to_le32(TARGET_TLV_NUM_TIDS);
++	if (ar->hw_params.num_peers)
++		cfg->num_tids = __cpu_to_le32(ar->hw_params.num_peers * 2);
++	else
++		cfg->num_tids = __cpu_to_le32(TARGET_TLV_NUM_TIDS);
+ 	cfg->tx_chain_mask = __cpu_to_le32(0x7);
+ 	cfg->rx_chain_mask = __cpu_to_le32(0x7);
+ 	cfg->rx_timeout_pri[0] = __cpu_to_le32(0x64);
+-- 
+2.7.4
+

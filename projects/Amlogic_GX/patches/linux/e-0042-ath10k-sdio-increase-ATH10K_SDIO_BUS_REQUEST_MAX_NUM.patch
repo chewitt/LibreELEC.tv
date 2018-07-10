@@ -1,0 +1,27 @@
+From 2dca3533495b2965cc4de2f328f5d5a4a9c06737 Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Tue, 5 Jun 2018 19:14:24 +0200
+Subject: [PATCH 42/46] ath10k: sdio: increase ATH10K_SDIO_BUS_REQUEST_MAX_NUM
+ from 64 to 256
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/sdio.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/sdio.h b/drivers/net/wireless/ath/ath10k/sdio.h
+index a5a669a..327ea10 100644
+--- a/drivers/net/wireless/ath/ath10k/sdio.h
++++ b/drivers/net/wireless/ath/ath10k/sdio.h
+@@ -48,7 +48,7 @@
+ 	(ATH10K_SDIO_MAX_BUFFER_SIZE - sizeof(struct ath10k_htc_hdr))
+ 
+ #define ATH10K_HIF_MBOX_NUM_MAX                 4
+-#define ATH10K_SDIO_BUS_REQUEST_MAX_NUM         64
++#define ATH10K_SDIO_BUS_REQUEST_MAX_NUM         256
+ 
+ #define ATH10K_SDIO_HIF_COMMUNICATION_TIMEOUT_HZ (100 * HZ)
+ 
+-- 
+2.7.4
+

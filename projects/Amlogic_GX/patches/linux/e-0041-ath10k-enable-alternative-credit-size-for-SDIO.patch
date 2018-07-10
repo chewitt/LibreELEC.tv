@@ -1,0 +1,35 @@
+From 99672aa14b3faffc2679513dde52dfefcdb8c1ed Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Tue, 5 Jun 2018 19:14:24 +0200
+Subject: [PATCH 41/46] ath10k: enable alternative credit size for SDIO
+
+This patch must be combined with the "convert native wifi to dot3"
+patch.
+
+Otherwise the HTT TX frames can be too big (exceeding the credit size).
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/core.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/core.c b/drivers/net/wireless/ath/ath10k/core.c
+index 58006a3..7b386a1 100644
+--- a/drivers/net/wireless/ath/ath10k/core.c
++++ b/drivers/net/wireless/ath/ath10k/core.c
+@@ -653,9 +653,10 @@ static void ath10k_init_sdio(struct ath10k *ar)
+ 	param &= ~HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_SET;
+ 
+ 	/* Alternate credit size of 1544 as used by SDIO firmware is
+-	 * not big enough for mac80211 / native wifi frames. disable it
++	 * not big enough for mac80211 / native wifi frames.
++	 * When using native wifi to 802.3 it will work.
+ 	 */
+-	param &= ~HI_ACS_FLAGS_ALT_DATA_CREDIT_SIZE;
++	param |= HI_ACS_FLAGS_ALT_DATA_CREDIT_SIZE;
+ 
+ 	param |= HI_ACS_FLAGS_SDIO_SWAP_MAILBOX_SET;
+ 	ath10k_bmi_write32(ar, hi_acs_flags, param);
+-- 
+2.7.4
+

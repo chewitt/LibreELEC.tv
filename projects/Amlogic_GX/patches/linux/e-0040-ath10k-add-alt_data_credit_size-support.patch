@@ -1,0 +1,75 @@
+From 6f8d5970fc899f4eed2634998abd1795f42927c2 Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Tue, 5 Jun 2018 19:14:23 +0200
+Subject: [PATCH 40/46] ath10k: add alt_data_credit_size support
+
+SDIO chipsets have the possibility to use an alternative credit size for
+HTT data.
+
+When using the alternative credit size, native wifi frames can possibly
+exceed the credit size limit, so this patch must be combined with native
+wifi to 802.3 frame conversion in the TX path.
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/htc.c | 6 ++++++
+ drivers/net/wireless/ath/ath10k/htc.h | 5 +++--
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/htc.c b/drivers/net/wireless/ath/ath10k/htc.c
+index e8c0cf0..ee49740 100644
+--- a/drivers/net/wireless/ath/ath10k/htc.c
++++ b/drivers/net/wireless/ath/ath10k/htc.c
+@@ -657,6 +657,8 @@ int ath10k_htc_wait_target(struct ath10k_htc *htc)
+ 		htc->max_msgs_per_htc_bundle =
+ 			min_t(u8, msg->ready_ext.max_msgs_per_htc_bundle,
+ 			      HTC_HOST_MAX_MSG_PER_RX_BUNDLE);
++		htc->target_alt_data_credit_size =
++			__le16_to_cpu(msg->ready_ext.alt_data_credit_size);
+ 		ath10k_dbg(ar, ATH10K_DBG_HTC,
+ 			   "Extended ready message. RX bundle size: %d\n",
+ 			   htc->max_msgs_per_htc_bundle);
+@@ -796,6 +798,10 @@ int ath10k_htc_connect_service(struct ath10k_htc *htc,
+ 	ep->max_tx_queue_depth = conn_req->max_send_queue_depth;
+ 	ep->max_ep_message_len = __le16_to_cpu(resp_msg->max_msg_size);
+ 	ep->tx_credits = tx_alloc;
++	if (htc->target_alt_data_credit_size && (ar->hif.bus == ATH10K_BUS_SDIO))
++		ep->tx_credit_size = htc->target_alt_data_credit_size;
++	else
++		ep->tx_credit_size = htc->target_credit_size;
+ 
+ 	/* copy all the callbacks */
+ 	ep->ep_ops = conn_req->ep_ops;
+diff --git a/drivers/net/wireless/ath/ath10k/htc.h b/drivers/net/wireless/ath/ath10k/htc.h
+index 5bed3cf..588c1c1 100644
+--- a/drivers/net/wireless/ath/ath10k/htc.h
++++ b/drivers/net/wireless/ath/ath10k/htc.h
+@@ -138,8 +138,7 @@ struct ath10k_htc_ready_extended {
+ 	struct ath10k_htc_ready base;
+ 	u8 htc_version; /* @enum ath10k_htc_version */
+ 	u8 max_msgs_per_htc_bundle;
+-	u8 pad0;
+-	u8 pad1;
++	__le16 alt_data_credit_size;
+ } __packed;
+ 
+ struct ath10k_htc_conn_svc {
+@@ -342,6 +341,7 @@ struct ath10k_htc_ep {
+ 
+ 	u8 seq_no; /* for debugging */
+ 	int tx_credits;
++	int tx_credit_size;
+ 	bool tx_credit_flow_enabled;
+ };
+ 
+@@ -366,6 +366,7 @@ struct ath10k_htc {
+ 
+ 	int total_transmit_credits;
+ 	int target_credit_size;
++	int target_alt_data_credit_size;
+ 	u8 max_msgs_per_htc_bundle;
+ };
+ 
+-- 
+2.7.4
+

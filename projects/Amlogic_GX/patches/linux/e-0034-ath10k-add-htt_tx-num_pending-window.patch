@@ -1,0 +1,95 @@
+From c50ba7e2da8e5ae1d1c171562101a5a3edd48a82 Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Sun, 3 Jun 2018 20:31:43 +0200
+Subject: [PATCH 34/46] ath10k: add htt_tx num_pending window
+
+Instead of turning off TX when the num_pending_tx counter has reached
+its maximum value and immediately turn it on back again when the
+counter has been decremented, we introduce a window for the number of
+pending TX frames.
+
+During high network load (like iperf tests), the TX lock will be turned
+on and off for each transmitted frame, thus eliminating the purpose of
+this counter (since there will only be one outstanding frame).
+
+The lock is also activated HTC_HOST_MAX_MSG_PER_TX_BUNDLE frames below
+the maximum value in order to make sure we don't reach the max TX pending
+limit while processing packet bundles.
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/core.c   | 4 ++++
+ drivers/net/wireless/ath/ath10k/htt.h    | 4 ++++
+ drivers/net/wireless/ath/ath10k/htt_tx.c | 4 ++--
+ drivers/net/wireless/ath/ath10k/mac.c    | 3 +++
+ 4 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/core.c b/drivers/net/wireless/ath/ath10k/core.c
+index c8b0101..108f92f 100644
+--- a/drivers/net/wireless/ath/ath10k/core.c
++++ b/drivers/net/wireless/ath/ath10k/core.c
+@@ -2170,6 +2170,10 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
+ 		return -EINVAL;
+ 	}
+ 
++	ar->htt.num_pending_tx_lock =
++		ar->htt.max_num_pending_tx - HTC_HOST_MAX_MSG_PER_TX_BUNDLE - 1;
++	ar->htt.num_pending_tx_unlock = ar->htt.num_pending_tx_lock / 2;
++
+ 	if (ar->hw_params.num_peers)
+ 		ar->max_num_peers = ar->hw_params.num_peers;
+ 	else
+diff --git a/drivers/net/wireless/ath/ath10k/htt.h b/drivers/net/wireless/ath/ath10k/htt.h
+index e5fb8e0..35d8d30 100644
+--- a/drivers/net/wireless/ath/ath10k/htt.h
++++ b/drivers/net/wireless/ath/ath10k/htt.h
+@@ -1801,6 +1801,10 @@ struct ath10k_htt {
+ 	/* Protects access to pending_tx, num_pending_tx */
+ 	spinlock_t tx_lock;
+ 	int max_num_pending_tx;
++	/* The number of pending TX messages at which we lock TX */
++	int num_pending_tx_lock;
++	/* The number of pending TX messages at which we unlock TX */
++	int num_pending_tx_unlock;
+ 	int num_pending_tx;
+ 	int num_pending_mgmt_tx;
+ 	struct idr pending_tx;
+diff --git a/drivers/net/wireless/ath/ath10k/htt_tx.c b/drivers/net/wireless/ath/ath10k/htt_tx.c
+index fff03da..4b8058f 100644
+--- a/drivers/net/wireless/ath/ath10k/htt_tx.c
++++ b/drivers/net/wireless/ath/ath10k/htt_tx.c
+@@ -156,7 +156,7 @@ void ath10k_htt_tx_dec_pending(struct ath10k_htt *htt)
+ 	lockdep_assert_held(&htt->tx_lock);
+ 
+ 	htt->num_pending_tx--;
+-	if (htt->num_pending_tx == htt->max_num_pending_tx - 1)
++	if (htt->num_pending_tx == htt->num_pending_tx_unlock)
+ 		ath10k_mac_tx_unlock(htt->ar, ATH10K_TX_PAUSE_Q_FULL);
+ }
+ 
+@@ -168,7 +168,7 @@ int ath10k_htt_tx_inc_pending(struct ath10k_htt *htt)
+ 		return -EBUSY;
+ 
+ 	htt->num_pending_tx++;
+-	if (htt->num_pending_tx == htt->max_num_pending_tx)
++	if (htt->num_pending_tx == htt->num_pending_tx_lock)
+ 		ath10k_mac_tx_lock(htt->ar, ATH10K_TX_PAUSE_Q_FULL);
+ 
+ 	return 0;
+diff --git a/drivers/net/wireless/ath/ath10k/mac.c b/drivers/net/wireless/ath/ath10k/mac.c
+index c2c2e22..ab01434 100644
+--- a/drivers/net/wireless/ath/ath10k/mac.c
++++ b/drivers/net/wireless/ath/ath10k/mac.c
+@@ -3237,6 +3237,9 @@ void ath10k_mac_tx_lock(struct ath10k *ar, int reason)
+ 	lockdep_assert_held(&ar->htt.tx_lock);
+ 
+ 	WARN_ON(reason >= ATH10K_TX_PAUSE_MAX);
++	if (ar->tx_paused & BIT(reason))
++		/* already locked due to this reason */
++		return;
+ 	ar->tx_paused |= BIT(reason);
+ 	ieee80211_stop_queues(ar->hw);
+ }
+-- 
+2.7.4
+

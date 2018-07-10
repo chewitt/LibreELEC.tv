@@ -1,0 +1,38 @@
+From dc3504e533460173f88a668a6f81392321eee415 Mon Sep 17 00:00:00 2001
+From: Alagu Sankar <alagusankar@silex-india.com>
+Date: Sun, 3 Jun 2018 20:31:33 +0200
+Subject: [PATCH 22/46] ath10k_sdio: wb396 reference card fix
+
+The QCA9377-3 WB396 sdio reference card does not get initialized
+due to the conflict in uart gpio pins. This fix is not required
+for other QCA9377 sdio cards.
+
+Signed-off-by: Alagu Sankar <alagusankar@silex-india.com>
+---
+ drivers/net/wireless/ath/ath10k/core.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/core.c b/drivers/net/wireless/ath/ath10k/core.c
+index cbdfd58..fd3eeb2 100644
+--- a/drivers/net/wireless/ath/ath10k/core.c
++++ b/drivers/net/wireless/ath/ath10k/core.c
+@@ -1861,8 +1861,15 @@ static int ath10k_init_uart(struct ath10k *ar)
+ 		return ret;
+ 	}
+ 
+-	if (!uart_print)
++	if (!uart_print) {
++		/* Hack: override dbg TX pin to avoid side effects of default
++		 * GPIO_6 in QCA9377 WB396 reference card
++		 */
++		if (ar->hif.bus == ATH10K_BUS_SDIO)
++			ath10k_bmi_write32(ar, hi_dbg_uart_txpin,
++					   ar->hw_params.uart_pin);
+ 		return 0;
++	}
+ 
+ 	ret = ath10k_bmi_write32(ar, hi_dbg_uart_txpin, ar->hw_params.uart_pin);
+ 	if (ret) {
+-- 
+2.7.4
+

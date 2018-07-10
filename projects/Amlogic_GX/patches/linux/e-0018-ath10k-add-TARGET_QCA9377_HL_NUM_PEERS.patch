@@ -1,0 +1,27 @@
+From 6385c7fea602dd7bdfd28022004d6b401bdbe37a Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Sun, 3 Jun 2018 20:31:30 +0200
+Subject: [PATCH 18/46] ath10k: add TARGET_QCA9377_HL_NUM_PEERS
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/hw.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/net/wireless/ath/ath10k/hw.h b/drivers/net/wireless/ath/ath10k/hw.h
+index d861c31..0c36934 100644
+--- a/drivers/net/wireless/ath/ath10k/hw.h
++++ b/drivers/net/wireless/ath/ath10k/hw.h
+@@ -693,6 +693,9 @@ ath10k_rx_desc_get_l3_pad_bytes(struct ath10k_hw_params *hw,
+ #define TARGET_HL_10_TLV_AST_SKID_LIMIT		6
+ #define TARGET_HL_10_TLV_NUM_WDS_ENTRIES	2
+ 
++/* Target specific defines for QCA9377 high latency firmware */
++#define TARGET_QCA9377_HL_NUM_PEERS		15
++
+ /* Diagnostic Window */
+ #define CE_DIAG_PIPE	7
+ 
+-- 
+2.7.4
+

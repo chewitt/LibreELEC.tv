@@ -1,0 +1,36 @@
+From 30ccca28e5d7fc181f462c569d13ddbb3769f8c2 Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Sun, 3 Jun 2018 20:31:44 +0200
+Subject: [PATCH 36/46] ath10k: increase TX lock limit for high latency devices
+
+This is done in order to avoid locking of the TX queue and thereby
+reduce TX performance.
+
+This patch reverts a part of commit:
+"ath10k: add htt_tx num_pending window"
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/core.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/core.c b/drivers/net/wireless/ath/ath10k/core.c
+index 108f92f..58006a3 100644
+--- a/drivers/net/wireless/ath/ath10k/core.c
++++ b/drivers/net/wireless/ath/ath10k/core.c
+@@ -2170,9 +2170,9 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
+ 		return -EINVAL;
+ 	}
+ 
+-	ar->htt.num_pending_tx_lock =
+-		ar->htt.max_num_pending_tx - HTC_HOST_MAX_MSG_PER_TX_BUNDLE - 1;
+-	ar->htt.num_pending_tx_unlock = ar->htt.num_pending_tx_lock / 2;
++	ar->htt.num_pending_tx_lock = ar->htt.max_num_pending_tx +
++		HTC_HOST_MAX_MSG_PER_TX_BUNDLE;
++	ar->htt.num_pending_tx_unlock = ar->htt.max_num_pending_tx / 2;
+ 
+ 	if (ar->hw_params.num_peers)
+ 		ar->max_num_peers = ar->hw_params.num_peers;
+-- 
+2.7.4
+

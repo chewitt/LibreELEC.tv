@@ -1,0 +1,259 @@
+From 83e4d9d7096b53430c823b95ffac8b2817452900 Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Tue, 5 Jun 2018 19:14:27 +0200
+Subject: [PATCH 45/46] ath10k: add more_data argument in TX chain
+
+This makes it possible for the SDIO and USB Hif layers to
+implement packet bundling.
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/htt.h    |  7 +++--
+ drivers/net/wireless/ath/ath10k/htt_rx.c |  2 +-
+ drivers/net/wireless/ath/ath10k/htt_tx.c | 10 ++++---
+ drivers/net/wireless/ath/ath10k/mac.c    | 50 +++++++++++++++++++++++++-------
+ drivers/net/wireless/ath/ath10k/mac.h    |  3 +-
+ 5 files changed, 53 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/htt.h b/drivers/net/wireless/ath/ath10k/htt.h
+index 35d8d30..00e0b60 100644
+--- a/drivers/net/wireless/ath/ath10k/htt.h
++++ b/drivers/net/wireless/ath/ath10k/htt.h
+@@ -1869,7 +1869,7 @@ struct ath10k_htt_tx_ops {
+ 	int (*htt_alloc_frag_desc)(struct ath10k_htt *htt);
+ 	void (*htt_free_frag_desc)(struct ath10k_htt *htt);
+ 	int (*htt_tx)(struct ath10k_htt *htt, enum ath10k_hw_txrx_mode txmode,
+-		      struct sk_buff *msdu);
++		      struct sk_buff *msdu, bool more_data);
+ 	int (*htt_alloc_txbuff)(struct ath10k_htt *htt);
+ 	void (*htt_free_txbuff)(struct ath10k_htt *htt);
+ };
+@@ -1906,9 +1906,10 @@ static inline void ath10k_htt_free_frag_desc(struct ath10k_htt *htt)
+ 
+ static inline int ath10k_htt_tx(struct ath10k_htt *htt,
+ 				enum ath10k_hw_txrx_mode txmode,
+-				struct sk_buff *msdu)
++				struct sk_buff *msdu,
++				bool more_data)
+ {
+-	return htt->tx_ops->htt_tx(htt, txmode, msdu);
++	return htt->tx_ops->htt_tx(htt, txmode, msdu, more_data);
+ }
+ 
+ static inline int ath10k_htt_alloc_txbuff(struct ath10k_htt *htt)
+diff --git a/drivers/net/wireless/ath/ath10k/htt_rx.c b/drivers/net/wireless/ath/ath10k/htt_rx.c
+index a46d3e5..7ce6de8 100644
+--- a/drivers/net/wireless/ath/ath10k/htt_rx.c
++++ b/drivers/net/wireless/ath/ath10k/htt_rx.c
+@@ -2436,7 +2436,7 @@ static void ath10k_htt_rx_tx_fetch_ind(struct ath10k *ar, struct sk_buff *skb)
+ 
+ 		while (num_msdus < max_num_msdus &&
+ 		       num_bytes < max_num_bytes) {
+-			ret = ath10k_mac_tx_push_txq(hw, txq);
++			ret = ath10k_mac_tx_push_txq(hw, txq, false);
+ 			if (ret < 0)
+ 				break;
+ 
+diff --git a/drivers/net/wireless/ath/ath10k/htt_tx.c b/drivers/net/wireless/ath/ath10k/htt_tx.c
+index acf8f2e..ec49ff2 100644
+--- a/drivers/net/wireless/ath/ath10k/htt_tx.c
++++ b/drivers/net/wireless/ath/ath10k/htt_tx.c
+@@ -1255,7 +1255,7 @@ static int __dot11_to_dot3(struct sk_buff *skb)
+ 	sizeof(struct ath10k_htc_hdr))
+ 
+ static int ath10k_htt_tx_hl(struct ath10k_htt *htt, enum ath10k_hw_txrx_mode txmode,
+-			    struct sk_buff *msdu)
++			    struct sk_buff *msdu, bool more_data)
+ {
+ 	struct ath10k *ar = htt->ar;
+ 	int res, data_len;
+@@ -1355,7 +1355,7 @@ static int ath10k_htt_tx_hl(struct ath10k_htt *htt, enum ath10k_hw_txrx_mode txm
+ 	 */
+ 	tx_desc->peerid = __cpu_to_le32(HTT_INVALID_PEERID);
+ 
+-	res = ath10k_htc_send(&htt->ar->htc, htt->eid, msdu);
++	res = ath10k_htc_send_bundle(&htt->ar->htc, htt->eid, msdu, more_data);
+ 
+ out:
+ 	return res;
+@@ -1363,7 +1363,8 @@ static int ath10k_htt_tx_hl(struct ath10k_htt *htt, enum ath10k_hw_txrx_mode txm
+ 
+ static int ath10k_htt_tx_32(struct ath10k_htt *htt,
+ 			    enum ath10k_hw_txrx_mode txmode,
+-			    struct sk_buff *msdu)
++			    struct sk_buff *msdu,
++			    bool more_data)
+ {
+ 	struct ath10k *ar = htt->ar;
+ 	struct device *dev = ar->dev;
+@@ -1565,7 +1566,8 @@ static int ath10k_htt_tx_32(struct ath10k_htt *htt,
+ 
+ static int ath10k_htt_tx_64(struct ath10k_htt *htt,
+ 			    enum ath10k_hw_txrx_mode txmode,
+-			    struct sk_buff *msdu)
++			    struct sk_buff *msdu,
++			    bool more_data)
+ {
+ 	struct ath10k *ar = htt->ar;
+ 	struct device *dev = ar->dev;
+diff --git a/drivers/net/wireless/ath/ath10k/mac.c b/drivers/net/wireless/ath/ath10k/mac.c
+index 653acdb..555c88e 100644
+--- a/drivers/net/wireless/ath/ath10k/mac.c
++++ b/drivers/net/wireless/ath/ath10k/mac.c
+@@ -3598,14 +3598,15 @@ ath10k_mac_tx_h_get_txpath(struct ath10k *ar,
+ static int ath10k_mac_tx_submit(struct ath10k *ar,
+ 				enum ath10k_hw_txrx_mode txmode,
+ 				enum ath10k_mac_tx_path txpath,
+-				struct sk_buff *skb)
++				struct sk_buff *skb,
++				bool more_data)
+ {
+ 	struct ath10k_htt *htt = &ar->htt;
+ 	int ret = -EINVAL;
+ 
+ 	switch (txpath) {
+ 	case ATH10K_MAC_TX_HTT:
+-		ret = ath10k_htt_tx(htt, txmode, skb);
++		ret = ath10k_htt_tx(htt, txmode, skb, more_data);
+ 		break;
+ 	case ATH10K_MAC_TX_HTT_MGMT:
+ 		ret = ath10k_htt_mgmt_tx(htt, skb);
+@@ -3635,7 +3636,8 @@ static int ath10k_mac_tx(struct ath10k *ar,
+ 			 struct ieee80211_vif *vif,
+ 			 enum ath10k_hw_txrx_mode txmode,
+ 			 enum ath10k_mac_tx_path txpath,
+-			 struct sk_buff *skb)
++			 struct sk_buff *skb,
++			 bool more_data)
+ {
+ 	struct ieee80211_hw *hw = ar->hw;
+ 	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+@@ -3674,7 +3676,7 @@ static int ath10k_mac_tx(struct ath10k *ar,
+ 		}
+ 	}
+ 
+-	ret = ath10k_mac_tx_submit(ar, txmode, txpath, skb);
++	ret = ath10k_mac_tx_submit(ar, txmode, txpath, skb, more_data);
+ 	if (ret) {
+ 		ath10k_warn(ar, "failed to submit frame: %d\n", ret);
+ 		return ret;
+@@ -3775,7 +3777,7 @@ void ath10k_offchan_tx_work(struct work_struct *work)
+ 		txmode = ath10k_mac_tx_h_get_txmode(ar, vif, sta, skb);
+ 		txpath = ath10k_mac_tx_h_get_txpath(ar, skb, txmode);
+ 
+-		ret = ath10k_mac_tx(ar, vif, txmode, txpath, skb);
++		ret = ath10k_mac_tx(ar, vif, txmode, txpath, skb, false);
+ 		if (ret) {
+ 			ath10k_warn(ar, "failed to transmit offchannel frame: %d\n",
+ 				    ret);
+@@ -3908,6 +3910,29 @@ struct ieee80211_txq *ath10k_mac_txq_lookup(struct ath10k *ar,
+ 		return NULL;
+ }
+ 
++static bool ath10k_mac_tx_more_data(struct ath10k *ar,
++				    struct ieee80211_txq *txq,
++				    int max)
++{
++	unsigned long txq_frame_cnt;
++
++	if (max <= 0)
++		return false;
++
++	spin_lock_bh(&ar->htt.tx_lock);
++	if (ar->htt.num_pending_tx >= ar->htt.max_num_pending_tx - 1) {
++		spin_unlock_bh(&ar->htt.tx_lock);
++		return false;
++	}
++	spin_unlock_bh(&ar->htt.tx_lock);
++
++	ieee80211_txq_get_depth(txq, &txq_frame_cnt, NULL);
++	if (txq_frame_cnt <= 1)
++		return false;
++
++	return true;
++}
++
+ static bool ath10k_mac_tx_can_push(struct ieee80211_hw *hw,
+ 				   struct ieee80211_txq *txq)
+ {
+@@ -3929,7 +3954,8 @@ static bool ath10k_mac_tx_can_push(struct ieee80211_hw *hw,
+ }
+ 
+ int ath10k_mac_tx_push_txq(struct ieee80211_hw *hw,
+-			   struct ieee80211_txq *txq)
++			   struct ieee80211_txq *txq,
++			   bool more_data)
+ {
+ 	struct ath10k *ar = hw->priv;
+ 	struct ath10k_htt *htt = &ar->htt;
+@@ -3982,7 +4008,7 @@ int ath10k_mac_tx_push_txq(struct ieee80211_hw *hw,
+ 		spin_unlock_bh(&ar->htt.tx_lock);
+ 	}
+ 
+-	ret = ath10k_mac_tx(ar, vif, txmode, txpath, skb);
++	ret = ath10k_mac_tx(ar, vif, txmode, txpath, skb, more_data);
+ 	if (unlikely(ret)) {
+ 		ath10k_warn(ar, "failed to push frame: %d\n", ret);
+ 
+@@ -4010,6 +4036,7 @@ void ath10k_mac_tx_push_pending(struct ath10k *ar)
+ 	struct ath10k_txq *last;
+ 	int ret;
+ 	int max;
++	bool more_data;
+ 
+ 	if (ar->htt.num_pending_tx >= (ar->htt.max_num_pending_tx / 2))
+ 		return;
+@@ -4027,7 +4054,8 @@ void ath10k_mac_tx_push_pending(struct ath10k *ar)
+ 		max = HTC_HOST_MAX_MSG_PER_TX_BUNDLE;
+ 		ret = 0;
+ 		while (ath10k_mac_tx_can_push(hw, txq) && max--) {
+-			ret = ath10k_mac_tx_push_txq(hw, txq);
++			more_data = ath10k_mac_tx_more_data(ar, txq, max);
++			ret = ath10k_mac_tx_push_txq(hw, txq, more_data);
+ 			if (ret < 0)
+ 				break;
+ 		}
+@@ -4264,7 +4292,7 @@ static void ath10k_mac_op_tx(struct ieee80211_hw *hw,
+ 		spin_unlock_bh(&ar->htt.tx_lock);
+ 	}
+ 
+-	ret = ath10k_mac_tx(ar, vif, txmode, txpath, skb);
++	ret = ath10k_mac_tx(ar, vif, txmode, txpath, skb, false);
+ 	if (ret) {
+ 		ath10k_warn(ar, "failed to transmit frame: %d\n", ret);
+ 		if (is_htt) {
+@@ -4285,6 +4313,7 @@ static void ath10k_mac_op_wake_tx_queue(struct ieee80211_hw *hw,
+ 	struct ath10k_txq *artxq = (void *)txq->drv_priv;
+ 	struct ieee80211_txq *f_txq;
+ 	struct ath10k_txq *f_artxq;
++	bool more_data;
+ 	int ret = 0;
+ 	int max = HTC_HOST_MAX_MSG_PER_TX_BUNDLE;
+ 
+@@ -4297,7 +4326,8 @@ static void ath10k_mac_op_wake_tx_queue(struct ieee80211_hw *hw,
+ 	list_del_init(&f_artxq->list);
+ 
+ 	while (ath10k_mac_tx_can_push(hw, f_txq) && max--) {
+-		ret = ath10k_mac_tx_push_txq(hw, f_txq);
++		more_data = ath10k_mac_tx_more_data(ar, f_txq, max);
++		ret = ath10k_mac_tx_push_txq(hw, f_txq, more_data);
+ 		if (ret < 0)
+ 			break;
+ 	}
+diff --git a/drivers/net/wireless/ath/ath10k/mac.h b/drivers/net/wireless/ath/ath10k/mac.h
+index 81f8d6c..89abfdc 100644
+--- a/drivers/net/wireless/ath/ath10k/mac.h
++++ b/drivers/net/wireless/ath/ath10k/mac.h
+@@ -77,7 +77,8 @@ void ath10k_mac_vif_tx_unlock(struct ath10k_vif *arvif, int reason);
+ bool ath10k_mac_tx_frm_has_freq(struct ath10k *ar);
+ void ath10k_mac_tx_push_pending(struct ath10k *ar);
+ int ath10k_mac_tx_push_txq(struct ieee80211_hw *hw,
+-			   struct ieee80211_txq *txq);
++			   struct ieee80211_txq *txq,
++			   bool more_data);
+ struct ieee80211_txq *ath10k_mac_txq_lookup(struct ath10k *ar,
+ 					    u16 peer_id,
+ 					    u8 tid);
+-- 
+2.7.4
+

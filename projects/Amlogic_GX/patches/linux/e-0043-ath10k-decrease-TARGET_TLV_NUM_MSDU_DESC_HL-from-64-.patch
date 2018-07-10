@@ -1,0 +1,33 @@
+From cdc6ac553282a7a3d587ef7f40ef5e0e804d48e2 Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Tue, 5 Jun 2018 19:14:25 +0200
+Subject: [PATCH 43/46] ath10k: decrease TARGET_TLV_NUM_MSDU_DESC_HL from 64 to
+ 16
+
+This is done in order to run into the "EBUSY" case more often when
+pushing TX queues.
+
+By doing this, we give the driver a chance to create packet bundles
+(since we can't consume all skb's directly in wake_tx_queue).
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/hw.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/hw.h b/drivers/net/wireless/ath/ath10k/hw.h
+index 47eff4d..3b50221 100644
+--- a/drivers/net/wireless/ath/ath10k/hw.h
++++ b/drivers/net/wireless/ath/ath10k/hw.h
+@@ -689,7 +689,7 @@ ath10k_rx_desc_get_l3_pad_bytes(struct ath10k_hw_params *hw,
+ #define TARGET_TLV_NUM_TDLS_VDEVS		1
+ #define TARGET_TLV_NUM_TIDS			((TARGET_TLV_NUM_PEERS) * 2)
+ #define TARGET_TLV_NUM_MSDU_DESC		(1024 + 32)
+-#define TARGET_TLV_NUM_MSDU_DESC_HL		64
++#define TARGET_TLV_NUM_MSDU_DESC_HL		16
+ #define TARGET_TLV_NUM_WOW_PATTERNS		22
+ 
+ /* Target specific defines for WMI-HL-1.0 firmware */
+-- 
+2.7.4
+

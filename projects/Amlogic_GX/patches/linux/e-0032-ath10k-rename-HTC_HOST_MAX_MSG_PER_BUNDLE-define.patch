@@ -1,0 +1,95 @@
+From 4d4e4c07a1ea086e280a51675e2c8ea4689f394c Mon Sep 17 00:00:00 2001
+From: Erik Stromdahl <erik.stromdahl@gmail.com>
+Date: Sun, 3 Jun 2018 20:31:41 +0200
+Subject: [PATCH 32/46] ath10k: rename HTC_HOST_MAX_MSG_PER_BUNDLE define
+
+This define is only used for RX bundling so it is more descriptive if
+RX is added to the define-name.
+
+Signed-off-by: Erik Stromdahl <erik.stromdahl@gmail.com>
+---
+ drivers/net/wireless/ath/ath10k/htc.c  | 4 ++--
+ drivers/net/wireless/ath/ath10k/htc.h  | 2 +-
+ drivers/net/wireless/ath/ath10k/sdio.c | 4 ++--
+ drivers/net/wireless/ath/ath10k/sdio.h | 8 ++++----
+ 4 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/htc.c b/drivers/net/wireless/ath/ath10k/htc.c
+index d34ab0d..e8c0cf0 100644
+--- a/drivers/net/wireless/ath/ath10k/htc.c
++++ b/drivers/net/wireless/ath/ath10k/htc.c
+@@ -281,7 +281,7 @@ ath10k_htc_process_lookahead_bundle(struct ath10k_htc *htc,
+ 	struct ath10k *ar = htc->ar;
+ 	int bundle_cnt = len / sizeof(*report);
+ 
+-	if (!bundle_cnt || (bundle_cnt > HTC_HOST_MAX_MSG_PER_BUNDLE)) {
++	if (!bundle_cnt || (bundle_cnt > HTC_HOST_MAX_MSG_PER_RX_BUNDLE)) {
+ 		ath10k_warn(ar, "Invalid lookahead bundle count: %d\n",
+ 			    bundle_cnt);
+ 		return -EINVAL;
+@@ -656,7 +656,7 @@ int ath10k_htc_wait_target(struct ath10k_htc *htc)
+ 	    sizeof(msg->hdr) + sizeof(msg->ready_ext)) {
+ 		htc->max_msgs_per_htc_bundle =
+ 			min_t(u8, msg->ready_ext.max_msgs_per_htc_bundle,
+-			      HTC_HOST_MAX_MSG_PER_BUNDLE);
++			      HTC_HOST_MAX_MSG_PER_RX_BUNDLE);
+ 		ath10k_dbg(ar, ATH10K_DBG_HTC,
+ 			   "Extended ready message. RX bundle size: %d\n",
+ 			   htc->max_msgs_per_htc_bundle);
+diff --git a/drivers/net/wireless/ath/ath10k/htc.h b/drivers/net/wireless/ath/ath10k/htc.h
+index d1856c0..ad56a37 100644
+--- a/drivers/net/wireless/ath/ath10k/htc.h
++++ b/drivers/net/wireless/ath/ath10k/htc.h
+@@ -50,7 +50,7 @@ struct ath10k;
+  * 4-byte aligned.
+  */
+ 
+-#define HTC_HOST_MAX_MSG_PER_BUNDLE        8
++#define HTC_HOST_MAX_MSG_PER_RX_BUNDLE        8
+ 
+ enum ath10k_htc_tx_flags {
+ 	ATH10K_HTC_FLAG_NEED_CREDIT_UPDATE = 0x01,
+diff --git a/drivers/net/wireless/ath/ath10k/sdio.c b/drivers/net/wireless/ath/ath10k/sdio.c
+index 25961ed..ff533b76 100644
+--- a/drivers/net/wireless/ath/ath10k/sdio.c
++++ b/drivers/net/wireless/ath/ath10k/sdio.c
+@@ -543,11 +543,11 @@ static int ath10k_sdio_mbox_alloc_bundle(struct ath10k *ar,
+ 
+ 	*bndl_cnt = FIELD_GET(ATH10K_HTC_FLAG_BUNDLE_MASK, htc_hdr->flags);
+ 
+-	if (*bndl_cnt > HTC_HOST_MAX_MSG_PER_BUNDLE) {
++	if (*bndl_cnt > HTC_HOST_MAX_MSG_PER_RX_BUNDLE) {
+ 		ath10k_warn(ar,
+ 			    "HTC bundle length %u exceeds maximum %u\n",
+ 			    le16_to_cpu(htc_hdr->len),
+-			    HTC_HOST_MAX_MSG_PER_BUNDLE);
++			    HTC_HOST_MAX_MSG_PER_RX_BUNDLE);
+ 		return -ENOMEM;
+ 	}
+ 
+diff --git a/drivers/net/wireless/ath/ath10k/sdio.h b/drivers/net/wireless/ath/ath10k/sdio.h
+index 8b6a86a..a5a669a 100644
+--- a/drivers/net/wireless/ath/ath10k/sdio.h
++++ b/drivers/net/wireless/ath/ath10k/sdio.h
+@@ -96,14 +96,14 @@
+  * way:
+  *
+  * Let's assume that each packet in a bundle of the maximum bundle size
+- * (HTC_HOST_MAX_MSG_PER_BUNDLE) has the HTC header bundle count set
+- * to the maximum value (HTC_HOST_MAX_MSG_PER_BUNDLE).
++ * (HTC_HOST_MAX_MSG_PER_RX_BUNDLE) has the HTC header bundle count set
++ * to the maximum value (HTC_HOST_MAX_MSG_PER_RX_BUNDLE).
+  *
+  * in this case the driver must allocate
+- * (HTC_HOST_MAX_MSG_PER_BUNDLE * HTC_HOST_MAX_MSG_PER_BUNDLE) skb's.
++ * (HTC_HOST_MAX_MSG_PER_RX_BUNDLE * HTC_HOST_MAX_MSG_PER_RX_BUNDLE) skb's.
+  */
+ #define ATH10K_SDIO_MAX_RX_MSGS \
+-	(HTC_HOST_MAX_MSG_PER_BUNDLE * HTC_HOST_MAX_MSG_PER_BUNDLE)
++	(HTC_HOST_MAX_MSG_PER_RX_BUNDLE * HTC_HOST_MAX_MSG_PER_RX_BUNDLE)
+ 
+ #define ATH10K_FIFO_TIMEOUT_AND_CHIP_CONTROL   0x00000868u
+ #define ATH10K_FIFO_TIMEOUT_AND_CHIP_CONTROL_DISABLE_SLEEP_OFF 0xFFFEFFFF
+-- 
+2.7.4
+
