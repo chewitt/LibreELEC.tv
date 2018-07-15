@@ -1,0 +1,27 @@
+Subject: [PATCH] time: Define _STRUCT_TIMESPEC in <bits/types/struct_timespec.h>
+To: libc-alpha@sourceware.org
+
+After commit d76d3703551a362b472c866b5b6089f66f8daa8e ("Fix missing
+timespec definition for sys/stat.h (BZ #21371)"), sanitizer builds
+start to fail due to a conflicting definition of struct timespec in
+<linux/time.h>.  Use _STRUCT_TIMESPEC as the header file inclusion
+guard, which is already checked in the kernel header, to support
+including <linux/time.h> and <sys/stat.h> in the same translation
+unit.
+
+2018-06-21  Florian Weimer  <fweimer@redhat.com>
+
+	* time/bits/types/struct_timespec.h (_STRUCT_TIMESPEC): Define.
+
+diff --git a/time/bits/types/struct_timespec.h b/time/bits/types/struct_timespec.h
+index 644db9fdb6..5b77c52b4f 100644
+--- a/time/bits/types/struct_timespec.h
++++ b/time/bits/types/struct_timespec.h
+@@ -1,5 +1,6 @@
+-#ifndef __timespec_defined
+-#define __timespec_defined 1
++/* NB: Include guard matches what <linux/time.h> uses.  */
++#ifndef _STRUCT_TIMESPEC
++#define _STRUCT_TIMESPEC 1
+ 
+ #include <bits/types.h>
