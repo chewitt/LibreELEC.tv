@@ -1,0 +1,11 @@
+[Unit]
+Description=Detect and fix known-bad MAC addresses
+Wants=network-pre.target
+Before=network-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "/usr/bin/badmac-config"
+
+[Install]
+WantedBy=multi-user.target

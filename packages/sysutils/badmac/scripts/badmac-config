@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
+
+do_eth0(){
+  MAC=$(ifconfig | awk '$1 ~ /eth0/ {print $5}')
+}
+
+do_checkmac(){
+  case $MAC in
+    00:00:00:00:00:00)
+      BADMAC="true"
+      ;;
+    00:15:18:01:81:31)
+      BADMAC="true"
+      ;;
+    *)
+      BADMAC="false"
+      ;;
+  esac
+}
+
+do_procmac(){
+  CMDLINE=$(cat /proc/cmdline)
+
+  for i in $CMDLINE; do
+    case "$i" in
+      androidboot.mac=*)
+        MAC1=$(echo "$i" | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+        ;;
+      mac=*)
+        MAC2=$(echo "$i" | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+        ;;
+      ethaddr=*)
+        MAC3=$(echo "$i" | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+        ;;
+      androidboot.serialno=*)
+        MAC4=$(echo "$i" | sed 's/.*=//')
+        ;;
+    esac
+  done
+
+  if [ -n "$MAC1" ]; then
+    MAC="$MAC1"
+  elif [ -n "$MAC2" ]; then
+    MAC="$MAC2"
+  elif [ -n "$MAC3" ]; then
+    MAC="$MAC3"
+  elif [ -n "$MAC4" ]; then
+    MAC=$(echo "$MAC4" | sed 's/\(..\)/\1:/g' | cut -b-17)
+  fi
+}
+
+do_sslmac(){
+  MAC=$(openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//')
+}
+
+# get eth0 and check the MAC is not bad
+do_eth0
+do_checkmac
+
+if [ "$BADMAC" = "true" ]; then
+  # create MAC from /proc/cmdline and (re)check
+  do_procmac
+  do_checkmac
+  if [ "$BADMAC" = "true" ]; then
+    # if still bad create a random MAC
+    do_sslmmac
+  fi
+fi
+
+# write MAC to /run
+echo "MAC=$MAC" > /run/libreelec/badmac-eth0
+
+exit
