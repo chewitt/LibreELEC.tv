@@ -1,0 +1,280 @@
+From 6a6fc406ddd2dbb58b5bff18f1d448d7a49fd908 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Thu, 21 Jun 2018 12:35:28 -0700
+Subject: [PATCH 1/2] windowing/gbm: add drm modifiers
+
+---
+ cmake/modules/FindGBM.cmake         | 11 +++++
+ xbmc/windowing/gbm/DRMUtils.cpp     | 85 +++++++++++++++++++++++++++++++++----
+ xbmc/windowing/gbm/DRMUtils.h       |  5 +++
+ xbmc/windowing/gbm/GBMUtils.cpp     | 11 ++++-
+ xbmc/windowing/gbm/GBMUtils.h       |  2 +-
+ xbmc/windowing/gbm/WinSystemGbm.cpp |  4 +-
+ 6 files changed, 106 insertions(+), 12 deletions(-)
+
+diff --git a/cmake/modules/FindGBM.cmake b/cmake/modules/FindGBM.cmake
+index 18df89e1a4bb..37a26a7bc449 100644
+--- a/cmake/modules/FindGBM.cmake
++++ b/cmake/modules/FindGBM.cmake
+@@ -39,6 +39,14 @@ check_c_source_compiles("#include <gbm.h>
+                          }
+                          " GBM_HAS_BO_MAP)
+ 
++check_c_source_compiles("#include <gbm.h>
++
++                         int main()
++                         {
++                           gbm_surface_create_with_modifiers(NULL, 0, 0, 0, NULL, 0);
++                         }
++                         " GBM_HAS_MODIFIERS)
++
+ if(GBM_FOUND)
+   set(GBM_LIBRARIES ${GBM_LIBRARY})
+   set(GBM_INCLUDE_DIRS ${GBM_INCLUDE_DIR})
+@@ -46,6 +54,9 @@ if(GBM_FOUND)
+   if(GBM_HAS_BO_MAP)
+     list(APPEND GBM_DEFINITIONS -DHAS_GBM_BO_MAP=1)
+   endif()
++  if(GBM_HAS_MODIFIERS)
++    list(APPEND GBM_DEFINITIONS -DHAS_GBM_MODIFIERS=1)
++  endif()
+   if(NOT TARGET GBM::GBM)
+     add_library(GBM::GBM UNKNOWN IMPORTED)
+     set_target_properties(GBM::GBM PROPERTIES
+diff --git a/xbmc/windowing/gbm/DRMUtils.cpp b/xbmc/windowing/gbm/DRMUtils.cpp
+index 2d915cfbc794..059fb0a7108d 100644
+--- a/xbmc/windowing/gbm/DRMUtils.cpp
++++ b/xbmc/windowing/gbm/DRMUtils.cpp
+@@ -105,22 +105,40 @@ drm_fb * CDRMUtils::DrmFbGetFromBo(struct gbm_bo *bo)
+            strides[4] = {0},
+            offsets[4] = {0};
+ 
++  uint64_t modifiers[4] = {0};
++
+   width = gbm_bo_get_width(bo);
+   height = gbm_bo_get_height(bo);
+ 
++#if defined(HAS_GBM_MODIFIERS)
++  for (int i = 0; i < gbm_bo_get_plane_count(bo); i++)
++  {
++    handles[i] = gbm_bo_get_handle_for_plane(bo, i).u32;
++    strides[i] = gbm_bo_get_stride_for_plane(bo, i);
++    offsets[i] = gbm_bo_get_offset(bo, i);
++    modifiers[i] = gbm_bo_get_modifier(bo);
++  }
++#else
+   handles[0] = gbm_bo_get_handle(bo).u32;
+   strides[0] = gbm_bo_get_stride(bo);
+   memset(offsets, 0, 16);
++#endif
++
++  if (modifiers[0] == DRM_FORMAT_MOD_INVALID)
++    modifiers[0] = DRM_FORMAT_MOD_LINEAR;
+ 
+-  auto ret = drmModeAddFB2(m_fd,
+-                           width,
+-                           height,
+-                           fb->format,
+-                           handles,
+-                           strides,
+-                           offsets,
+-                           &fb->fb_id,
+-                           0);
++  CLog::Log(LOGDEBUG, "CDRMUtils::%s - using modifier: %lli", __FUNCTION__, modifiers[0]);
++
++  auto ret = drmModeAddFB2WithModifiers(m_fd,
++                                        width,
++                                        height,
++                                        fb->format,
++                                        handles,
++                                        strides,
++                                        offsets,
++                                        modifiers,
++                                        &fb->fb_id,
++                                        (modifiers[0] > 0) ? DRM_MODE_FB_MODIFIERS : 0);
+ 
+   if(ret)
+   {
+@@ -408,6 +426,11 @@ bool CDRMUtils::FindPlanes()
+       CLog::Log(LOGERROR, "CDRMUtils::%s - could not get primary plane %u properties: %s", __FUNCTION__, m_primary_plane->plane->plane_id, strerror(errno));
+       return false;
+     }
++
++    if(!FindModifiersForPlane(m_primary_plane))
++    {
++      CLog::Log(LOGDEBUG, "CDRMUtils::%s - no drm modifiers present for the primary plane", __FUNCTION__);
++    }
+   }
+ 
+   // overlay plane should always be available
+@@ -417,6 +440,50 @@ bool CDRMUtils::FindPlanes()
+     return false;
+   }
+ 
++  if(!FindModifiersForPlane(m_overlay_plane))
++  {
++    CLog::Log(LOGDEBUG, "CDRMUtils::%s - no drm modifiers present for the overlay plane", __FUNCTION__);
++  }
++
++  return true;
++}
++
++bool CDRMUtils::FindModifiersForPlane(struct plane *object)
++{
++  uint64_t blob_id = 0;
++
++  for (uint32_t i = 0; i < object->props->count_props; i++)
++  {
++    if (strcmp(object->props_info[i]->name, "IN_FORMATS") == 0)
++      blob_id = object->props->prop_values[i];
++  }
++
++  if (blob_id == 0)
++    return false;
++
++  drmModePropertyBlobPtr blob = drmModeGetPropertyBlob(m_fd, blob_id);
++  if (!blob)
++    return false;
++
++  drm_format_modifier_blob *header = static_cast<drm_format_modifier_blob*>(blob->data);
++  uint32_t *formats = reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(header) + header->formats_offset);
++  drm_format_modifier *mod = reinterpret_cast<drm_format_modifier*>(reinterpret_cast<char*>(header) + header->modifiers_offset);
++
++  for (uint32_t i = 0; i < header->count_formats; i++)
++  {
++    std::vector<uint64_t> modifiers;
++    for (uint32_t j = 0; j < header->count_modifiers; j++)
++    {
++      if (mod[j].formats & 1ULL << i)
++        modifiers.emplace_back(mod[j].modifier);
++    }
++
++    object->modifiers_map.emplace(formats[i], modifiers);
++  }
++
++  if (blob)
++    drmModeFreePropertyBlob(blob);
++
+   return true;
+ }
+ 
+diff --git a/xbmc/windowing/gbm/DRMUtils.h b/xbmc/windowing/gbm/DRMUtils.h
+index 8fa3ae7c0909..90ef954ffd28 100644
+--- a/xbmc/windowing/gbm/DRMUtils.h
++++ b/xbmc/windowing/gbm/DRMUtils.h
+@@ -25,6 +25,7 @@
+ #include <xf86drmMode.h>
+ #include <gbm.h>
+ #include <vector>
++#include <map>
+ 
+ #include "windowing/Resolution.h"
+ #include "GBMUtils.h"
+@@ -47,6 +48,7 @@ struct plane : drm_object
+ {
+   drmModePlanePtr plane = nullptr;
+   uint32_t format = DRM_FORMAT_XRGB8888;
++  std::map<uint32_t, std::vector<uint64_t>> modifiers_map;
+ };
+ 
+ struct connector : drm_object
+@@ -87,6 +89,8 @@ class CDRMUtils
+   int GetFileDescriptor() const { return m_fd; }
+   struct plane* GetPrimaryPlane() const { return m_primary_plane; }
+   struct plane* GetOverlayPlane() const { return m_overlay_plane; }
++  std::vector<uint64_t> *GetPrimaryPlaneModifiersForFormat(uint32_t format) { return &m_primary_plane->modifiers_map[format]; }
++  std::vector<uint64_t> *GetOverlayPlaneModifiersForFormat(uint32_t format) { return &m_overlay_plane->modifiers_map[format]; }
+   struct crtc* GetCrtc() const { return m_crtc; }
+ 
+   RESOLUTION_INFO GetCurrentMode();
+@@ -122,6 +126,7 @@ class CDRMUtils
+   bool FindEncoder();
+   bool FindCrtc();
+   bool FindPlanes();
++  bool FindModifiersForPlane(struct plane *object);
+   bool FindPreferredMode();
+   bool RestoreOriginalMode();
+   static void DrmFbDestroyCallback(struct gbm_bo *bo, void *data);
+diff --git a/xbmc/windowing/gbm/GBMUtils.cpp b/xbmc/windowing/gbm/GBMUtils.cpp
+index 5d2c36ec1df0..507a04505f4c 100644
+--- a/xbmc/windowing/gbm/GBMUtils.cpp
++++ b/xbmc/windowing/gbm/GBMUtils.cpp
+@@ -48,16 +48,25 @@ void CGBMUtils::DestroyDevice()
+   }
+ }
+ 
+-bool CGBMUtils::CreateSurface(int width, int height)
++bool CGBMUtils::CreateSurface(int width, int height, const uint64_t *modifiers, const int modifiers_count)
+ {
+   if (m_surface)
+     CLog::Log(LOGWARNING, "CGBMUtils::%s - surface already created", __FUNCTION__);
+ 
++#if defined(HAS_GBM_MODIFIERS)
++  m_surface = gbm_surface_create_with_modifiers(m_device,
++                                                width,
++                                                height,
++                                                GBM_FORMAT_ARGB8888,
++                                                modifiers,
++                                                modifiers_count);
++#else
+   m_surface = gbm_surface_create(m_device,
+                                  width,
+                                  height,
+                                  GBM_FORMAT_ARGB8888,
+                                  GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
++#endif
+ 
+   if (!m_surface)
+   {
+diff --git a/xbmc/windowing/gbm/GBMUtils.h b/xbmc/windowing/gbm/GBMUtils.h
+index 315135f28bff..e3e049461b8a 100644
+--- a/xbmc/windowing/gbm/GBMUtils.h
++++ b/xbmc/windowing/gbm/GBMUtils.h
+@@ -29,7 +29,7 @@ class CGBMUtils
+   ~CGBMUtils() = default;
+   bool CreateDevice(int fd);
+   void DestroyDevice();
+-  bool CreateSurface(int width, int height);
++  bool CreateSurface(int width, int height, const uint64_t *modifiers, const int modifiers_count);
+   void DestroySurface();
+   struct gbm_bo *LockFrontBuffer();
+   void ReleaseBuffer();
+diff --git a/xbmc/windowing/gbm/WinSystemGbm.cpp b/xbmc/windowing/gbm/WinSystemGbm.cpp
+index 349afc643e95..2a692da855ad 100644
+--- a/xbmc/windowing/gbm/WinSystemGbm.cpp
++++ b/xbmc/windowing/gbm/WinSystemGbm.cpp
+@@ -131,7 +131,9 @@ bool CWinSystemGbm::CreateNewWindow(const std::string& name,
+     return false;
+   }
+ 
+-  if(!m_GBM->CreateSurface(res.iWidth, res.iHeight))
++  std::vector<uint64_t> *modifiers = m_DRM->GetOverlayPlaneModifiersForFormat(m_DRM->GetOverlayPlane()->format);
++
++  if(!m_GBM->CreateSurface(res.iWidth, res.iHeight, modifiers->data(), modifiers->size()))
+   {
+     CLog::Log(LOGERROR, "CWinSystemGbm::%s - failed to initialize GBM", __FUNCTION__);
+     return false;
+
+From 1d7535eafff100838c0a28e002d3285b921b0cce Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Fri, 29 Jun 2018 00:13:55 -0700
+Subject: [PATCH 2/2] utils/GBMBufferObject: guard gbm_bo_get_modifier
+
+---
+ xbmc/utils/GBMBufferObject.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/xbmc/utils/GBMBufferObject.cpp b/xbmc/utils/GBMBufferObject.cpp
+index 9e7c1bc31389..dca22b69b203 100644
+--- a/xbmc/utils/GBMBufferObject.cpp
++++ b/xbmc/utils/GBMBufferObject.cpp
+@@ -92,5 +92,9 @@ int CGBMBufferObject::GetStride()
+ 
+ uint64_t CGBMBufferObject::GetModifier()
+ {
++#if defined(HAS_GBM_MODIFIERS)
+   return gbm_bo_get_modifier(m_bo);
++#else
++  return 0;
++#endif
+ }
