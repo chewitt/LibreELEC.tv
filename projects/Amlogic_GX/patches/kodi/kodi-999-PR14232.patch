@@ -1,0 +1,673 @@
+From 4d9fe30fe68726611ecaa1c87487db3df81f3a3e Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Thu, 26 Jul 2018 23:27:21 +0200
+Subject: [PATCH 1/4] RendererDRMPRIME: remove one time used variables
+
+---
+ .../HwDecRender/RendererDRMPRIME.cpp               | 34 +++++++++-------------
+ 1 file changed, 13 insertions(+), 21 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
+index 1fce1277b96e..af5fd6ae6036 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
+@@ -222,7 +222,7 @@ void CRendererDRMPRIME::SetVideoPlane(CVideoBufferDRMPRIME* buffer)
+       ret = drmPrimeFDToHandle(m_DRM->GetFileDescriptor(), descriptor->objects[object].fd, &buffer->m_handles[object]);
+       if (ret < 0)
+       {
+-        CLog::Log(LOGERROR, "CRendererDRMPRIME::%s - failed to retrieve the GEM handle from prime fd %d, ret = %d", __FUNCTION__, descriptor->objects[object].fd, ret);
++        CLog::Log(LOGERROR, "CRendererDRMPRIME::%s - failed to convert prime fd %d to gem handle %u, ret = %d", __FUNCTION__, descriptor->objects[object].fd, buffer->m_handles[object], ret);
+         return;
+       }
+     }
+@@ -246,28 +246,20 @@ void CRendererDRMPRIME::SetVideoPlane(CVideoBufferDRMPRIME* buffer)
+     ret = drmModeAddFB2WithModifiers(m_DRM->GetFileDescriptor(), buffer->GetWidth(), buffer->GetHeight(), layer->format, handles, pitches, offsets, modifier, &buffer->m_fb_id, 0);
+     if (ret < 0)
+     {
+-      CLog::Log(LOGERROR, "CRendererDRMPRIME::%s - failed to add drm layer %d, ret = %d", __FUNCTION__, buffer->m_fb_id, ret);
++      CLog::Log(LOGERROR, "CRendererDRMPRIME::%s - failed to add fb %d, ret = %d", __FUNCTION__, buffer->m_fb_id, ret);
+       return;
+     }
+ 
+-    int32_t crtc_x = static_cast<int32_t>(m_destRect.x1) & ~1;
+-    int32_t crtc_y = static_cast<int32_t>(m_destRect.y1) & ~1;
+-    uint32_t crtc_w = (static_cast<uint32_t>(m_destRect.Width()) + 1) & ~1;
+-    uint32_t crtc_h = (static_cast<uint32_t>(m_destRect.Height()) + 1) & ~1;
+-    uint32_t src_x = 0;
+-    uint32_t src_y = 0;
+-    uint32_t src_w = buffer->GetWidth() << 16;
+-    uint32_t src_h = buffer->GetHeight() << 16;
+-
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "FB_ID",   buffer->m_fb_id);
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "CRTC_ID", m_DRM->GetCrtc()->crtc->crtc_id);
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "SRC_X",   src_x);
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "SRC_Y",   src_y);
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "SRC_W",   src_w);
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "SRC_H",   src_h);
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "CRTC_X",  crtc_x);
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "CRTC_Y",  crtc_y);
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "CRTC_W",  crtc_w);
+-    m_DRM->AddProperty(m_DRM->GetPrimaryPlane(), "CRTC_H",  crtc_h);
++    struct plane* plane = m_DRM->GetPrimaryPlane();
++    m_DRM->AddProperty(plane, "FB_ID", buffer->m_fb_id);
++    m_DRM->AddProperty(plane, "CRTC_ID", m_DRM->GetCrtc()->crtc->crtc_id);
++    m_DRM->AddProperty(plane, "SRC_X", 0);
++    m_DRM->AddProperty(plane, "SRC_Y", 0);
++    m_DRM->AddProperty(plane, "SRC_W", buffer->GetWidth() << 16);
++    m_DRM->AddProperty(plane, "SRC_H", buffer->GetHeight() << 16);
++    m_DRM->AddProperty(plane, "CRTC_X", static_cast<int32_t>(m_destRect.x1) & ~1);
++    m_DRM->AddProperty(plane, "CRTC_Y", static_cast<int32_t>(m_destRect.y1) & ~1);
++    m_DRM->AddProperty(plane, "CRTC_W", (static_cast<uint32_t>(m_destRect.Width()) + 1) & ~1);
++    m_DRM->AddProperty(plane, "CRTC_H", (static_cast<uint32_t>(m_destRect.Height()) + 1) & ~1);
+   }
+ }
+
+From a38bf0f7344c4ff124303cdec2231b6dfd5c91d8 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Thu, 26 Jul 2018 23:27:21 +0200
+Subject: [PATCH 2/4] RendererDRMPRIME: ref count video buffer presented on
+ screen
+
+---
+ .../HwDecRender/RendererDRMPRIME.cpp               | 90 ++++++++++++++++++----
+ .../VideoRenderers/HwDecRender/RendererDRMPRIME.h  | 27 ++++++-
+ xbmc/windowing/gbm/VideoLayerBridge.h              | 16 ++++
+ xbmc/windowing/gbm/WinSystemGbm.cpp                | 12 +++
+ xbmc/windowing/gbm/WinSystemGbm.h                  |  5 ++
+ 5 files changed, 131 insertions(+), 19 deletions(-)
+ create mode 100644 xbmc/windowing/gbm/VideoLayerBridge.h
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
+index af5fd6ae6036..298af7e69e65 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
+@@ -33,11 +33,6 @@
+ 
+ const std::string SETTING_VIDEOPLAYER_USEPRIMERENDERER = "videoplayer.useprimerenderer";
+ 
+-CRendererDRMPRIME::CRendererDRMPRIME(std::shared_ptr<CDRMUtils> drm)
+-  : m_DRM(drm)
+-{
+-}
+-
+ CRendererDRMPRIME::~CRendererDRMPRIME()
+ {
+   Reset();
+@@ -49,8 +44,9 @@ CBaseRenderer* CRendererDRMPRIME::Create(CVideoBuffer* buffer)
+       CServiceBroker::GetSettings().GetInt(SETTING_VIDEOPLAYER_USEPRIMERENDERER) == 0)
+   {
+     CWinSystemGbmGLESContext* winSystem = dynamic_cast<CWinSystemGbmGLESContext*>(CServiceBroker::GetWinSystem());
+-    if (winSystem)
+-      return new CRendererDRMPRIME(winSystem->GetDrm());
++    if (winSystem && winSystem->GetDrm()->GetPrimaryPlane()->plane &&
++        std::dynamic_pointer_cast<CDRMAtomic>(winSystem->GetDrm()))
++      return new CRendererDRMPRIME();
+   }
+ 
+   return nullptr;
+@@ -169,8 +165,22 @@ void CRendererDRMPRIME::RenderUpdate(int index, int index2, bool clear, unsigned
+     return;
+ 
+   CVideoBufferDRMPRIME* buffer = dynamic_cast<CVideoBufferDRMPRIME*>(m_buffers[index].videoBuffer);
+-  if (buffer)
+-    SetVideoPlane(buffer);
++  if (!buffer)
++    return;
++
++  if (!m_videoLayerBridge)
++  {
++    CWinSystemGbmGLESContext* winSystem = static_cast<CWinSystemGbmGLESContext*>(CServiceBroker::GetWinSystem());
++    m_videoLayerBridge = std::dynamic_pointer_cast<CVideoLayerBridgeDRMPRIME>(winSystem->GetVideoLayerBridge());
++    if (!m_videoLayerBridge)
++      m_videoLayerBridge = std::make_shared<CVideoLayerBridgeDRMPRIME>(winSystem->GetDrm());
++    winSystem->RegisterVideoLayerBridge(m_videoLayerBridge);
++  }
++
++  if (m_iLastRenderBuffer == -1)
++    m_videoLayerBridge->Configure(buffer);
++
++  m_videoLayerBridge->SetVideoPlane(buffer, m_destRect);
+ 
+   m_iLastRenderBuffer = index;
+ }
+@@ -205,7 +215,53 @@ bool CRendererDRMPRIME::Supports(ESCALINGMETHOD method)
+   return false;
+ }
+ 
+-void CRendererDRMPRIME::SetVideoPlane(CVideoBufferDRMPRIME* buffer)
++//------------------------------------------------------------------------------
++
++CVideoLayerBridgeDRMPRIME::CVideoLayerBridgeDRMPRIME(std::shared_ptr<CDRMUtils> drm)
++  : m_DRM(drm)
++{
++}
++
++CVideoLayerBridgeDRMPRIME::~CVideoLayerBridgeDRMPRIME()
++{
++  Release(m_prev_buffer);
++  Release(m_buffer);
++}
++
++void CVideoLayerBridgeDRMPRIME::Disable()
++{
++  // disable video plane
++  struct plane* plane = m_DRM->GetPrimaryPlane();
++  m_DRM->AddProperty(plane, "FB_ID", 0);
++  m_DRM->AddProperty(plane, "CRTC_ID", 0);
++}
++
++void CVideoLayerBridgeDRMPRIME::Acquire(CVideoBufferDRMPRIME* buffer)
++{
++  // release the buffer that is no longer presented on screen
++  Release(m_prev_buffer);
++
++  // release the buffer currently being presented next call
++  m_prev_buffer = m_buffer;
++
++  // reference count the buffer that is going to be presented on screen
++  m_buffer = buffer;
++  m_buffer->Acquire();
++}
++
++void CVideoLayerBridgeDRMPRIME::Release(CVideoBufferDRMPRIME* buffer)
++{
++  if (!buffer)
++    return;
++
++  buffer->Release();
++}
++
++void CVideoLayerBridgeDRMPRIME::Configure(CVideoBufferDRMPRIME* buffer)
++{
++}
++
++void CVideoLayerBridgeDRMPRIME::SetVideoPlane(CVideoBufferDRMPRIME* buffer, const CRect& destRect)
+ {
+   buffer->m_drm_fd = m_DRM->GetFileDescriptor();
+ 
+@@ -222,7 +278,7 @@ void CRendererDRMPRIME::SetVideoPlane(CVideoBufferDRMPRIME* buffer)
+       ret = drmPrimeFDToHandle(m_DRM->GetFileDescriptor(), descriptor->objects[object].fd, &buffer->m_handles[object]);
+       if (ret < 0)
+       {
+-        CLog::Log(LOGERROR, "CRendererDRMPRIME::%s - failed to convert prime fd %d to gem handle %u, ret = %d", __FUNCTION__, descriptor->objects[object].fd, buffer->m_handles[object], ret);
++        CLog::Log(LOGERROR, "CVideoLayerBridgeDRMPRIME::%s - failed to convert prime fd %d to gem handle %u, ret = %d", __FUNCTION__, descriptor->objects[object].fd, buffer->m_handles[object], ret);
+         return;
+       }
+     }
+@@ -246,10 +302,12 @@ void CRendererDRMPRIME::SetVideoPlane(CVideoBufferDRMPRIME* buffer)
+     ret = drmModeAddFB2WithModifiers(m_DRM->GetFileDescriptor(), buffer->GetWidth(), buffer->GetHeight(), layer->format, handles, pitches, offsets, modifier, &buffer->m_fb_id, 0);
+     if (ret < 0)
+     {
+-      CLog::Log(LOGERROR, "CRendererDRMPRIME::%s - failed to add fb %d, ret = %d", __FUNCTION__, buffer->m_fb_id, ret);
++      CLog::Log(LOGERROR, "CVideoLayerBridgeDRMPRIME::%s - failed to add fb %d, ret = %d", __FUNCTION__, buffer->m_fb_id, ret);
+       return;
+     }
+ 
++    Acquire(buffer);
++
+     struct plane* plane = m_DRM->GetPrimaryPlane();
+     m_DRM->AddProperty(plane, "FB_ID", buffer->m_fb_id);
+     m_DRM->AddProperty(plane, "CRTC_ID", m_DRM->GetCrtc()->crtc->crtc_id);
+@@ -257,9 +315,9 @@ void CRendererDRMPRIME::SetVideoPlane(CVideoBufferDRMPRIME* buffer)
+     m_DRM->AddProperty(plane, "SRC_Y", 0);
+     m_DRM->AddProperty(plane, "SRC_W", buffer->GetWidth() << 16);
+     m_DRM->AddProperty(plane, "SRC_H", buffer->GetHeight() << 16);
+-    m_DRM->AddProperty(plane, "CRTC_X", static_cast<int32_t>(m_destRect.x1) & ~1);
+-    m_DRM->AddProperty(plane, "CRTC_Y", static_cast<int32_t>(m_destRect.y1) & ~1);
+-    m_DRM->AddProperty(plane, "CRTC_W", (static_cast<uint32_t>(m_destRect.Width()) + 1) & ~1);
+-    m_DRM->AddProperty(plane, "CRTC_H", (static_cast<uint32_t>(m_destRect.Height()) + 1) & ~1);
++    m_DRM->AddProperty(plane, "CRTC_X", static_cast<int32_t>(destRect.x1) & ~1);
++    m_DRM->AddProperty(plane, "CRTC_Y", static_cast<int32_t>(destRect.y1) & ~1);
++    m_DRM->AddProperty(plane, "CRTC_W", (static_cast<uint32_t>(destRect.Width()) + 1) & ~1);
++    m_DRM->AddProperty(plane, "CRTC_H", (static_cast<uint32_t>(destRect.Height()) + 1) & ~1);
+   }
+ }
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h
+index c00d4fb2d599..648dd3710f7a 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h
+@@ -24,11 +24,33 @@
+ #include "cores/VideoPlayer/VideoRenderers/BaseRenderer.h"
+ #include "windowing/gbm/WinSystemGbmGLESContext.h"
+ 
++class CVideoLayerBridgeDRMPRIME
++  : public CVideoLayerBridge
++{
++public:
++  CVideoLayerBridgeDRMPRIME(std::shared_ptr<CDRMUtils> drm);
++  ~CVideoLayerBridgeDRMPRIME();
++  void Disable() override;
++
++  virtual void Configure(CVideoBufferDRMPRIME* buffer);
++  virtual void SetVideoPlane(CVideoBufferDRMPRIME* buffer, const CRect& destRect);
++
++protected:
++  std::shared_ptr<CDRMUtils> m_DRM;
++
++private:
++  void Acquire(CVideoBufferDRMPRIME* buffer);
++  void Release(CVideoBufferDRMPRIME* buffer);
++
++  CVideoBufferDRMPRIME* m_buffer = nullptr;
++  CVideoBufferDRMPRIME* m_prev_buffer = nullptr;
++};
++
+ class CRendererDRMPRIME
+   : public CBaseRenderer
+ {
+ public:
+-  CRendererDRMPRIME(std::shared_ptr<CDRMUtils> drm);
++  CRendererDRMPRIME() = default;
+   ~CRendererDRMPRIME();
+ 
+   // Registration
+@@ -60,12 +82,11 @@ class CRendererDRMPRIME
+ 
+ private:
+   void Reset();
+-  void SetVideoPlane(CVideoBufferDRMPRIME* buffer);
+ 
+   bool m_bConfigured = false;
+   int m_iLastRenderBuffer = -1;
+ 
+-  std::shared_ptr<CDRMUtils> m_DRM;
++  std::shared_ptr<CVideoLayerBridgeDRMPRIME> m_videoLayerBridge;
+ 
+   struct BUFFER
+   {
+diff --git a/xbmc/windowing/gbm/VideoLayerBridge.h b/xbmc/windowing/gbm/VideoLayerBridge.h
+new file mode 100644
+index 000000000000..8a01e67fc092
+--- /dev/null
++++ b/xbmc/windowing/gbm/VideoLayerBridge.h
+@@ -0,0 +1,16 @@
++/*
++ *  Copyright (C) 2018 Team Kodi
++ *  This file is part of Kodi - https://kodi.tv
++ *
++ *  SPDX-License-Identifier: GPL-2.0-or-later
++ *  See LICENSES/README.md for more information.
++ */
++
++#pragma once
++
++class CVideoLayerBridge
++{
++public:
++  virtual ~CVideoLayerBridge() = default;
++  virtual void Disable() {};
++};
+diff --git a/xbmc/windowing/gbm/WinSystemGbm.cpp b/xbmc/windowing/gbm/WinSystemGbm.cpp
+index 994e26c09b57..47858db952ec 100644
+--- a/xbmc/windowing/gbm/WinSystemGbm.cpp
++++ b/xbmc/windowing/gbm/WinSystemGbm.cpp
+@@ -245,11 +245,23 @@ bool CWinSystemGbm::SetFullScreen(bool fullScreen, RESOLUTION_INFO& res, bool bl
+ 
+ void CWinSystemGbm::FlipPage(bool rendered, bool videoLayer)
+ {
++  if (m_videoLayerBridge && !videoLayer)
++  {
++    // disable video plane when video layer no longer is active
++    m_videoLayerBridge->Disable();
++  }
++
+   struct gbm_bo *bo = m_GBM->LockFrontBuffer();
+ 
+   m_DRM->FlipPage(bo, rendered, videoLayer);
+ 
+   m_GBM->ReleaseBuffer();
++
++  if (m_videoLayerBridge && !videoLayer)
++  {
++    // delete video layer bridge when video layer no longer is active
++    m_videoLayerBridge.reset();
++  }
+ }
+ 
+ void CWinSystemGbm::WaitVBlank()
+diff --git a/xbmc/windowing/gbm/WinSystemGbm.h b/xbmc/windowing/gbm/WinSystemGbm.h
+index e1a3bc863b89..1bbf003f7a78 100644
+--- a/xbmc/windowing/gbm/WinSystemGbm.h
++++ b/xbmc/windowing/gbm/WinSystemGbm.h
+@@ -28,6 +28,7 @@
+ #include "threads/CriticalSection.h"
+ #include "windowing/WinSystem.h"
+ #include "DRMUtils.h"
++#include "VideoLayerBridge.h"
+ 
+ class IDispResource;
+ 
+@@ -62,6 +63,9 @@ class CWinSystemGbm : public CWinSystemBase
+   virtual void Register(IDispResource *resource);
+   virtual void Unregister(IDispResource *resource);
+ 
++  std::shared_ptr<CVideoLayerBridge> GetVideoLayerBridge() const { return m_videoLayerBridge; };
++  void RegisterVideoLayerBridge(std::shared_ptr<CVideoLayerBridge> bridge) { m_videoLayerBridge = bridge; };
++
+   std::string GetModule() const { return m_DRM->GetModule(); }
+   std::string GetDevicePath() const { return m_DRM->GetDevicePath(); }
+   struct gbm_device *GetGBMDevice() const { return m_GBM->GetDevice(); }
+@@ -72,6 +76,7 @@ class CWinSystemGbm : public CWinSystemBase
+ 
+   std::shared_ptr<CDRMUtils> m_DRM;
+   std::unique_ptr<CGBMUtils> m_GBM;
++  std::shared_ptr<CVideoLayerBridge> m_videoLayerBridge;
+ 
+   CCriticalSection m_resourceSection;
+   std::vector<IDispResource*>  m_resources;
+
+From d45d31937f89d514f528aa1f566c29057d6de2b2 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Thu, 26 Jul 2018 23:27:21 +0200
+Subject: [PATCH 3/4] RendererDRMPRIME: refactor to use Map and Unmap methods
+
+---
+ .../DVDCodecs/Video/DVDVideoCodecDRMPRIME.cpp      |  19 ---
+ .../DVDCodecs/Video/DVDVideoCodecDRMPRIME.h        |   1 -
+ .../HwDecRender/RendererDRMPRIME.cpp               | 128 +++++++++++++--------
+ .../VideoRenderers/HwDecRender/RendererDRMPRIME.h  |   2 +
+ 4 files changed, 81 insertions(+), 69 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecDRMPRIME.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecDRMPRIME.cpp
+index 4d274659290d..26df2d42ed7b 100644
+--- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecDRMPRIME.cpp
++++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecDRMPRIME.cpp
+@@ -27,9 +27,6 @@
+ #include "utils/log.h"
+ #include "windowing/gbm/WinSystemGbm.h"
+ 
+-#include <xf86drm.h>
+-#include <xf86drmMode.h>
+-
+ extern "C" {
+ #include "libavcodec/avcodec.h"
+ #include "libavutil/pixdesc.h"
+@@ -58,22 +55,6 @@ void CVideoBufferDRMPRIME::SetRef(AVFrame* frame)
+ 
+ void CVideoBufferDRMPRIME::Unref()
+ {
+-  if (m_fb_id)
+-  {
+-    drmModeRmFB(m_drm_fd, m_fb_id);
+-    m_fb_id = 0;
+-  }
+-
+-  for (int i = 0; i < AV_DRM_MAX_PLANES; i++)
+-  {
+-    if (m_handles[i])
+-    {
+-      struct drm_gem_close gem_close = { .handle = m_handles[i] };
+-      drmIoctl(m_drm_fd, DRM_IOCTL_GEM_CLOSE, &gem_close);
+-      m_handles[i] = 0;
+-    }
+-  }
+-
+   av_frame_unref(m_pFrame);
+ }
+ 
+diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecDRMPRIME.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecDRMPRIME.h
+index 44ec0014e38c..08cf1cb8fdc9 100644
+--- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecDRMPRIME.h
++++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecDRMPRIME.h
+@@ -41,7 +41,6 @@ class CVideoBufferDRMPRIME
+   void SetRef(AVFrame* frame);
+   void Unref();
+ 
+-  uint32_t m_drm_fd = -1;
+   uint32_t m_fb_id = 0;
+   uint32_t m_handles[AV_DRM_MAX_PLANES] = {0};
+ 
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
+index 298af7e69e65..bf8cefba25d0 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
+@@ -168,6 +168,10 @@ void CRendererDRMPRIME::RenderUpdate(int index, int index2, bool clear, unsigned
+   if (!buffer)
+     return;
+ 
++  AVDRMFrameDescriptor* descriptor = buffer->GetDescriptor();
++  if (!descriptor || !descriptor->nb_layers)
++    return;
++
+   if (!m_videoLayerBridge)
+   {
+     CWinSystemGbmGLESContext* winSystem = static_cast<CWinSystemGbmGLESContext*>(CServiceBroker::GetWinSystem());
+@@ -254,70 +258,96 @@ void CVideoLayerBridgeDRMPRIME::Release(CVideoBufferDRMPRIME* buffer)
+   if (!buffer)
+     return;
+ 
++  Unmap(buffer);
+   buffer->Release();
+ }
+ 
+-void CVideoLayerBridgeDRMPRIME::Configure(CVideoBufferDRMPRIME* buffer)
+-{
+-}
+-
+-void CVideoLayerBridgeDRMPRIME::SetVideoPlane(CVideoBufferDRMPRIME* buffer, const CRect& destRect)
++bool CVideoLayerBridgeDRMPRIME::Map(CVideoBufferDRMPRIME* buffer)
+ {
+-  buffer->m_drm_fd = m_DRM->GetFileDescriptor();
+-
+   AVDRMFrameDescriptor* descriptor = buffer->GetDescriptor();
+-  if (descriptor && descriptor->nb_layers)
+-  {
+-    uint32_t handles[4] = {0}, pitches[4] = {0}, offsets[4] = {0};
+-    uint64_t modifier[4] = {0};
+-    int ret;
++  uint32_t handles[4] = {0}, pitches[4] = {0}, offsets[4] = {0};
++  uint64_t modifier[4] = {0};
++  int ret;
+ 
+-    // convert Prime FD to GEM handle
+-    for (int object = 0; object < descriptor->nb_objects; object++)
++  // convert Prime FD to GEM handle
++  for (int object = 0; object < descriptor->nb_objects; object++)
++  {
++    ret = drmPrimeFDToHandle(m_DRM->GetFileDescriptor(), descriptor->objects[object].fd, &buffer->m_handles[object]);
++    if (ret < 0)
+     {
+-      ret = drmPrimeFDToHandle(m_DRM->GetFileDescriptor(), descriptor->objects[object].fd, &buffer->m_handles[object]);
+-      if (ret < 0)
+-      {
+-        CLog::Log(LOGERROR, "CVideoLayerBridgeDRMPRIME::%s - failed to convert prime fd %d to gem handle %u, ret = %d", __FUNCTION__, descriptor->objects[object].fd, buffer->m_handles[object], ret);
+-        return;
+-      }
++      CLog::Log(LOGERROR, "CVideoLayerBridgeDRMPRIME::%s - failed to convert prime fd %d to gem handle %u, ret = %d", __FUNCTION__, descriptor->objects[object].fd, buffer->m_handles[object], ret);
++      return false;
+     }
++  }
+ 
+-    AVDRMLayerDescriptor* layer = &descriptor->layers[0];
++  AVDRMLayerDescriptor* layer = &descriptor->layers[0];
+ 
+-    for (int plane = 0; plane < layer->nb_planes; plane++)
++  for (int plane = 0; plane < layer->nb_planes; plane++)
++  {
++    int object = layer->planes[plane].object_index;
++    uint32_t handle = buffer->m_handles[object];
++    if (handle && layer->planes[plane].pitch)
+     {
+-      int object = layer->planes[plane].object_index;
+-      uint32_t handle = buffer->m_handles[object];
+-      if (handle && layer->planes[plane].pitch)
+-      {
+-        handles[plane] = handle;
+-        pitches[plane] = layer->planes[plane].pitch;
+-        offsets[plane] = layer->planes[plane].offset;
+-        modifier[plane] = descriptor->objects[object].format_modifier;
+-      }
++      handles[plane] = handle;
++      pitches[plane] = layer->planes[plane].pitch;
++      offsets[plane] = layer->planes[plane].offset;
++      modifier[plane] = descriptor->objects[object].format_modifier;
+     }
++  }
+ 
+-    // add the video frame FB
+-    ret = drmModeAddFB2WithModifiers(m_DRM->GetFileDescriptor(), buffer->GetWidth(), buffer->GetHeight(), layer->format, handles, pitches, offsets, modifier, &buffer->m_fb_id, 0);
+-    if (ret < 0)
++  // add the video frame FB
++  ret = drmModeAddFB2WithModifiers(m_DRM->GetFileDescriptor(), buffer->GetWidth(), buffer->GetHeight(), layer->format, handles, pitches, offsets, modifier, &buffer->m_fb_id, 0);
++  if (ret < 0)
++  {
++    CLog::Log(LOGERROR, "CVideoLayerBridgeDRMPRIME::%s - failed to add fb %d, ret = %d", __FUNCTION__, buffer->m_fb_id, ret);
++    return false;
++  }
++
++  return true;
++}
++
++void CVideoLayerBridgeDRMPRIME::Unmap(CVideoBufferDRMPRIME* buffer)
++{
++  if (buffer->m_fb_id)
++  {
++    drmModeRmFB(m_DRM->GetFileDescriptor(), buffer->m_fb_id);
++    buffer->m_fb_id = 0;
++  }
++
++  for (int i = 0; i < AV_DRM_MAX_PLANES; i++)
++  {
++    if (buffer->m_handles[i])
+     {
+-      CLog::Log(LOGERROR, "CVideoLayerBridgeDRMPRIME::%s - failed to add fb %d, ret = %d", __FUNCTION__, buffer->m_fb_id, ret);
+-      return;
++      struct drm_gem_close gem_close = { .handle = buffer->m_handles[i] };
++      drmIoctl(m_DRM->GetFileDescriptor(), DRM_IOCTL_GEM_CLOSE, &gem_close);
++      buffer->m_handles[i] = 0;
+     }
++  }
++}
++
++void CVideoLayerBridgeDRMPRIME::Configure(CVideoBufferDRMPRIME* buffer)
++{
++}
+ 
+-    Acquire(buffer);
+-
+-    struct plane* plane = m_DRM->GetPrimaryPlane();
+-    m_DRM->AddProperty(plane, "FB_ID", buffer->m_fb_id);
+-    m_DRM->AddProperty(plane, "CRTC_ID", m_DRM->GetCrtc()->crtc->crtc_id);
+-    m_DRM->AddProperty(plane, "SRC_X", 0);
+-    m_DRM->AddProperty(plane, "SRC_Y", 0);
+-    m_DRM->AddProperty(plane, "SRC_W", buffer->GetWidth() << 16);
+-    m_DRM->AddProperty(plane, "SRC_H", buffer->GetHeight() << 16);
+-    m_DRM->AddProperty(plane, "CRTC_X", static_cast<int32_t>(destRect.x1) & ~1);
+-    m_DRM->AddProperty(plane, "CRTC_Y", static_cast<int32_t>(destRect.y1) & ~1);
+-    m_DRM->AddProperty(plane, "CRTC_W", (static_cast<uint32_t>(destRect.Width()) + 1) & ~1);
+-    m_DRM->AddProperty(plane, "CRTC_H", (static_cast<uint32_t>(destRect.Height()) + 1) & ~1);
++void CVideoLayerBridgeDRMPRIME::SetVideoPlane(CVideoBufferDRMPRIME* buffer, const CRect& destRect)
++{
++  if (!Map(buffer))
++  {
++    Unmap(buffer);
++    return;
+   }
++
++  Acquire(buffer);
++
++  struct plane* plane = m_DRM->GetPrimaryPlane();
++  m_DRM->AddProperty(plane, "FB_ID", buffer->m_fb_id);
++  m_DRM->AddProperty(plane, "CRTC_ID", m_DRM->GetCrtc()->crtc->crtc_id);
++  m_DRM->AddProperty(plane, "SRC_X", 0);
++  m_DRM->AddProperty(plane, "SRC_Y", 0);
++  m_DRM->AddProperty(plane, "SRC_W", buffer->GetWidth() << 16);
++  m_DRM->AddProperty(plane, "SRC_H", buffer->GetHeight() << 16);
++  m_DRM->AddProperty(plane, "CRTC_X", static_cast<int32_t>(destRect.x1) & ~1);
++  m_DRM->AddProperty(plane, "CRTC_Y", static_cast<int32_t>(destRect.y1) & ~1);
++  m_DRM->AddProperty(plane, "CRTC_W", (static_cast<uint32_t>(destRect.Width()) + 1) & ~1);
++  m_DRM->AddProperty(plane, "CRTC_H", (static_cast<uint32_t>(destRect.Height()) + 1) & ~1);
+ }
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h
+index 648dd3710f7a..1b0064cc0a16 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h
+@@ -41,6 +41,8 @@ class CVideoLayerBridgeDRMPRIME
+ private:
+   void Acquire(CVideoBufferDRMPRIME* buffer);
+   void Release(CVideoBufferDRMPRIME* buffer);
++  bool Map(CVideoBufferDRMPRIME* buffer);
++  void Unmap(CVideoBufferDRMPRIME* buffer);
+ 
+   CVideoBufferDRMPRIME* m_buffer = nullptr;
+   CVideoBufferDRMPRIME* m_prev_buffer = nullptr;
+
+From 8bdb1deb4df36fef5edb8d9ca8956bf7166ca268 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Thu, 26 Jul 2018 23:27:21 +0200
+Subject: [PATCH 4/4] RendererDRMPRIME: merge Flush and Reset
+
+---
+ .../VideoRenderers/HwDecRender/RendererDRMPRIME.cpp    | 18 ++++++------------
+ .../VideoRenderers/HwDecRender/RendererDRMPRIME.h      |  2 --
+ 2 files changed, 6 insertions(+), 14 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
+index bf8cefba25d0..88f80c92d455 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.cpp
+@@ -35,7 +35,7 @@ const std::string SETTING_VIDEOPLAYER_USEPRIMERENDERER = "videoplayer.useprimere
+ 
+ CRendererDRMPRIME::~CRendererDRMPRIME()
+ {
+-  Reset();
++  Flush();
+ }
+ 
+ CBaseRenderer* CRendererDRMPRIME::Create(CVideoBuffer* buffer)
+@@ -83,7 +83,7 @@ bool CRendererDRMPRIME::Configure(const VideoPicture& picture, float fps, unsign
+   SetViewMode(m_videoSettings.m_ViewMode);
+   ManageRenderArea();
+ 
+-  Reset();
++  Flush();
+ 
+   m_bConfigured = true;
+   return true;
+@@ -106,17 +106,16 @@ void CRendererDRMPRIME::ManageRenderArea()
+ void CRendererDRMPRIME::AddVideoPicture(const VideoPicture& picture, int index, double currentClock)
+ {
+   BUFFER& buf = m_buffers[index];
+-
+-  // delay Release of videoBuffer after a Flush call to prevent drmModeRmFB of a videoBuffer tied to a drm plane
+-  // TODO: move Release to Flush once current videoBuffer tied to a drm plane is reference counted
+   if (buf.videoBuffer)
++  {
++    CLog::LogF(LOGERROR, "unreleased video buffer");
+     buf.videoBuffer->Release();
+-
++  }
+   buf.videoBuffer = picture.videoBuffer;
+   buf.videoBuffer->Acquire();
+ }
+ 
+-void CRendererDRMPRIME::Reset()
++void CRendererDRMPRIME::Flush()
+ {
+   for (int i = 0; i < NUM_BUFFERS; i++)
+     ReleaseBuffer(i);
+@@ -124,11 +123,6 @@ void CRendererDRMPRIME::Reset()
+   m_iLastRenderBuffer = -1;
+ }
+ 
+-void CRendererDRMPRIME::Flush()
+-{
+-  m_iLastRenderBuffer = -1;
+-}
+-
+ void CRendererDRMPRIME::ReleaseBuffer(int index)
+ {
+   BUFFER& buf = m_buffers[index];
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h
+index 1b0064cc0a16..9d673f1d99fe 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIME.h
+@@ -83,8 +83,6 @@ class CRendererDRMPRIME
+   void ManageRenderArea() override;
+ 
+ private:
+-  void Reset();
+-
+   bool m_bConfigured = false;
+   int m_iLastRenderBuffer = -1;
+ 

@@ -1,0 +1,105 @@
+From 624d0e81201f9f80c5ac6dc16decce5cbfa0710e Mon Sep 17 00:00:00 2001
+From: Rainer Hochecker <fernetmenta@online.de>
+Date: Tue, 17 Jul 2018 18:32:17 +0200
+Subject: [PATCH 1/2] VideoPlayer: pause realtime streams on stall instead of
+ flush
+
+---
+ xbmc/cores/VideoPlayer/VideoPlayer.cpp      | 14 +++++++++++---
+ xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp |  4 +++-
+ 2 files changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
+index 45759c499323..d8d85e22330f 100644
+--- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
++++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
+@@ -1822,7 +1822,7 @@ void CVideoPlayer::ProcessRadioRDSData(CDemuxStream* pStream, DemuxPacket* pPack
+ 
+ bool CVideoPlayer::GetCachingTimes(double& level, double& delay, double& offset)
+ {
+-  if(!m_pInputStream || !m_pDemuxer)
++  if (!m_pInputStream || !m_pDemuxer)
+     return false;
+ 
+   XFILE::SCacheStatus status;
+@@ -1900,6 +1900,13 @@ void CVideoPlayer::HandlePlaySpeed()
+           (!m_VideoPlayerVideo->AcceptsData() && m_CurrentVideo.id >= 0))
+         SetCaching(CACHESTATE_INIT);
+     }
++
++    // if audio stream stalled, wait untit demux queue filled 10%
++    if (m_pInputStream->IsRealtime() &&
++        (m_CurrentAudio.id < 0 || m_VideoPlayerAudio->GetLevel() > 10))
++    {
++      SetCaching(CACHESTATE_INIT);
++    }
+   }
+ 
+   if (m_caching == CACHESTATE_INIT)
+@@ -1940,13 +1947,14 @@ void CVideoPlayer::HandlePlaySpeed()
+       {
+         if (m_pInputStream->IsRealtime())
+         {
+-          if ((m_CurrentAudio.id >= 0 && m_CurrentAudio.syncState == IDVDStreamPlayer::SYNC_INSYNC && m_VideoPlayerAudio->IsStalled()) ||
++          if ((m_CurrentAudio.id >= 0 && m_CurrentAudio.syncState == IDVDStreamPlayer::SYNC_INSYNC &&
++               m_VideoPlayerAudio->IsStalled()) ||
+               (m_CurrentVideo.id >= 0 && m_CurrentVideo.syncState == IDVDStreamPlayer::SYNC_INSYNC &&
+                m_processInfo->GetLevelVQ() == 0))
+           {
+             CLog::Log(LOGDEBUG, "Stream stalled, start buffering. Audio: %d - Video: %d",
+                                  m_VideoPlayerAudio->GetLevel(), m_processInfo->GetLevelVQ());
+-            FlushBuffers(DVD_NOPTS_VALUE, true, true);
++            SetCaching(CACHESTATE_FULL);
+           }
+         }
+         else
+diff --git a/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp b/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
+index 82bf8e796cd0..46cc9a5c7f3b 100644
+--- a/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
++++ b/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
+@@ -282,7 +282,6 @@ void CVideoPlayerAudio::Process()
+       if (priority)
+         continue;
+ 
+-      // Flush as the audio output may keep looping if we don't
+       if (m_processInfo.IsTempoAllowed(static_cast<float>(m_speed)/DVD_PLAYSPEED_NORMAL) &&
+           !m_stalled && m_syncState == IDVDStreamPlayer::SYNC_INSYNC)
+       {
+@@ -364,7 +363,10 @@ void CVideoPlayerAudio::Process()
+         if (speed != m_speed)
+         {
+           if (m_syncState == IDVDStreamPlayer::SYNC_INSYNC)
++          {
+             m_audioSink.Resume();
++            m_stalled = false;
++          }
+         }
+       }
+       else
+
+From eb1d3141bcf09242e43c3181b2889aa5bfc4b388 Mon Sep 17 00:00:00 2001
+From: Rainer Hochecker <fernetmenta@online.de>
+Date: Tue, 17 Jul 2018 18:50:22 +0200
+Subject: [PATCH 2/2] VideoPlayer: fix starttime of realtime streams
+
+---
+ xbmc/cores/VideoPlayer/VideoPlayer.cpp | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
+index d8d85e22330f..a46e94a9c519 100644
+--- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
++++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
+@@ -2056,8 +2056,11 @@ void CVideoPlayer::HandlePlaySpeed()
+         if (m_CurrentVideo.starttime != DVD_NOPTS_VALUE && (m_CurrentVideo.packets > 0))
+         {
+           if (m_CurrentVideo.starttime - m_CurrentVideo.cachetotal < clock)
++          {
+             clock = m_CurrentVideo.starttime - m_CurrentVideo.cachetotal;
+-          else if (m_CurrentVideo.starttime > m_CurrentAudio.starttime)
++          }
++          else if (m_CurrentVideo.starttime > m_CurrentAudio.starttime &&
++                   !m_pInputStream->IsRealtime())
+           {
+             int audioLevel = m_VideoPlayerAudio->GetLevel();
+             //@todo hardcoded 8 seconds in message queue
