@@ -69,14 +69,6 @@ if [ -n "$KERNEL_LINARO_TOOLCHAIN" ]; then
   HEADERS_ARCH=$TARGET_ARCH
 fi
 
-if [ -n "$KERNEL_CMDLINE" ]; then
-  sed -i -e "s|^CONFIG_CMDLINE=.*$|CONFIG_CMDLINE=\"$KERNEL_CMDLINE\"|g" $PKG_BUILD/.config
-fi
-
-if [ ! "$KERNEL_FORCE" = yes ]; then
-  sed -i -e "s|^CONFIG_CMDLINE_FORCE=.*$|# CONFIG_CMDLINE_FORCE is not set|" $PKG_BUILD/.config
-fi
-
 if [ "$PKG_BUILD_PERF" != "no" ] && grep -q ^CONFIG_PERF_EVENTS= $PKG_KERNEL_CFG_FILE ; then
   PKG_BUILD_PERF="yes"
   PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET binutils elfutils libunwind zlib openssl"
@@ -95,6 +87,16 @@ post_patch() {
   if [ ! "$BUILD_ANDROID_BOOTIMG" = "yes" ]; then
     sed -i -e "s|^CONFIG_INITRAMFS_SOURCE=.*$|CONFIG_INITRAMFS_SOURCE=\"$BUILD/image/initramfs.cpio\"|" $PKG_BUILD/.config
     sed -i -e '/^CONFIG_INITRAMFS_SOURCE=*./ a CONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0' $PKG_BUILD/.config
+  fi
+
+  # set kernel boot args from options
+  if [ -n "$KERNEL_CMDLINE" ]; then
+    sed -i -e "s|^CONFIG_CMDLINE=.*$|CONFIG_CMDLINE=\"$KERNEL_CMDLINE\"|g" $PKG_BUILD/.config
+  fi
+
+  # set kernel boot args from options
+  if [ ! "$KERNEL_FORCE" = yes ]; then
+    sed -i -e "s|^CONFIG_CMDLINE_FORCE=.*$|# CONFIG_CMDLINE_FORCE is not set|" $PKG_BUILD/.config
   fi
 
   # set default hostname based on $DISTRONAME
