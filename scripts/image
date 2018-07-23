@@ -352,38 +352,38 @@ if [ "$1" = "release" -o "$1" = "mkimage" -o "$1" = "amlpkg" -o "$1" = "noobs" ]
   # cleanup release dir
   rm -rf $RELEASE_DIR
 
-  # create WeTek Play (Amlogic) ZIP update and auto-install packages if requested
+  # create Android zip update and auto-install packages if requested
   if [ "$1" = "amlpkg" ]; then
-    echo "Creating Amlogic ZIP update package"
+    echo "Creating Android update package"
 
-    AML_PKG_DIR="$RELEASE_DIR/ampl-pkg"
+    AMLPKG_DIR="$RELEASE_DIR/amlpkg"
 
     # create package directory
-    mkdir -p "$AML_PKG_DIR"
+    mkdir -p "$AMLPKG_DIR"
 
     # copy system and kernel images
-    mkdir -p "$AML_PKG_DIR/system"
-    cp $TARGET_IMG/$IMAGE_NAME.system $AML_PKG_DIR/system/SYSTEM
-    cp $TARGET_IMG/$IMAGE_NAME.kernel $AML_PKG_DIR/KERNEL
+    mkdir -p "$AMLPKG_DIR/system"
+    cp $TARGET_IMG/$IMAGE_NAME.system $AMLPKG_DIR/system/SYSTEM
+    cp $TARGET_IMG/$IMAGE_NAME.kernel $AMLPKG_DIR/KERNEL
 
     # copy update-binary and updater-script
-    META_INF_DIR="$AML_PKG_DIR/META-INF/com/google/android"
+    META_INF_DIR="$AMLPKG_DIR/META-INF/com/google/android"
     mkdir -p "$META_INF_DIR"
     cp $INSTALL_SRC_DIR/update-binary $META_INF_DIR
     cp $INSTALL_SRC_DIR/updater-script $META_INF_DIR
 
     # copy other files if any
     if [ -d "$INSTALL_SRC_DIR/files" ]; then
-      cp -PR $INSTALL_SRC_DIR/files/* $AML_PKG_DIR
+      cp -PR $INSTALL_SRC_DIR/files/* $AMLPKG_DIR
     fi
 
     # copy device tree image if any
     if [ -f "$INSTALL/usr/share/bootloader/dtb.img" ]; then
-      cp "$INSTALL/usr/share/bootloader/dtb.img" $AML_PKG_DIR/dtb.img
+      cp "$INSTALL/usr/share/bootloader/dtb.img" $AMLPKG_DIR/dtb.img
     fi
 
     # create the update package
-    pushd "$AML_PKG_DIR" > /dev/null
+    pushd "$AMLPKG_DIR" > /dev/null
     zip -rq update.zip *
 
     # sign the update package
@@ -403,7 +403,7 @@ if [ "$1" = "release" -o "$1" = "mkimage" -o "$1" = "amlpkg" -o "$1" = "noobs" ]
     fi
 
     if [ -f $INSTALL_SRC_DIR/files/aml_autoscript ]; then
-      cp $INSTALL_SRC_DIR/files/aml_autoscript .
+      cp $INSTALL_SRC_DIR/files/*autoscript .
     fi
 
     # copy device tree image if any
