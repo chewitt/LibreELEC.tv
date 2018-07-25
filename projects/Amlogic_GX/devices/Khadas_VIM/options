@@ -16,16 +16,13 @@
   # kernel image name
     KERNEL_NAME="kernel.img"
 
-  # kernel boot args
-    KERNEL_CMDLINE="BOOT_IMAGE=kernel.img boot=/dev/mmcblk0p1 disk=/dev/mmcblk0p2 console=ttyAML0,115200n8 console=tty0 systemd.show_status=auto"
-
   # kernel boot args forced
-    KERNEL_FORCE="yes"
+    KERNEL_FORCE="no"
 
   # additional packages to install:
   # Space separated list is supported,
   # e.g. ADDITIONAL_PACKAGES="PACKAGE1 PACKAGE2"
-    ADDITIONAL_PACKAGES+=" aml_autoscript cpumac"
+    ADDITIONAL_PACKAGES+=" autoscript-amlogic cpumac"
 
   # additional Firmware to use (dvb-firmware, misc-firmware, wlan-firmware)
   # Space separated list is supported,

@@ -1,5 +1,3 @@
-#!/bin/sh
-
 ################################################################################
 #      This file is part of LibreELEC - https://libreelec.tv
 #      Copyright (C) 2018-present Team LibreELEC
@@ -18,6 +16,25 @@
 #  along with LibreELEC.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
-mkdir -p $RELEASE_DIR/3rdparty/bootloader
-  cp -a $(get_build_dir linux)/arch/$TARGET_KERNEL_ARCH/boot/dtb.img $RELEASE_DIR/3rdparty/bootloader
-  cp -a $(get_build_dir autoscript-amlogic)/* $RELEASE_DIR/3rdparty/bootloader
+PKG_NAME="autoscript-amlogic"
+PKG_VERSION="0.1"
+PKG_LICENSE="GPL"
+PKG_DEPENDS_TARGET="toolchain"
+PKG_TOOLCHAIN="manual"
+
+make_target() {
+  for src in $PKG_DIR/scripts/*autoscript.src ; do
+    $TOOLCHAIN/bin/mkimage -A $TARGET_KERNEL_ARCH -O linux -T script -C none -d "$src" "$(basename $src .src)" > /dev/null
+  done
+}
+
+makeinstall_target() {
+  mkdir -p $INSTALL/usr/share/bootloader
+#  cp -a $PKG_BUILD/*autoscript $INSTALL/usr/share/bootloader/
+#  cp -a $PKG_DIR/instboot/*.zip $INSTALL/usr/share/bootloader/
+#  cp -a $PKG_DIR/instboot/*.sh $INSTALL/usr/share/bootloader/
+#  cp -a $PKG_DIR/instboot/*.ini $INSTALL/usr/share/bootloader/
+  cp -a $PKG_DIR/instboot/*.zip $PKG_BUILD
+  cp -a $PKG_DIR/instboot/*.sh $PKG_BUILD
+  cp -a $PKG_DIR/instboot/*.ini $PKG_BUILD/
+}
