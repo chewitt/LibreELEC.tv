@@ -1,0 +1,29 @@
+--- a/arch/arm64/boot/dts/amlogic/meson-gxbb-wetek.dtsi	2018-06-06 08:09:26.970866789 +0100
++++ b/arch/arm64/boot/dts/amlogic/meson-gxbb-wetek.dtsi	2018-06-06 08:12:17.642339887 +0100
+@@ -10,6 +10,7 @@
+ / {
+ 	aliases {
+ 		serial0 = &uart_AO;
++		serial1 = &uart_A;
+ 		ethernet0 = &ethmac;
+ 	};
+ 
+@@ -284,6 +285,18 @@
+ 	vqmmc-supply = <&vddio_boot>;
+ };
+ 
++/* This is connected to the Bluetooth module: */
++&uart_A {
++	status = "okay";
++	pinctrl-0 = <&uart_a_pins>, <&uart_a_cts_rts_pins>;
++	pinctrl-names = "default";
++
++	bluetooth {
++		compatible = "brcm,bcm43438-bt";
++		shutdown-gpios = <&gpio GPIOX_20 GPIO_ACTIVE_HIGH>;
++	};
++};
++
+ /* This UART is brought out to the DB9 connector */
+ &uart_AO {
+ 	status = "okay";

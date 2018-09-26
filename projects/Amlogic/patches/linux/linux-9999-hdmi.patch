@@ -1,0 +1,12 @@
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+index 5971976284bf..e2f832182afe 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+@@ -2007,6 +2007,7 @@  static void dw_hdmi_bridge_mode_set(struct drm_bridge *bridge,
+ 
+ 	/* Store the display mode for plugin/DKMS poweron events */
+ 	memcpy(&hdmi->previous_mode, mode, sizeof(hdmi->previous_mode));
++	dw_hdmi_setup(hdmi, mode);
+ 
+ 	mutex_unlock(&hdmi->mutex);
+ }

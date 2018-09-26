@@ -1,0 +1,50 @@
+From dd60c9efc7de1ba5a64f99dc47623ffd77590b74 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sun, 9 Sep 2018 08:28:18 +0400
+Subject: [PATCH] amlogic: meson-gx-socinfo: Update SoC ID's
+
+The H in S905H means "licenses" (Widevine L1, etc.) so change to S905-H
+to make it distinct from S905D/W/X etc. which are board types. Plus:
+
+Add ID for the S905-H used in the WeTek Hub and Play 2
+Add ID for the S905D-H used in the Smartlabs SML-5442TW
+Add ID for the S905X used in the Khadas VIM
+Add ID for the S912 used in the Khadas VIM2
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/soc/amlogic/meson-gx-socinfo.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/soc/amlogic/meson-gx-socinfo.c b/drivers/soc/amlogic/meson-gx-socinfo.c
+index 37ea0a1..a5c6f5d 100644
+--- a/drivers/soc/amlogic/meson-gx-socinfo.c
++++ b/drivers/soc/amlogic/meson-gx-socinfo.c
+@@ -45,7 +45,7 @@ static const struct meson_gx_package_id {
+ 	unsigned int pack_id;
+ } soc_packages[] = {
+ 	{ "S905", 0x1f, 0 },
+-	{ "S905H", 0x1f, 0x13 },
++	{ "S905-H", 0x1f, 0x13 },
+ 	{ "S905M", 0x1f, 0x20 },
+ 	{ "S905D", 0x21, 0 },
+ 	{ "S905X", 0x21, 0x80 },
+@@ -53,6 +53,7 @@ static const struct meson_gx_package_id {
+ 	{ "S905L", 0x21, 0xc0 },
+ 	{ "S905M2", 0x21, 0xe0 },
+ 	{ "S912", 0x22, 0 },
++	{ "S912", 0x22, 0x82 },
+ 	{ "962X", 0x24, 0x10 },
+ 	{ "962E", 0x24, 0x20 },
+ 	{ "A113X", 0x25, 0x37 },
+@@ -82,7 +82,7 @@ static inline unsigned int socinfo_to_mi
+ 
+ static const char *socinfo_to_package_id(u32 socinfo)
+ {
+-	unsigned int pack = socinfo_to_pack(socinfo) & 0xf0;
++	unsigned int pack = socinfo_to_pack(socinfo);
+ 	unsigned int major = socinfo_to_major(socinfo);
+ 	int i;
+ 
+-- 
+2.7.4
