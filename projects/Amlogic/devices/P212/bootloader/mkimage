@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
+
+. config/options $1
+
+echo "Generating u-boot.bin"
+DESTDIR="$LE_TMP/fip"
+FIPDIR="$(get_build_dir amlogic-boot-fip)"
+
+mkdir -p $DESTDIR
+
+cp $FIPDIR/gxl/bl2.bin $DESTDIR/
+cp $FIPDIR/gxl/acs.bin $DESTDIR/
+cp $FIPDIR/gxl/bl21.bin $DESTDIR/
+cp $FIPDIR/gxl/bl30.bin $DESTDIR/
+cp $FIPDIR/gxl/bl301.bin $DESTDIR/
+cp $FIPDIR/gxl/bl31.img $DESTDIR/
+cp $(get_build_dir $BOOTLOADER)/u-boot.bin $DESTDIR/bl33.bin
+
+$FIPDIR/blx_fix.sh $DESTDIR/bl30.bin \
+		   $DESTDIR/zero_tmp \
+		   $DESTDIR/bl30_zero.bin \
+		   $DESTDIR/bl301.bin \
+		   $DESTDIR/bl301_zero.bin \
+		   $DESTDIR/bl30_new.bin bl30 2>&1 || show_error
+python $FIPDIR/acs_tool.pyc $DESTDIR/bl2.bin \
+	       		    $DESTDIR/bl2_acs.bin \
+			    $DESTDIR/acs.bin 0
+$FIPDIR/blx_fix.sh $DESTDIR/bl2_acs.bin \
+		   $DESTDIR/zero_tmp \
+		   $DESTDIR/bl2_zero.bin \
+		   $DESTDIR/bl21.bin \
+		   $DESTDIR/bl21_zero.bin \
+		   $DESTDIR/bl2_new.bin bl2 2>&1 || show_error
+
+$FIPDIR/gxl/aml_encrypt_gxl --bl3enc --input $DESTDIR/bl30_new.bin
+$FIPDIR/gxl/aml_encrypt_gxl --bl3enc --input $DESTDIR/bl31.img
+$FIPDIR/gxl/aml_encrypt_gxl --bl3enc --input $DESTDIR/bl33.bin
+$FIPDIR/gxl/aml_encrypt_gxl --bl2sig --input $DESTDIR/bl2_new.bin --output $DESTDIR/bl2.n.bin.sig
+$FIPDIR/gxl/aml_encrypt_gxl --bootmk --output $DESTDIR/u-boot.bin --bl2 $DESTDIR/bl2.n.bin.sig --bl30 $DESTDIR/bl30_new.bin.enc --bl31 $DESTDIR/bl31.img.enc --bl33 $DESTDIR/bl33.bin.enc
+
+echo "Writing u-boot to $(basename $DISK)"
+dd if="$DESTDIR/u-boot.bin.sd.bin" of="$DISK" conv=fsync,notrunc bs=1 count=112 >"$SAVE_ERROR" 2>&1 || show_error
+dd if="$DESTDIR/u-boot.bin.sd.bin" of="$DISK" conv=fsync,notrunc bs=512 skip=1 seek=1 >"$SAVE_ERROR" 2>&1 || show_error
+
+echo "Installing dtb"
+LINUX="$(get_build_dir linux)"
+DTB="$($ROOT/$SCRIPTS/uboot_helper $PROJECT $DEVICE $UBOOT_SYSTEM dtb)"
+
+cp -a $LINUX/arch/$TARGET_KERNEL_ARCH/boot/dts/amlogic/$DTB "$LE_TMP/"
+
+mcopy -s "$LE_TMP/$DTB" ::
