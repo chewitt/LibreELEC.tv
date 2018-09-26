@@ -1,0 +1,4 @@
+if test ${bls} = android; then setenv bls "libreelec"; saveenv; run storeboot; fi;
+setenv env_addr "0x10400000"
+setenv bootargs ddr_size=${ddr_size} ${bootargs}
+if ext4load mmc 1:b ${loadaddr} kernel.img; then if ext4load mmc 1:b ${env_addr} emmc_uEnv.ini; then env import -t ${env_addr} ${filesize}; setenv bootargs ${boot_env} ${bootargs}; fi; if ext4load mmc 1:b ${dtb_mem_addr} dtb.img; then bootm ${loadaddr}; else store dtb read ${dtb_mem_addr}; bootm ${loadaddr}; fi; fi;
