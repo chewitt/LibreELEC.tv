@@ -8,7 +8,14 @@ devices = {
       'board_name' : { 'dtb' : 'board_name.dtb', 'config' : 'board_name_defconfig' },
     },
   },
-
+  'Amlogic' : {
+    'Odroid_C2' : { 'Odroid_C2' : { 'dtb' : 'meson-gxbb-odroidc2.dtb', 'config' : 'odroid-c2_defconfig' }, },
+    'P212' : { 'P212' : { 'dtb' : 'meson-gxl-s905x-p212.dtb', 'config' : 'p212_defconfig' }, },
+    'LePotato' : { 'LePotato' : { 'dtb' : 'meson-gxl-s905x-libretech-cc.dtb', 'config' : 'libretech-cc_defconfig' }, },
+    'Khadas_VIM' : { 'Khadas_VIM' : { 'dtb' : 'meson-gxl-s905x-khadas-vim.dtb', 'config' : 'khadas-vim_defconfig' }, },
+    'Khadas_VIM2' : { 'Khadas_VIM2' : { 'dtb' : 'meson-gxm-khadas-vim2.dtb', 'config' : 'khadas-vim_defconfig' }, },
+    'NanoPi_K2' : { 'NanoPi_K2' : { 'dtb' : 'meson-gxbb-nanopi-k2.dtb', 'config' : 'nanopi-k2_defconfig' }, },
+  },
   'Rockchip' : {
     'MiQi' : { 'rk3288' : { 'dtb' : 'rk3288-miqi.dtb', 'config' : 'miqi-rk3288_config' }, },
     'RK3328' : {
