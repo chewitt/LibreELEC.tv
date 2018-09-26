@@ -1,0 +1,711 @@
+From eeb1c67933362d0cd9cf8839a2fb9c99b151e8ee Mon Sep 17 00:00:00 2001
+From: chewitt <chewitt@libreelec.tv>
+Date: Fri, 29 Jun 2018 11:32:01 +0400
+Subject: [PATCH 1/5] dt-bindings: Add vendor prefix for Smartlabs LLC.
+
+Smartlabs LLC are a professional integrator of Interactive TV solutions
+and IPTV/VOD STB devices (https://www.smartlabs.tv/en/about/) for Telco
+providers. Most devices are a fixed-function package dedicated to an
+operator, but some can boot an alternative OS from removable media or a
+dedicated boot slot on internal eMMC storage, e.g. the open-source Kodi
+distro LibreELEC.
+
+Signed-off-by: Christian Hewitt <chewitt@libreelec.tv>
+---
+ Documentation/devicetree/bindings/vendor-prefixes.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/vendor-prefixes.txt b/Documentation/devicetree/bindings/vendor-prefixes.txt
+index 7cad066191eeb..ec945307dc886 100644
+--- a/Documentation/devicetree/bindings/vendor-prefixes.txt
++++ b/Documentation/devicetree/bindings/vendor-prefixes.txt
+@@ -339,6 +339,7 @@ sirf	SiRF Technology, Inc.
+ sis	Silicon Integrated Systems Corp.
+ sitronix	Sitronix Technology Corporation
+ skyworks	Skyworks Solutions, Inc.
++smartlabs	Smartlabs LLC.
+ smsc	Standard Microsystems Corporation
+ snps	Synopsys, Inc.
+ socionext	Socionext Inc.
+
+From a7886a06dfdf48ee3bb42d18ba2f7d4437a8b5f7 Mon Sep 17 00:00:00 2001
+From: chewitt <chewitt@libreelec.tv>
+Date: Fri, 29 Jun 2018 15:54:47 +0400
+Subject: [PATCH 2/5] dt-bindings: arm: amlogic: Add support for the Smartlabs
+ SML-5442TW
+
+The SML-5442TW is an STB for a European Telco supporting terrestrial DVB-S
+broadcasts and IPTV/VOD services. The SML-5442TV is based on the Amlogic
+P231 reference design using the S905D chipset. Specification:
+
+- 2GB DDR3 RAM
+- 8GB eMMC storage
+- 10/100 Base-T Ethernet
+- 802.11 a/b/g/n/ac + BT 4.1 HS sdio wireless module (QCA9377)
+- 2x single colour and 1x dual colour LEDs on the front panel
+- 1x reset button on the front panel
+- HDMI 2.0 (4k@60p) video
+- Composite video + 2-channel audio output on 3.5mm jack
+- S/PDIF audio output
+- Single DVB-S tuner (AVL6762/MxL608)
+- 2x USB 2.0 ports
+- 1x micro SD card slot
+- UART pins (internal)
+
+The QCA9377 module uses experimental ath10k-sdio support which is slowly
+being upstreamed. Bluez support requires out-of-tree patches and firmware
+that are available and widely used, but pending a rewrite to avoid use of
+(deprecated) hciattach.
+
+The DVB-S tuner uses the Availink AVL6762 and MxL608 chips. No GPL drivers
+exist but there is an ongoing attempt to create an open AVL6862 driver for
+Amlogic 3.14 bsp kernels that could probably be adapted.
+
+Signed-off-by: Christian Hewitt <chewitt@libreelec.tv>
+---
+ Documentation/devicetree/bindings/arm/amlogic.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/arm/amlogic.txt b/Documentation/devicetree/bindings/arm/amlogic.txt
+index 69880560c0f02..f325f7a8201f5 100644
+--- a/Documentation/devicetree/bindings/arm/amlogic.txt
++++ b/Documentation/devicetree/bindings/arm/amlogic.txt
+@@ -78,6 +78,7 @@ Board compatible values (alphabetically, grouped by SoC):
+ 
+   - "amlogic,p230" (Meson gxl s905d)
+   - "amlogic,p231" (Meson gxl s905d)
++  - "smartlabs,sml5442tw" (Meson gxl s905d)
+ 
+   - "amlogic,q200" (Meson gxm s912)
+   - "amlogic,q201" (Meson gxm s912)
+
+From 61dab808c3ae8f8fd5b7e69f074909b5ea955a17 Mon Sep 17 00:00:00 2001
+From: chewitt <chewitt@libreelec.tv>
+Date: Fri, 29 Jun 2018 16:07:23 +0400
+Subject: [PATCH 3/5] ARM64: dts: meson-gxl: Add support for the Smartlabs
+ SML-5442TW
+
+The Smartlabs SML-5442TW is broadly similar to the P231 reference design
+but with the following differences:
+
+- Yellow and Blue front-panel LEDs are available but disabled
+- Red/Green LED is used to signal off/on status
+- GPIOX_17 is set high to enable the QCA9377 wireless module
+- uart_AO can be accessed after opening the case; soldered pins exist
+
+Signed-off-by: Christian Hewitt <chewitt@libreelec.tv>
+---
+ arch/arm64/boot/dts/amlogic/Makefile               |   1 +
+ .../meson-gxl-s905d-smartlabs-sml5442tw.dts        | 328 +++++++++++++++++++++
+ 2 files changed, 329 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/amlogic/meson-gxl-s905d-smartlabs-sml5442tw.dts
+
+diff --git a/arch/arm64/boot/dts/amlogic/Makefile b/arch/arm64/boot/dts/amlogic/Makefile
+index 34dd0e9b5cbbc..51bf92e6a370c 100644
+--- a/arch/arm64/boot/dts/amlogic/Makefile
++++ b/arch/arm64/boot/dts/amlogic/Makefile
+@@ -17,6 +17,7 @@ dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905x-nexbox-a95x.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905x-p212.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905d-p230.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905d-p231.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-gxl-s905d-smartlabs-sml5442tw.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxm-khadas-vim2.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxm-nexbox-a1.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-gxm-q200.dtb
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl-s905d-smartlabs-sml5442tw.dts b/arch/arm64/boot/dts/amlogic/meson-gxl-s905d-smartlabs-sml5442tw.dts
+new file mode 100644
+index 0000000000000..80452e50958e9
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/meson-gxl-s905d-smartlabs-sml5442tw.dts
+@@ -0,0 +1,328 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright (c) 2016 Endless Computers, Inc.
++ * Author: Carlo Caione <carlo@endlessm.com>
++ * Copyright (c) 2018 BayLibre, SAS
++ * Author: Neil Armstrong <narmstrong@baylibre.com>
++ * Copyright (c) 2018 LibreELEC
++ * Author: Christian Hewitt <chewitt@libreelec.tv>
++ */
++
++/dts-v1/;
++
++#include "meson-gxl-s905d.dtsi"
++
++/ {
++	compatible = "smartlabs,sml5442tw", "amlogic,s905d", "amlogic,meson-gxl";
++	model = "Smartlabs SML-5442TW";
++
++	aliases {
++		serial0 = &uart_AO;
++		serial1 = &uart_A;
++		ethernet0 = &ethmac;
++	};
++
++	chosen {
++		stdout-path = "serial0:115200n8";
++	};
++
++	memory@0 {
++		device_type = "memory";
++		reg = <0x0 0x0 0x0 0x80000000>;
++	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		yellow {
++			label = "sml5442tw:yellow";
++			gpios = <&gpio_ao GPIOAO_6 GPIO_ACTIVE_HIGH>;
++			default-state = "off";
++		};
++
++		blue {
++			label = "sml5442tw:blue";
++			gpios = <&gpio GPIODV_28 GPIO_ACTIVE_HIGH>;
++			default-state = "off";
++		};
++
++		green {
++			label = "sml5442tw:green";
++			gpios = <&gpio_ao GPIOAO_9 GPIO_ACTIVE_HIGH>;
++			default-state = "on";
++		};
++
++		red {
++			label = "sml5442tw:red";
++			gpios = <&gpio GPIODV_27 GPIO_ACTIVE_HIGH>;
++			default-state = "off";
++		};
++	};
++
++	hdmi_5v: regulator-hdmi-5v {
++		compatible = "regulator-fixed";
++
++		regulator-name = "HDMI_5V";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++
++		gpio = <&gpio GPIOH_3 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++		regulator-always-on;
++	};
++
++	vddio_ao18: regulator-vddio_ao18 {
++		compatible = "regulator-fixed";
++		regulator-name = "VDDIO_AO18";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++	};
++
++	vddio_boot: regulator-vddio_boot {
++		compatible = "regulator-fixed";
++		regulator-name = "VDDIO_BOOT";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++	};
++
++	vddao_3v3: regulator-vddao_3v3 {
++		compatible = "regulator-fixed";
++		regulator-name = "VDDAO_3V3";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++	};
++
++	vcc_3v3: regulator-vcc_3v3 {
++		compatible = "regulator-fixed";
++		regulator-name = "VCC_3V3";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++	};
++
++	emmc_pwrseq: emmc-pwrseq {
++		compatible = "mmc-pwrseq-emmc";
++		reset-gpios = <&gpio BOOT_9 GPIO_ACTIVE_LOW>;
++	};
++
++	wifi32k: wifi32k {
++		compatible = "pwm-clock";
++		#clock-cells = <0>;
++		clock-frequency = <32768>;
++		pwms = <&pwm_ef 0 30518 0>; /* PWM_E at 32.768KHz */
++	};
++
++	sdio_pwrseq: sdio-pwrseq {
++		compatible = "mmc-pwrseq-simple";
++		reset-gpios = <&gpio GPIOX_6 GPIO_ACTIVE_LOW>;
++		clocks = <&wifi32k>;
++		clock-names = "ext_clock";
++	};
++
++	cvbs-connector {
++		compatible = "composite-video-connector";
++
++		port {
++			cvbs_connector_in: endpoint {
++				remote-endpoint = <&cvbs_vdac_out>;
++			};
++		};
++	};
++
++	hdmi-connector {
++		compatible = "hdmi-connector";
++		type = "a";
++
++		port {
++			hdmi_connector_in: endpoint {
++				remote-endpoint = <&hdmi_tx_tmds_out>;
++			};
++		};
++	};
++
++	sound {
++		compatible = "simple-audio-card";
++		simple-audio-card,name = "HDMI";
++
++		simple-audio-card,dai-link@0 {
++			/* HDMI Output */
++			format = "i2s";
++			mclk-fs = <128>;
++			bitclock-master =  <&i2s_dai>;
++			frame-master = <&i2s_dai>;
++			plat {
++				sound-dai = <&aiu_i2s_dma>;
++			};
++
++			cpu {
++				sound-dai = <&i2s_dai>;
++			};
++
++			codec {
++				sound-dai = <&hdmi_tx>;
++			};
++		};
++	};
++};
++
++&cec_AO {
++	status = "okay";
++	pinctrl-0 = <&ao_cec_pins>;
++	pinctrl-names = "default";
++	hdmi-phandle = <&hdmi_tx>;
++};
++
++&audio {
++	status = "okay";
++};
++
++&aiu_i2s_dma {
++	status = "okay";
++};
++
++&i2s_dai {
++	status = "okay";
++};
++
++&cvbs_vdac_port {
++	cvbs_vdac_out: endpoint {
++		remote-endpoint = <&cvbs_connector_in>;
++	};
++};
++
++&ethmac {
++	status = "okay";
++	phy-mode = "rmii";
++	phy-handle = <&internal_phy>;
++};
++
++/* This will enable the bluetooth module */
++&gpio {
++	bt-en {
++		gpio-hog;
++		gpios = <GPIOX_17 GPIO_ACTIVE_HIGH>;
++		output-high;
++		line-name = "bt-en";
++	};
++};
++
++&hdmi_tx {
++	status = "okay";
++	pinctrl-0 = <&hdmi_hpd_pins>, <&hdmi_i2c_pins>;
++	pinctrl-names = "default";
++};
++
++&hdmi_tx_tmds_port {
++	hdmi_tx_tmds_out: endpoint {
++		remote-endpoint = <&hdmi_connector_in>;
++	};
++};
++
++&i2c_A {
++	status = "okay";
++	pinctrl-0 = <&i2c_a_pins>;
++	pinctrl-names = "default";
++};
++
++&internal_phy {
++	pinctrl-0 = <&eth_link_led_pins>, <&eth_act_led_pins>;
++	pinctrl-names = "default";
++};
++
++&ir {
++	status = "okay";
++	pinctrl-0 = <&remote_input_ao_pins>;
++	pinctrl-names = "default";
++	linux,rc-map-name = "rc-khamsin";
++};
++
++&pwm_ef {
++	status = "okay";
++	pinctrl-0 = <&pwm_e_pins>;
++	pinctrl-names = "default";
++	clocks = <&clkc CLKID_FCLK_DIV4>;
++	clock-names = "clkin0";
++};
++
++&saradc {
++	status = "okay";
++	vref-supply = <&vddio_ao18>;
++};
++
++/* Wireless SDIO Module */
++&sd_emmc_a {
++	status = "okay";
++	pinctrl-0 = <&sdio_pins>;
++	pinctrl-1 = <&sdio_clk_gate_pins>;
++	pinctrl-names = "default", "clk-gate";
++	#address-cells = <1>;
++	#size-cells = <0>;
++
++	bus-width = <4>;
++	cap-sd-highspeed;
++	max-frequency = <100000000>;
++
++	non-removable;
++	disable-wp;
++
++	mmc-pwrseq = <&sdio_pwrseq>;
++
++	vmmc-supply = <&vddao_3v3>;
++	vqmmc-supply = <&vddio_boot>;
++};
++
++/* SD card */
++&sd_emmc_b {
++	status = "okay";
++	pinctrl-0 = <&sdcard_pins>;
++	pinctrl-1 = <&sdcard_clk_gate_pins>;
++	pinctrl-names = "default", "clk-gate";
++
++	bus-width = <4>;
++	cap-sd-highspeed;
++	max-frequency = <100000000>;
++	disable-wp;
++
++	cd-gpios = <&gpio CARD_6 GPIO_ACTIVE_HIGH>;
++	cd-inverted;
++
++	vmmc-supply = <&vddao_3v3>;
++	vqmmc-supply = <&vddio_boot>;
++};
++
++/* eMMC */
++&sd_emmc_c {
++	status = "okay";
++	pinctrl-0 = <&emmc_pins>, <&emmc_ds_pins>;
++	pinctrl-1 = <&emmc_clk_gate_pins>;
++	pinctrl-names = "default", "clk-gate";
++
++	bus-width = <8>;
++	cap-mmc-highspeed;
++	max-frequency = <100000000>;
++	non-removable;
++	disable-wp;
++	mmc-ddr-1_8v;
++	mmc-hs200-1_8v;
++
++	mmc-pwrseq = <&emmc_pwrseq>;
++	vmmc-supply = <&vcc_3v3>;
++	vqmmc-supply = <&vddio_boot>;
++};
++
++/* This is connected to the Bluetooth module: */
++&uart_A {
++	status = "okay";
++	pinctrl-0 = <&uart_a_pins>, <&uart_a_cts_rts_pins>;
++	pinctrl-names = "default";
++};
++
++/* This UART is brought out to the debug header */
++&uart_AO {
++	status = "okay";
++	pinctrl-0 = <&uart_ao_a_pins>;
++	pinctrl-names = "default";
++};
++
++&usb0 {
++	status = "okay";
++};
+
+From 27b11f65c889ccb49e3e9131356773bf96761087 Mon Sep 17 00:00:00 2001
+From: chewitt <chewitt@libreelec.tv>
+Date: Sat, 30 Jun 2018 13:06:50 +0400
+Subject: [PATCH 4/5] media: rc: add keymap for KHAMSIN remote
+
+Add an IR keymap for the KHAMSIN IR/BT remote supplied with the Smartlabs
+SML-5442TW set-top box that allows basic GUI navigation to pair the more
+functional BT mode of the RCU.
+
+Signed-off-by: Christian Hewitt <chewitt@libreelec.tv>
+---
+ drivers/media/rc/keymaps/Makefile     |  1 +
+ drivers/media/rc/keymaps/rc-khamsin.c | 76 +++++++++++++++++++++++++++++++++++
+ include/media/rc-map.h                |  1 +
+ 3 files changed, 78 insertions(+)
+ create mode 100644 drivers/media/rc/keymaps/rc-khamsin.c
+
+diff --git a/drivers/media/rc/keymaps/Makefile b/drivers/media/rc/keymaps/Makefile
+index d6b913a3032d8..78437ec25135a 100644
+--- a/drivers/media/rc/keymaps/Makefile
++++ b/drivers/media/rc/keymaps/Makefile
+@@ -58,6 +58,7 @@ obj-$(CONFIG_RC_MAP) += rc-adstech-dvb-t-pci.o \
+ 			rc-it913x-v1.o \
+ 			rc-it913x-v2.o \
+ 			rc-kaiomy.o \
++			rc-khamsin.o \
+ 			rc-kworld-315u.o \
+ 			rc-kworld-pc150u.o \
+ 			rc-kworld-plus-tv-analog.o \
+diff --git a/drivers/media/rc/keymaps/rc-khamsin.c b/drivers/media/rc/keymaps/rc-khamsin.c
+new file mode 100644
+index 0000000000000..f8ae014b7a9a3
+--- /dev/null
++++ b/drivers/media/rc/keymaps/rc-khamsin.c
+@@ -0,0 +1,76 @@
++// SPDX-License-Identifier: GPL-2.0+
++// Copyright (c) 2018 Christian Hewitt
++
++#include <media/rc-map.h>
++#include <linux/module.h>
++
++/*
++ * KHAMSIN is an IR/Bluetooth RCU supplied with the Smartlabs
++ * SML-5442TW DVB-S/VOD box. The RCU has separate IR (TV) and
++ * BT (STB) modes. This keymap adds IR controls so that users
++ * can navigate and initiate BT pairing.
++ */
++
++static struct rc_map_table khamsin[] = {
++	{ 0x70702, KEY_POWER},
++
++	{ 0x70701, KEY_VIDEO},		/* source */
++
++	{ 0x7076c, KEY_RED},
++	{ 0x70714, KEY_GREEN},
++	{ 0x70715, KEY_YELLOW},
++	{ 0x70716, KEY_BLUE},
++
++	{ 0x7071a, KEY_MENU},
++	{ 0x7074f, KEY_EPG},
++
++	{ 0x70760, KEY_UP },
++	{ 0x70761, KEY_DOWN },
++	{ 0x70765, KEY_LEFT },
++	{ 0x70762, KEY_RIGHT },
++	{ 0x70768, KEY_ENTER },
++
++	{ 0x7072d, KEY_ESC },		/* back */
++
++	{ 0x70707, KEY_VOLUMEUP },
++	{ 0x7070b, KEY_VOLUMEDOWN },
++	{ 0x7070f, KEY_MUTE },
++	{ 0x70712, KEY_CHANNELUP },
++	{ 0x70710, KEY_CHANNELDOWN },
++
++	{ 0x70704, KEY_1 },
++	{ 0x70705, KEY_2 },
++	{ 0x70706, KEY_3 },
++	{ 0x70708, KEY_4 },
++	{ 0x70709, KEY_5 },
++	{ 0x7070a, KEY_6 },
++	{ 0x7070c, KEY_7 },
++	{ 0x7070d, KEY_8 },
++	{ 0x7070e, KEY_9 },
++	{ 0x70711, KEY_0 },
++};
++
++static struct rc_map_list khamsin_map = {
++	.map = {
++		.scan     = khamsin,
++		.size     = ARRAY_SIZE(khamsin),
++		.rc_proto = RC_PROTO_NEC,
++		.name     = RC_MAP_KHAMSIN,
++	}
++};
++
++static int __init init_rc_map_khamsin(void)
++{
++	return rc_map_register(&khamsin_map);
++}
++
++static void __exit exit_rc_map_khamsin(void)
++{
++	rc_map_unregister(&khamsin_map);
++}
++
++module_init(init_rc_map_khamsin)
++module_exit(exit_rc_map_khamsin)
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Christian Hewitt <chewitt@libreelec.tv>");
+diff --git a/include/media/rc-map.h b/include/media/rc-map.h
+index bfa3017cecbaa..ac3786a85f11d 100644
+--- a/include/media/rc-map.h
++++ b/include/media/rc-map.h
+@@ -218,6 +218,7 @@ struct rc_map *rc_map_get(const char *name);
+ #define RC_MAP_IT913X_V1                 "rc-it913x-v1"
+ #define RC_MAP_IT913X_V2                 "rc-it913x-v2"
+ #define RC_MAP_KAIOMY                    "rc-kaiomy"
++#define RC_MAP_KHAMSIN                   "rc-khamsin"
+ #define RC_MAP_KWORLD_315U               "rc-kworld-315u"
+ #define RC_MAP_KWORLD_PC150U             "rc-kworld-pc150u"
+ #define RC_MAP_KWORLD_PLUS_TV_ANALOG     "rc-kworld-plus-tv-analog"
+
+From 703379c91d8079046fe6e77165db357aa609e6f7 Mon Sep 17 00:00:00 2001
+From: chewitt <chewitt@libreelec.tv>
+Date: Sat, 30 Jun 2018 19:54:41 +0400
+Subject: [PATCH 5/5] media: rc: add keymap for Philips RC242 remote
+
+Add an IR keymap for the Philips RC242 remote used with some IPTV/VOD STB's.
+
+Signed-off-by: Christian Hewitt <chewitt@libreelec.tv>
+---
+ drivers/media/rc/keymaps/Makefile           |  1 +
+ drivers/media/rc/keymaps/rc-philips-rc242.c | 93 +++++++++++++++++++++++++++++
+ include/media/rc-map.h                      |  1 +
+ 3 files changed, 95 insertions(+)
+ create mode 100644 drivers/media/rc/keymaps/rc-philips-rc242.c
+
+diff --git a/drivers/media/rc/keymaps/Makefile b/drivers/media/rc/keymaps/Makefile
+index 78437ec25135a..53d4f74170afd 100644
+--- a/drivers/media/rc/keymaps/Makefile
++++ b/drivers/media/rc/keymaps/Makefile
+@@ -77,6 +77,7 @@ obj-$(CONFIG_RC_MAP) += rc-adstech-dvb-t-pci.o \
+ 			rc-norwood.o \
+ 			rc-npgtech.o \
+ 			rc-pctv-sedna.o \
++                        rc-philips-rc242.o \
+ 			rc-pinnacle-color.o \
+ 			rc-pinnacle-grey.o \
+ 			rc-pinnacle-pctv-hd.o \
+diff --git a/drivers/media/rc/keymaps/rc-philips-rc242.c b/drivers/media/rc/keymaps/rc-philips-rc242.c
+new file mode 100644
+index 0000000000000..84c436ce84963
+--- /dev/null
++++ b/drivers/media/rc/keymaps/rc-philips-rc242.c
+@@ -0,0 +1,93 @@
++// SPDX-License-Identifier: GPL-2.0+
++// Copyright (c) 2018 Christian Hewitt
++
++#include <media/rc-map.h>
++#include <linux/module.h>
++
++/*
++ * The Philips RC242 remote ships is used with several European
++ * telco provided IPTV/VOD set-top boxes.
++ */
++
++static struct rc_map_table philips_rc242[] = {
++
++	{ 0x40c, KEY_POWER },
++	{ 0x44a, KEY_INFO },
++	{ 0x461, KEY_FAVORITES },
++
++	{ 0x401, KEY_1 },
++	{ 0x402, KEY_2 },
++	{ 0x403, KEY_3 },
++
++	{ 0x404, KEY_4 },
++	{ 0x405, KEY_5 },
++	{ 0x406, KEY_6 },
++
++	{ 0x407, KEY_7 },
++	{ 0x408, KEY_8 },
++	{ 0x409, KEY_9 },
++
++	{ 0x448, KEY_ZOOM },
++	{ 0x400, KEY_0 },
++	{ 0x441, KEY_EPG },
++
++	{ 0x412, KEY_CONTEXT_MENU },
++	{ 0x437, KEY_RECORD },
++	{ 0x430, KEY_PAUSE },
++	{ 0x41d, KEY_ZOOM },
++
++	{ 0x410, KEY_UP },
++	{ 0x411, KEY_DOWN },
++	{ 0x415, KEY_LEFT },
++	{ 0x416, KEY_RIGHT },
++	{ 0x424, KEY_OK },
++
++	{ 0x414, KEY_VOLUMEUP },
++	{ 0x41f, KEY_BACK },
++	{ 0x40e, KEY_CHANNELUP },
++
++	{ 0x417, KEY_VOLUMEDOWN },
++	{ 0x40d, KEY_MUTE },
++	{ 0x40a, KEY_CHANNELDOWN },
++
++	{ 0x432, KEY_REWIND },
++	{ 0x435, KEY_PLAYPAUSE },
++	{ 0x436, KEY_STOP },
++	{ 0x434, KEY_FORWARD },
++
++	{ 0x451, KEY_PREVIOUSSONG },
++	{ 0x43c, KEY_SUBTITLE },
++	{ 0x40f, KEY_LANGUAGE },
++	{ 0x450, KEY_NEXTSONG },
++
++	{ 0x46b, KEY_RED },
++	{ 0x46c, KEY_GREEN },
++	{ 0x46d, KEY_YELLOW },
++	{ 0x46e, KEY_BLUE },
++
++};
++
++static struct rc_map_list philips_rc242_map = {
++	.map = {
++		.scan     = philips_rc242,
++		.size     = ARRAY_SIZE(philips_rc242),
++		.rc_proto = RC_PROTO_RC5,
++		.name     = RC_MAP_PHILIPS_RC242,
++	}
++};
++
++static int __init init_rc_map_philips_rc242(void)
++{
++	return rc_map_register(&philips_rc242_map);
++}
++
++static void __exit exit_rc_map_philips_rc242(void)
++{
++	rc_map_unregister(&philips_rc242_map);
++}
++
++module_init(init_rc_map_philips_rc242)
++module_exit(exit_rc_map_philips_rc242)
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Christian Hewitt <chewitt@libreelec.tv>");
+diff --git a/include/media/rc-map.h b/include/media/rc-map.h
+index ac3786a85f11d..2481c9c853e11 100644
+--- a/include/media/rc-map.h
++++ b/include/media/rc-map.h
+@@ -237,6 +237,7 @@ struct rc_map *rc_map_get(const char *name);
+ #define RC_MAP_NORWOOD                   "rc-norwood"
+ #define RC_MAP_NPGTECH                   "rc-npgtech"
+ #define RC_MAP_PCTV_SEDNA                "rc-pctv-sedna"
++#define RC_MAP_PHILIPS_RC242             "rc-philips-rc242"
+ #define RC_MAP_PINNACLE_COLOR            "rc-pinnacle-color"
+ #define RC_MAP_PINNACLE_GREY             "rc-pinnacle-grey"
+ #define RC_MAP_PINNACLE_PCTV_HD          "rc-pinnacle-pctv-hd"
