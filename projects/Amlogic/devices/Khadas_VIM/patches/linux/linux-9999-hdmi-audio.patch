@@ -1,0 +1,17 @@
+--- a/arch/arm64/boot/dts/amlogic/meson-gxl-s905x-khadas-vim.dts	2019-01-16 19:11:08.001770002 +0000
++++ b/arch/arm64/boot/dts/amlogic/meson-gxl-s905x-khadas-vim.dts	2019-01-16 19:11:30.057957548 +0000
+@@ -68,12 +68,12 @@
+ 
+ 	sound {
+ 		compatible = "simple-audio-card";
+-		simple-audio-card,name = "meson-gx-audio";
++		simple-audio-card,name = "HDMI";
+ 
+ 		simple-audio-card,dai-link@0 {
+ 			/* HDMI Output */
+ 			format = "i2s";
+-			mclk-fs = <256>;
++			mclk-fs = <128>;
+ 			bitclock-master = <&aiu_i2s>;
+ 			frame-master = <&aiu_i2s>;
+ 

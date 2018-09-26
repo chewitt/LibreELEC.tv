@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
+
+mcopy "$RELEASE_DIR/3rdparty/bootloader/dtb.img" :: 2>&1 > /dev/null || true
+mcopy "$RELEASE_DIR/3rdparty/bootloader/aml_autoscript" :: 2>&1 > /dev/null || true
+mcopy "$RELEASE_DIR/3rdparty/bootloader/emmc_autoscript" :: 2>&1 > /dev/null || true
+mcopy "$RELEASE_DIR/3rdparty/bootloader/s905_autoscript" :: 2>&1 > /dev/null || true
+mcopy "$RELEASE_DIR/3rdparty/bootloader/aml_autoscript.zip" :: 2>&1 > /dev/null || true
+mcopy "$RELEASE_DIR/3rdparty/bootloader/uEnv.ini" :: 2>&1 > /dev/null || true
+mcopy "$RELEASE_DIR/3rdparty/bootloader/emmc_uEnv.ini" :: 2>&1 > /dev/null || true
+mcopy "$RELEASE_DIR/3rdparty/bootloader/install2emmc.sh" :: 2>&1 > /dev/null || true
