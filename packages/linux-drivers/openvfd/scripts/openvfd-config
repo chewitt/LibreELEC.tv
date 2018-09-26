@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
+
+COMPATIBLE=$(grep "open,vfd" /proc/device-tree/openvfd/compatible)
+
+if [ -n $COMPATIBLE ]; then
+  if [ -f /storage/.config/vfd.conf ]; then
+    cp /storage/.config/vfd.conf /run/libreelec/openvfd.conf
+  elif [ -f /storage/.config/openvfd.conf ]; then
+    cp /storage/.config/openvfd.conf /run/libreelec/openvfd.conf
+  elif [ -f /etc/openvfd.conf ]; then
+    cp /etc/openvfd.conf /run/libreelec/openvfd.conf
+  fi
+fi
