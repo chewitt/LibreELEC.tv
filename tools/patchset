@@ -1,0 +1,155 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
+
+if [ -f  .git/config ]; then
+  DIR="/home/chewitt/LibreELEC.chewitt"
+else
+  echo "not in git root folder, exiting.."
+  exit 1
+fi
+
+do_narmstrong(){
+  rm projects/Amlogic/patches/linux/a* 2&>/dev/null
+
+  # DRM OVERLAY
+  local SEQUENCE="aa"
+  rm projects/Amlogic/patches/linux/$SEQUENCE-* 2&>/dev/null
+  cd ~/linux.narmstrong
+  rm *.patch 2&>/dev/null
+  git checkout amlogic/v4.19/drm-overlay
+  git fetch origin amlogic/v4.19/drm-overlay
+  git reset --hard origin/amlogic/v4.19/drm-overlay
+  git format-patch --start-number 0001 94710cac0ef4ee177a63b5227664b38c95bbf703 # 4.18.0
+  for filename in *.patch; do mv "$filename" "$SEQUENCE-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic/patches/linux/
+
+  # VPU-4K
+#  local SEQUENCE="ab"
+#  rm projects/Amlogic/patches/linux/$SEQUENCE-* 2&>/dev/null
+#  cd ~/linux.narmstrong
+#  rm *.patch 2&>/dev/null
+#  git checkout amlogic/v4.19/vpu-4k
+#  git fetch origin amlogic/v4.19/vpu-4k
+#  git reset --hard origin/amlogic/v4.19/vpu-4k
+#  git format-patch --start-number 0001 acb1872577b346bd15ab3a3f8dff780d6cca4b70 # 4.18-rc7
+#  for filename in *.patch; do mv "$filename" "$SEQUENCE-$filename"; done;
+#  mv *.patch $DIR/projects/Amlogic/patches/linux/
+
+  # VPU-ALT-CLK
+  local SEQUENCE="ac"
+  rm projects/Amlogic/patches/linux/$SEQUENCE-* 2&>/dev/null
+  cd ~/linux.narmstrong
+  rm *.patch 2&>/dev/null
+  git checkout amlogic/v4.19/vpu-alt-clk
+  git fetch origin amlogic/v4.19/vpu-alt-clk
+  git reset --hard origin/amlogic/v4.19/vpu-alt-clk
+  git format-patch --start-number 0001 9b79b14f4082a111f7cd278c091c1295d15ce295 # 4.18-rc7
+  for filename in *.patch; do mv "$filename" "$SEQUENCE-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic/patches/linux/
+
+  # FIX-DRM
+  local SEQUENCE="ad"
+  rm projects/Amlogic/patches/linux/$SEQUENCE-* 2&>/dev/null
+  cd ~/linux.narmstrong
+  rm *.patch 2&>/dev/null
+  git checkout amlogic/v4.19/fix-drm-min-max
+  git fetch origin amlogic/v4.19/fix-drm-min-max
+  git reset --hard origin/amlogic/v4.19/fix-drm-min-max
+  git format-patch --start-number 0001 17b57b1883c1285f3d0dc2266e8f79286a7bef38 # 4.19-rc6
+  for filename in *.patch; do mv "$filename" "$SEQUENCE-$filename"; done;
+  rm ad-0001-drm-fix-use-after-free-read-in-drm_mode_create_lease.patch
+  rm ad-0002-drm-cma-helper-Fix-crash-in-fbdev-error-path.patch
+  mv *.patch $DIR/projects/Amlogic/patches/linux/
+}
+
+do_upstream(){
+  # LINUX PATCHES
+  rm projects/Amlogic/patches/linux/b-* 2&>/dev/null
+  cd ~/linux.narmstrong
+  rm *.patch 2&>/dev/null
+  git checkout linux-4.19-le-amlogic-gx
+  git fetch origin linux-4.19-le-amlogic-gx
+  git reset --hard origin/linux-4.19-le-amlogic-gx
+  git format-patch --start-number 0001 6bf4ca7fbc85d80446ac01c0d1d77db4d91a6d84 #4.19-rc5
+  #rm 0001*
+  #rm 0003*
+  for filename in *.patch; do mv "$filename" "b-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic/patches/linux/
+}
+
+do_elyotna(){
+  # VDEC PATCHES
+  rm projects/Amlogic/patches/linux/c-* 2&>/dev/null
+  cd ~/linux.elyotna
+  rm *.patch 2&>/dev/null
+  git checkout 4.19/v4l2-m2m-pr
+  git fetch origin 4.19/v4l2-m2m-pr
+  git reset --hard origin/4.19/v4l2-m2m-pr
+  git format-patch --start-number 0001 efbb45d80619d3441b3887e55c31569518baa05b # 4.19-rc4 + canvas
+  for filename in *.patch; do mv "$filename" "c-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic/patches/linux/
+  cd $DIR
+  git checkout projects/Amlogic/patches/linux/c-0005-arm64-dts-meson-add-vdec-entries.patch
+}
+
+do_kwiboo(){
+  # HDMI AUDIO PATCHES
+  rm projects/Amlogic/patches/linux/d-* 2&>/dev/null
+  cd ~/linux.kwiboo
+  rm *.patch 2&>/dev/null
+  git checkout hdmi-audio-4.18
+  git fetch origin hdmi-audio-4.18
+  git reset --hard origin/hdmi-audio-4.18
+  git format-patch --start-number 0001 1e4b044d22517cae7047c99038abb444423243ca #4.18-rc4
+  rm 0001*
+  for filename in *.patch; do mv "$filename" "d-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic/patches/linux/
+}
+
+do_erstrom(){
+  # ath10k-sdio PATCHES
+  rm projects/Amlogic/patches/linux/e-* 2&>/dev/null
+  cd ~/linux.erstrom
+  rm *.patch 2&>/dev/null
+  git checkout ath-201809061619-ath10k-high-latency
+  git fetch origin ath-201809061619-ath10k-high-latency
+  git reset --hard origin/ath-201809061619-ath10k-high-latency
+  git format-patch --start-number 0001 55dbf290bc3c38d0060462fb6968a80f9b885d67 #4.19-rc4
+  #rm 0001*
+  #rm 0002*
+  #rm 0003*
+  #rm 0004*
+  #rm 0005*
+  for filename in *.patch; do mv "$filename" "e-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic/patches/linux/
+}
+
+case $1 in
+  narmstrong)
+    do_narmstrong
+    ;;
+  upstream)
+    do_upstream
+    ;;
+  elyotna|ely)
+    do_elyotna
+    ;;
+  kwiboo)
+    do_kwiboo
+    ;;
+  erstrom|ath10k)
+    do_erstrom
+    ;;
+  all|*)
+    do_narmstrong
+    do_upstream
+    do_elyotna
+    do_kwiboo
+    do_erstrom
+esac
+
+cd $DIR
+
+exit
