@@ -1,0 +1,12 @@
+  # Configuration for u-boot
+    UBOOT_SYSTEM="Odroid_C2"
+
+  # Kernel extra targets to build
+    KERNEL_UBOOT_EXTRA_TARGET="amlogic/meson-gxbb-odroidc2.dtb"
+
+  # additional packages to install:
+  # e.g. ADDITIONAL_PACKAGES="PACKAGE1 PACKAGE2"
+    ADDITIONAL_PACKAGES+=" amlogic-boot-fip"
+
+  # OOTB support for IR remote
+    IR_REMOTE_KEYMAPS+=" odroid"
