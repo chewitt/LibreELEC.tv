@@ -1,0 +1,14 @@
+--- a/arch/arm64/boot/dts/amlogic/meson-gxm-khadas-vim2.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-gxm-khadas-vim2.dts
+@@ -386,6 +386,11 @@
+ 	status = "okay";
+ 	pinctrl-0 = <&uart_a_pins>;
+ 	pinctrl-names = "default";
++
++	bluetooth {
++		compatible = "brcm,bcm43438-bt";
++		shutdown-gpios = <&gpio GPIOX_17 GPIO_ACTIVE_HIGH>;
++	};
+ };
+ 
+ /* This is brought out on the Linux_RX (18) and Linux_TX (19) pins: */

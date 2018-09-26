@@ -1,0 +1,10 @@
+--- a/arch/arm64/boot/dts/amlogic/meson-gxm-khadas-vim2.dts	2018-10-12 10:24:28.422443883 +0100
++++ b/arch/arm64/boot/dts/amlogic/meson-gxm-khadas-vim2.dts	2018-10-21 07:11:00.820029984 +0100
+@@ -305,6 +305,7 @@
+ 		interrupt-parent = <&gpio_intc>;
+ 		/* MAC_INTR on GPIOZ_15 */
+ 		interrupts = <25 IRQ_TYPE_LEVEL_LOW>;
++		eee-broken-1000t;
+ 	};
+ };
+ 
