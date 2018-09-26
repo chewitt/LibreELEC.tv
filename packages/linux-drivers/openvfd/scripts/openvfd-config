@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
+
+DTNAME=$(/usr/bin/dtname)
+
+if [ ! -e /proc/device-tree/openvfd/compatible ]; then
+  if [ -e /flash/$DTNAME.dtb ]; then
+    DTB="/flash/$DTNAME.dtb"
+  else
+    DTB="/flash/dtb.img"
+  fi
+  mount -o remount,rw /flash
+    fdtput -p -t s $DTB /openvfd status "okay"
+    fdtput -p -t s $DTB /openvfd dev_name "openvfd"
+    fdtput -p -t s $DTB /openvfd compatible "open,vfd"
+  mount -o remount,ro /flash
+fi
+
+if [ -f /storage/.config/vfd.conf ]; then
+  cp /storage/.config/vfd.conf /run/libreelec/openvfd.conf
+elif [ -f /storage/.config/openvfd.conf ]; then
+  cp /storage/.config/openvfd.conf /run/libreelec/openvfd.conf
+elif [ -f /etc/openvfd.conf ]; then
+  cp /etc/openvfd.conf /run/libreelec/openvfd.conf
+elif [ -f /usr/config/openvfd/$DTNAME.conf ]; then
+  cp /usr/config/openvfd/$DTNAME.conf /run/libreelec/openvfd.conf
+fi
