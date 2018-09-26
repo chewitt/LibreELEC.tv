@@ -1,0 +1,171 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
+
+if [ -f  .git/config ]; then
+  DIR=$(pwd)
+else
+  echo "not in git root folder, exiting.."
+  exit 1
+fi
+
+do_narmstrong(){
+  # DRM + AUDIO PATCHES
+  rm $PATCHES/a-* 2&>/dev/null
+  cd ~/linux.narmstrong
+  rm *.patch 2&>/dev/null
+  git checkout linux-5.0-le-amlogic-gx
+  git fetch origin linux-5.0-le-amlogic-gx
+  git reset --hard origin/linux-5.0-le-amlogic-gx
+  git format-patch --start-number 0001 a3b22b9f11d9fbc48b0291ea92259a5a810e9438 # 5.0-rc7
+  for filename in *.patch; do mv "$filename" "a-$filename"; done;
+  mv *.patch $DIR/$PATCHES/
+}
+
+do_elyotna(){
+  # V4L2 VDEC PATCHES
+  rm $PATCHES/b-* 2&>/dev/null
+  cd ~/linux.elyotna
+  rm *.patch 2&>/dev/null
+  git checkout 5.0/v4l2-m2m-pr
+  git fetch origin 5.0/v4l2-m2m-pr
+  git reset --hard origin/5.0/v4l2-m2m-pr
+  git format-patch --start-number 0001 8834f5600cf3c8db365e18a3d5cac2c2780c81e5 # 5.0-rc5
+  for filename in *.patch; do mv "$filename" "b-$filename"; done;
+  mv *.patch $DIR/$PATCHES/
+#  cd $DIR
+#  git checkout projects/Amlogic/patches/linux/b-0005-arm64-dts-meson-add-vdec-entries.patch
+}
+
+do_kwiboo(){
+  # DW-HDMI AUDIO PATCHES
+  rm $PATCHES/c-* 2&>/dev/null
+  cd ~/linux.kwiboo
+  rm *.patch 2&>/dev/null
+  git fetch origin allwinner-4.20-audio
+  git checkout allwinner-4.20-audio
+  git reset --hard origin/allwinner-4.20-audio
+  git format-patch --start-number 0001 8fe28cb58bcb235034b64cbbb7550a8a43fd88be # 4.20.0
+  for filename in *.patch; do mv "$filename" "c-$filename"; done;
+  mv *.patch $DIR/$PATCHES/
+}
+
+do_erstrom(){
+  # ATH10K-SDIO PATCHES
+  rm $PATCHES/d-* 2&>/dev/null
+  cd ~/linux.erstrom
+  rm *.patch 2&>/dev/null
+  git fetch origin master
+  git checkout master
+  git reset --hard origin/master
+  git format-patch --start-number 0001 94f742967c57a997ab239846be5eb48f5b1458e3 #4.19.0
+  for filename in *.patch; do mv "$filename" "d-$filename"; done;
+  mv *.patch $DIR/$PATCHES/
+}
+
+do_lima(){
+  # LIMA KERNEL DRIVER
+  rm $PATCHES/e-* 2&>/dev/null
+  cd ~/linux.lima
+  rm *.patch 2&>/dev/null
+  git fetch origin lima-5.0-rc8-2
+  git checkout lima-5.0-rc8-2
+  git reset --hard origin/lima-5.0-rc8-2
+  git format-patch --start-number 0001 5908e6b738e3357af42c10e1183753c70a0117a9 #5.0.0-rc8
+  for filename in *.patch; do mv "$filename" "e-$filename"; done;
+  mv *.patch $DIR/$PATCHES/
+}
+
+do_panfrost(){
+  # PANFROST KERNEL DRIVER
+  rm $PATCHES/f-* 2&>/dev/null
+  cd ~/linux.panfrost
+  rm *.patch 2&>/dev/null
+  git fetch origin panfrost-5.0
+  git checkout panfrost-5.0
+  git reset --hard origin/panfrost-5.0
+  git format-patch --start-number 0001 12ad143e1b803e541e48b8ba40f550250259ecdd #5.0.0
+  for filename in *.patch; do mv "$filename" "f-$filename"; done;
+  mv *.patch $DIR/$PATCHES/
+  cd $DIR
+  rm $PATCHES/f-0009-drm-Add-reservation_object-to-drm_gem_object.patch
+  rm $PATCHES/f-0017-drm-doc-document-recommended-component-helper-usage.patch
+}
+
+do_nondrm(){
+  # PANFROST NONDRM MESA PATCHES
+  rm packages/graphics/mesa/patches/panfrost/a-* 2&>/dev/null
+  cd ~/panfrost.nondrm
+  rm *.patch 2&>/dev/null
+  git fetch origin master
+  git checkout master
+  git reset --hard origin/master
+  git format-patch --start-number 0001 a98efe3901c3b4d6cc7587b0909d6fb9c49e8323 #nondrm
+  for filename in *.patch; do mv "$filename" "a-$filename"; done;
+  sed -i 's|a/|a/src/gallium/drivers/panfrost/nondrm/|g' *.patch
+  sed -i 's|b/|b/src/gallium/drivers/panfrost/nondrm/|g' *.patch
+  mv *.patch $DIR/packages/graphics/mesa/patches/panfrost/
+}
+
+do_ffmpeg(){
+  # FFMPEG STATEFUL HWACCELL
+  rm project/Amlogic/patches/ffmpeg/ffmpeg-hwaccel-* 2&>/dev/null
+  cd ~/ffmpeg.lrusak
+  rm *.patch 2&>/dev/null
+  git fetch origin v4l2-request-hwaccel
+  git checkout v4l2-request-hwaccel
+  git reset --hard origin/v4l2-request-hwaccel
+  git format-patch --start-number 0001 21c13d04e624aabc1c78998f910782db673070e6 # 4.0.3-Leia-18.2
+  for filename in *.patch; do mv "$filename" "ffmpeg-hwaccel-$filename"; done;
+  mv *.patch $DIR/projects/Amlogic/patches/ffmpeg/
+}
+
+case $2 in
+  g12a)
+    PATCHES="packages/linux/patches/amlogic-g12a"
+    ;;
+  g12b)
+    PATCHES="packages/linux/patches/amlogic-g12b"
+    ;;
+  mainline|*)
+    PATCHES="packages/linux/patches/amlogic-mainline"
+    ;;
+esac
+
+case $1 in
+  narmstrong)
+    do_narmstrong
+    ;;
+  upstream)
+    do_upstream
+    ;;
+  elyotna|ely)
+    do_elyotna
+    ;;
+  kwiboo)
+    do_kwiboo
+    ;;
+  erstrom|ath10k)
+    do_erstrom
+    ;;
+  lima)
+    do_lima
+    ;;
+  panfrost)
+    do_panfrost
+    ;;
+  nondrm)
+    do_nondrm
+    ;;
+  ffmpeg)
+    do_ffmpeg
+    ;;
+  *)
+    echo "error: nothing selected!"
+    ;;
+esac
+
+cd $DIR
+
+exit
