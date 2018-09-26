@@ -1,0 +1,52 @@
+From 6df887b270ebda7448da1b4cca2ca936bafbf40f Mon Sep 17 00:00:00 2001
+From: Maxime Jourdan <mjourdan@baylibre.com>
+Date: Mon, 1 Oct 2018 18:37:07 +0200
+Subject: [PATCH 11/18] meson: vdec: Fix the *num_buffers logic in queue_setup
+
+ - Take into account the current amount of allocated buffers in
+ q->num_buffers
+ - Clarify the comment regarding the min_buffers_needed override
+---
+ drivers/media/platform/meson/vdec/vdec.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/platform/meson/vdec/vdec.c b/drivers/media/platform/meson/vdec/vdec.c
+index 233250d..c15658d 100644
+--- a/drivers/media/platform/meson/vdec/vdec.c
++++ b/drivers/media/platform/meson/vdec/vdec.c
+@@ -164,6 +164,7 @@ static int vdec_queue_setup(struct vb2_queue *q,
+ 	const struct amvdec_format *fmt_out = sess->fmt_out;
+ 	u32 output_size = amvdec_get_output_size(sess);
+ 	u32 am21c_size = amvdec_am21c_size(sess->width, sess->height);
++	u32 buffers_total;
+ 
+ 	if (*num_planes) {
+ 		switch (q->type) {
+@@ -223,10 +224,20 @@ static int vdec_queue_setup(struct vb2_queue *q,
+ 		default:
+ 			return -EINVAL;
+ 		}
+-		*num_buffers = min(max(*num_buffers, fmt_out->min_buffers),
+-				   fmt_out->max_buffers);
+-		/* The HW needs all buffers to be configured during startup */
+-		q->min_buffers_needed = *num_buffers;
++
++		buffers_total = q->num_buffers + *num_buffers;
++
++		if (buffers_total < fmt_out->min_buffers)
++			*num_buffers = fmt_out->min_buffers - q->num_buffers;
++		if (buffers_total > fmt_out->max_buffers)
++			*num_buffers = fmt_out->max_buffers - q->num_buffers;
++
++		/* We need to program the complete CAPTURE buffer list
++		 * in registers during start_streaming, and the firmwares
++		 * are free to choose any of them to write frames to. As such,
++		 * we need all of them to be queued into the driver
++		 */
++		q->min_buffers_needed = q->num_buffers + *num_buffers;
+ 		break;
+ 	default:
+ 		return -EINVAL;
+-- 
+2.7.4
+

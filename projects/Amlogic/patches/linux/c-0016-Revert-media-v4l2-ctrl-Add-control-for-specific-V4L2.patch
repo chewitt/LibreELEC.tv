@@ -1,0 +1,73 @@
+From 7f1794f40468b603968f94a89f952fd336178b8b Mon Sep 17 00:00:00 2001
+From: Maxime Jourdan <mjourdan@baylibre.com>
+Date: Wed, 3 Oct 2018 12:08:49 +0200
+Subject: [PATCH 16/18] Revert "media: v4l2-ctrl: Add control for specific
+ V4L2_EVENT_SRC_CH_RESOLUTION support"
+
+Not the right solution -- https://patchwork.linuxtv.org/patch/52309/
+
+This reverts commit 2dacce7ba4046496cd6b8e4ef7f09f8d636c7968.
+---
+ Documentation/media/uapi/v4l/control.rst | 7 -------
+ drivers/media/v4l2-core/v4l2-ctrls.c     | 3 ---
+ include/uapi/linux/v4l2-controls.h       | 4 +---
+ 3 files changed, 1 insertion(+), 13 deletions(-)
+
+diff --git a/Documentation/media/uapi/v4l/control.rst b/Documentation/media/uapi/v4l/control.rst
+index 029a4e8..c1e6adb 100644
+--- a/Documentation/media/uapi/v4l/control.rst
++++ b/Documentation/media/uapi/v4l/control.rst
+@@ -297,13 +297,6 @@ Control IDs
+     set the alpha component value of all pixels for further processing
+     in the device.
+ 
+-``V4L2_CID_SUPPORTS_CH_RESOLUTION`` ``(boolean)``
+-    This is a read-only control that can be read by the application when
+-    the driver exposes an OUTPUT queue and event
+-    ``V4L2_EVENT_SRC_CH_RESOLUTION`` but doesn't support it for every
+-    OUTPUT format. It returns true if the currently selected OUTPUT format
+-    supports this event.
+-
+ ``V4L2_CID_LASTP1``
+     End of the predefined control IDs (currently
+     ``V4L2_CID_ALPHA_COMPONENT`` + 1).
+diff --git a/drivers/media/v4l2-core/v4l2-ctrls.c b/drivers/media/v4l2-core/v4l2-ctrls.c
+index a8037ff..599c1cb 100644
+--- a/drivers/media/v4l2-core/v4l2-ctrls.c
++++ b/drivers/media/v4l2-core/v4l2-ctrls.c
+@@ -739,7 +739,6 @@ const char *v4l2_ctrl_get_name(u32 id)
+ 	case V4L2_CID_MIN_BUFFERS_FOR_OUTPUT:	return "Min Number of Output Buffers";
+ 	case V4L2_CID_ALPHA_COMPONENT:		return "Alpha Component";
+ 	case V4L2_CID_COLORFX_CBCR:		return "Color Effects, CbCr";
+-	case V4L2_CID_SUPPORTS_CH_RESOLUTION:	return "Supports Change Resolution";
+ 
+ 	/* Codec controls */
+ 	/* The MPEG controls are applicable to all codec controls
+@@ -1075,8 +1074,6 @@ void v4l2_ctrl_fill(u32 id, const char **name, enum v4l2_ctrl_type *type,
+ 	*flags = 0;
+ 
+ 	switch (id) {
+-	case V4L2_CID_SUPPORTS_CH_RESOLUTION:
+-		*flags |= V4L2_CTRL_FLAG_READ_ONLY;
+ 	case V4L2_CID_AUDIO_MUTE:
+ 	case V4L2_CID_AUDIO_LOUDNESS:
+ 	case V4L2_CID_AUTO_WHITE_BALANCE:
+diff --git a/include/uapi/linux/v4l2-controls.h b/include/uapi/linux/v4l2-controls.h
+index c874fdd2..e4ee10e 100644
+--- a/include/uapi/linux/v4l2-controls.h
++++ b/include/uapi/linux/v4l2-controls.h
+@@ -141,10 +141,8 @@ enum v4l2_colorfx {
+ #define V4L2_CID_ALPHA_COMPONENT		(V4L2_CID_BASE+41)
+ #define V4L2_CID_COLORFX_CBCR			(V4L2_CID_BASE+42)
+ 
+-#define V4L2_CID_SUPPORTS_CH_RESOLUTION		(V4L2_CID_BASE+43)
+-
+ /* last CID + 1 */
+-#define V4L2_CID_LASTP1                         (V4L2_CID_BASE+44)
++#define V4L2_CID_LASTP1                         (V4L2_CID_BASE+43)
+ 
+ /* USER-class private control IDs */
+ 
+-- 
+2.7.4
+

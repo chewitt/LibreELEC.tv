@@ -1,0 +1,283 @@
+From 82677c50d0cf3580be994e042056b3135c2b9a02 Mon Sep 17 00:00:00 2001
+From: Maxime Jourdan <mjourdan@baylibre.com>
+Date: Thu, 4 Oct 2018 10:51:35 +0200
+Subject: [PATCH 18/18] Revert "mpeg2,mpeg4: always allocate max buffer size,
+ and fetch width/height"
+
+This reverts commit 332fa96f8697d2a07ce0d1e53be4d965f65fb776.
+---
+ drivers/media/platform/meson/vdec/codec_mpeg12.c  | 11 +++++++++--
+ drivers/media/platform/meson/vdec/codec_mpeg4.c   | 11 +++++------
+ drivers/media/platform/meson/vdec/vdec.c          | 10 ++--------
+ drivers/media/platform/meson/vdec/vdec.h          | 12 ------------
+ drivers/media/platform/meson/vdec/vdec_platform.c | 15 ---------------
+ 5 files changed, 16 insertions(+), 43 deletions(-)
+
+diff --git a/drivers/media/platform/meson/vdec/codec_mpeg12.c b/drivers/media/platform/meson/vdec/codec_mpeg12.c
+index d21cb3a..1bd6fb7 100644
+--- a/drivers/media/platform/meson/vdec/codec_mpeg12.c
++++ b/drivers/media/platform/meson/vdec/codec_mpeg12.c
+@@ -88,7 +88,16 @@ static int codec_mpeg12_start(struct amvdec_session *sess)
+ 	amvdec_write_dos(core, MREG_CO_MV_START,
+ 			 mpeg12->workspace_paddr + WORKSPACE_OFFSET);
+ 
++	amvdec_write_dos(core, MPEG1_2_REG, 0);
++	amvdec_write_dos(core, PSCALE_CTRL, 0);
+ 	amvdec_write_dos(core, PIC_HEAD_INFO, 0x380);
++	amvdec_write_dos(core, M4_CONTROL_REG, 0);
++	amvdec_write_dos(core, MREG_BUFFERIN, 0);
++	amvdec_write_dos(core, MREG_BUFFEROUT, 0);
++	amvdec_write_dos(core, MREG_CMD, (sess->width << 16) | sess->height);
++	amvdec_write_dos(core, MREG_ERROR_COUNT, 0);
++	amvdec_write_dos(core, MREG_FATAL_ERROR, 0);
++	amvdec_write_dos(core, MREG_WAIT_BUFFER, 0);
+ 
+ 	sess->keyframe_found = 1;
+ 	sess->priv = mpeg12;
+@@ -168,8 +177,6 @@ static irqreturn_t codec_mpeg12_threaded_isr(struct amvdec_session *sess)
+ 
+ 	pic_info = amvdec_read_dos(core, MREG_PIC_INFO);
+ 	is_progressive = pic_info & PICINFO_PROG;
+-	sess->width = amvdec_read_dos(core, MREG_PIC_WIDTH);
+-	sess->height = amvdec_read_dos(core, MREG_PIC_HEIGHT);
+ 
+ 	if (!is_progressive)
+ 		field = (pic_info & PICINFO_TOP_FIRST) ?
+diff --git a/drivers/media/platform/meson/vdec/codec_mpeg4.c b/drivers/media/platform/meson/vdec/codec_mpeg4.c
+index 8407887..1d574e5 100644
+--- a/drivers/media/platform/meson/vdec/codec_mpeg4.c
++++ b/drivers/media/platform/meson/vdec/codec_mpeg4.c
+@@ -14,7 +14,6 @@
+ #define DCAC_BUFF_START_IP	0x02b00000
+ 
+ /* map firmware registers to known MPEG4 functions */
+-#define MP4_PIC_WH		AV_SCRATCH_7
+ #define MREG_BUFFERIN		AV_SCRATCH_8
+ #define MREG_BUFFEROUT		AV_SCRATCH_9
+ #define MP4_NOT_CODED_CNT	AV_SCRATCH_A
+@@ -67,6 +66,11 @@ static int codec_mpeg4_start(struct amvdec_session *sess) {
+ 
+ 	amvdec_write_dos(core, MEM_OFFSET_REG,
+ 			 mpeg4->workspace_paddr - DCAC_BUFF_START_IP);
++	amvdec_write_dos(core, PSCALE_CTRL, 0);
++	amvdec_write_dos(core, MP4_NOT_CODED_CNT, 0);
++	amvdec_write_dos(core, MREG_BUFFERIN, 0);
++	amvdec_write_dos(core, MREG_BUFFEROUT, 0);
++	amvdec_write_dos(core, MREG_FATAL_ERROR, 0);
+ 	amvdec_write_dos(core, MDEC_PIC_DC_THRESH, 0x404038aa);
+ 
+ 	sess->keyframe_found = 1;
+@@ -99,7 +103,6 @@ static irqreturn_t codec_mpeg4_isr(struct amvdec_session *sess)
+ 	struct amvdec_core *core = sess->core;
+ 	u32 reg;
+ 	u32 buffer_index;
+-	u32 wh;
+ 	u32 field = V4L2_FIELD_NONE;
+ 
+ 	reg = amvdec_read_dos(core, MREG_FATAL_ERROR);
+@@ -113,10 +116,6 @@ static irqreturn_t codec_mpeg4_isr(struct amvdec_session *sess)
+ 	if (!reg)
+ 		goto end;
+ 
+-	wh = amvdec_read_dos(core, MP4_PIC_WH);
+-	sess->width = (wh >> 16) & 0xffff;
+-	sess->height = wh & 0xffff;
+-
+ 	buffer_index = reg & BUF_IDX_MASK;
+ 	if (reg & INTERLACE_FLAG)
+ 		field = (reg & TOP_FIELD_FIRST_FLAG) ?
+diff --git a/drivers/media/platform/meson/vdec/vdec.c b/drivers/media/platform/meson/vdec/vdec.c
+index 68a3b75..1f36b59 100644
+--- a/drivers/media/platform/meson/vdec/vdec.c
++++ b/drivers/media/platform/meson/vdec/vdec.c
+@@ -162,16 +162,10 @@ static int vdec_queue_setup(struct vb2_queue *q,
+ {
+ 	struct amvdec_session *sess = vb2_get_drv_priv(q);
+ 	const struct amvdec_format *fmt_out = sess->fmt_out;
++	u32 output_size = amvdec_get_output_size(sess);
+ 	u32 am21c_size = amvdec_am21c_size(sess->width, sess->height);
+-	u32 output_size;
+ 	u32 buffers_total;
+ 
+-	if (fmt_out->flags & AMFMT_ALLOC_MAX_SIZE)
+-		output_size = get_output_size(fmt_out->max_width,
+-					      fmt_out->max_height);
+-	else
+-		output_size = amvdec_get_output_size(sess);
+-
+ 	if (*num_planes) {
+ 		switch (q->type) {
+ 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+@@ -208,7 +202,7 @@ static int vdec_queue_setup(struct vb2_queue *q,
+ 
+ 	switch (q->type) {
+ 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+-		sizes[0] = output_size;
++		sizes[0] = amvdec_get_output_size(sess);
+ 		*num_planes = 1;
+ 		break;
+ 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+diff --git a/drivers/media/platform/meson/vdec/vdec.h b/drivers/media/platform/meson/vdec/vdec.h
+index 232d94a..c38a016 100644
+--- a/drivers/media/platform/meson/vdec/vdec.h
++++ b/drivers/media/platform/meson/vdec/vdec.h
+@@ -133,16 +133,6 @@ struct amvdec_codec_ops {
+ };
+ 
+ /**
+- * enum amvdec_format_flag - flags associated with amvdec_format
+- *
+- * @AMFMT_ALLOC_MAX_SIZE: CAPTURE buffers allocated for this format must be big
+- *			  enough to contain the maximum picture size
+- */
+-enum amvdec_format_flag {
+-	AMFMT_ALLOC_MAX_SIZE = 0x00000001,
+-};
+-
+-/**
+  * struct amvdec_format - describes one of the OUTPUT (src) format supported
+  *
+  * @pixfmt: V4L2 pixel format
+@@ -150,7 +140,6 @@ enum amvdec_format_flag {
+  * @max_buffers: maximum amount of CAPTURE (dst) buffers
+  * @max_width: maximum picture width supported
+  * @max_height: maximum picture height supported
+- * @flags: flags associated with this format
+  * @vdec_ops: the VDEC operations that support this format
+  * @codec_ops: the codec operations that support this format
+  * @firmware_path: Path to the firmware that supports this format
+@@ -162,7 +151,6 @@ struct amvdec_format {
+ 	u32 max_buffers;
+ 	u32 max_width;
+ 	u32 max_height;
+-	enum amvdec_format_flag flags;
+ 
+ 	struct amvdec_ops *vdec_ops;
+ 	struct amvdec_codec_ops *codec_ops;
+diff --git a/drivers/media/platform/meson/vdec/vdec_platform.c b/drivers/media/platform/meson/vdec/vdec_platform.c
+index 8bc3afd..d3214dd 100644
+--- a/drivers/media/platform/meson/vdec/vdec_platform.c
++++ b/drivers/media/platform/meson/vdec/vdec_platform.c
+@@ -42,7 +42,6 @@ static const struct amvdec_format vdec_formats_gxbb[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg4_ops,
+ 		.firmware_path = "meson/gx/vmpeg4_mc_5",
+@@ -53,7 +52,6 @@ static const struct amvdec_format vdec_formats_gxbb[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg4_ops,
+ 		.firmware_path = "meson/gx/h263_mc",
+@@ -64,7 +62,6 @@ static const struct amvdec_format vdec_formats_gxbb[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg4_ops,
+ 		.firmware_path = "meson/gx/vmpeg4_mc_5",
+@@ -85,7 +82,6 @@ static const struct amvdec_format vdec_formats_gxbb[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg12_ops,
+ 		.firmware_path = "meson/gx/vmpeg12_mc",
+@@ -96,7 +92,6 @@ static const struct amvdec_format vdec_formats_gxbb[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg12_ops,
+ 		.firmware_path = "meson/gx/vmpeg12_mc",
+@@ -131,7 +126,6 @@ static const struct amvdec_format vdec_formats_gxl[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg4_ops,
+ 		.firmware_path = "meson/gx/vmpeg4_mc_5",
+@@ -142,7 +136,6 @@ static const struct amvdec_format vdec_formats_gxl[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg4_ops,
+ 		.firmware_path = "meson/gx/h263_mc",
+@@ -153,7 +146,6 @@ static const struct amvdec_format vdec_formats_gxl[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg4_ops,
+ 		.firmware_path = "meson/gx/vmpeg4_mc_5",
+@@ -174,7 +166,6 @@ static const struct amvdec_format vdec_formats_gxl[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg12_ops,
+ 		.firmware_path = "meson/gx/vmpeg12_mc",
+@@ -185,7 +176,6 @@ static const struct amvdec_format vdec_formats_gxl[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg12_ops,
+ 		.firmware_path = "meson/gx/vmpeg12_mc",
+@@ -220,7 +210,6 @@ static const struct amvdec_format vdec_formats_gxm[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg4_ops,
+ 		.firmware_path = "meson/gx/vmpeg4_mc_5",
+@@ -231,7 +220,6 @@ static const struct amvdec_format vdec_formats_gxm[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg4_ops,
+ 		.firmware_path = "meson/gx/h263_mc",
+@@ -242,7 +230,6 @@ static const struct amvdec_format vdec_formats_gxm[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg4_ops,
+ 		.firmware_path = "meson/gx/vmpeg4_mc_5",
+@@ -263,7 +250,6 @@ static const struct amvdec_format vdec_formats_gxm[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg12_ops,
+ 		.firmware_path = "meson/gx/vmpeg12_mc",
+@@ -274,7 +260,6 @@ static const struct amvdec_format vdec_formats_gxm[] = {
+ 		.max_buffers = 8,
+ 		.max_width = 1920,
+ 		.max_height = 1080,
+-		.flags = AMFMT_ALLOC_MAX_SIZE,
+ 		.vdec_ops = &vdec_1_ops,
+ 		.codec_ops = &codec_mpeg12_ops,
+ 		.firmware_path = "meson/gx/vmpeg12_mc",
+-- 
+2.7.4
+

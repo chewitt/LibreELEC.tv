@@ -1,0 +1,38 @@
+From 7716010343561c52032c9813635433fd58595232 Mon Sep 17 00:00:00 2001
+From: Maxime Jourdan <mjourdan@baylibre.com>
+Date: Mon, 1 Oct 2018 18:43:24 +0200
+Subject: [PATCH 12/18] meson: vdec: use strscpy instead of strlcpy
+
+---
+ drivers/media/platform/meson/vdec/vdec.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/platform/meson/vdec/vdec.c b/drivers/media/platform/meson/vdec/vdec.c
+index c15658d..1f36b59 100644
+--- a/drivers/media/platform/meson/vdec/vdec.c
++++ b/drivers/media/platform/meson/vdec/vdec.c
+@@ -408,9 +408,9 @@ static const struct vb2_ops vdec_vb2_ops = {
+ static int
+ vdec_querycap(struct file *file, void *fh, struct v4l2_capability *cap)
+ {
+-	strlcpy(cap->driver, "meson-vdec", sizeof(cap->driver));
+-	strlcpy(cap->card, "Amlogic Video Decoder", sizeof(cap->card));
+-	strlcpy(cap->bus_info, "platform:meson-vdec", sizeof(cap->bus_info));
++	strscpy(cap->driver, "meson-vdec", sizeof(cap->driver));
++	strscpy(cap->card, "Amlogic Video Decoder", sizeof(cap->card));
++	strscpy(cap->bus_info, "platform:meson-vdec", sizeof(cap->bus_info));
+ 
+ 	return 0;
+ }
+@@ -999,7 +999,7 @@ static int vdec_probe(struct platform_device *pdev)
+ 	core->dev_dec = dev;
+ 	mutex_init(&core->lock);
+ 
+-	strlcpy(vdev->name, "meson-video-decoder", sizeof(vdev->name));
++	strscpy(vdev->name, "meson-video-decoder", sizeof(vdev->name));
+ 	vdev->release = video_device_release;
+ 	vdev->fops = &vdec_fops;
+ 	vdev->ioctl_ops = &vdec_ioctl_ops;
+-- 
+2.7.4
+

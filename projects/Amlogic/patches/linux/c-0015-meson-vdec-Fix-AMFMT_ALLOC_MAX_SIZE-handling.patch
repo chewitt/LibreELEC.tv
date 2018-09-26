@@ -1,0 +1,138 @@
+From a19c96be321bf47e4f5cc54800f0310575c81fe4 Mon Sep 17 00:00:00 2001
+From: Maxime Jourdan <mjourdan@baylibre.com>
+Date: Wed, 3 Oct 2018 12:04:07 +0200
+Subject: [PATCH 15/18] meson: vdec: Fix AMFMT_ALLOC_MAX_SIZE handling
+
+Set the canvas width/height and the bytesperline buffer properties
+accordingly.
+
+Also remove unneeded MJPEG register write
+---
+ drivers/media/platform/meson/vdec/codec_mjpeg.c  |  2 --
+ drivers/media/platform/meson/vdec/vdec.c         | 37 +++++++++++++-----------
+ drivers/media/platform/meson/vdec/vdec.h         |  2 +-
+ drivers/media/platform/meson/vdec/vdec_helpers.c |  6 ++++
+ 4 files changed, 27 insertions(+), 20 deletions(-)
+
+diff --git a/drivers/media/platform/meson/vdec/codec_mjpeg.c b/drivers/media/platform/meson/vdec/codec_mjpeg.c
+index abea9e3..44dfb68 100644
+--- a/drivers/media/platform/meson/vdec/codec_mjpeg.c
++++ b/drivers/media/platform/meson/vdec/codec_mjpeg.c
+@@ -95,8 +95,6 @@ static int codec_mjpeg_start(struct amvdec_session *sess)
+ 	amvdec_write_dos(core, MREG_TO_AMRISC, 0);
+ 	amvdec_write_dos(core, MREG_FROM_AMRISC, 0);
+ 	amvdec_write_dos(core, MCPU_INTR_MSK, 0xffff);
+-	amvdec_write_dos(core, MREG_DECODE_PARAM,
+-			 (sess->height << 4) | 0x8000);
+ 	amvdec_write_dos(core, VDEC_ASSIST_AMR1_INT8, 8);
+ 
+ 	/* Intra-only codec */
+diff --git a/drivers/media/platform/meson/vdec/vdec.c b/drivers/media/platform/meson/vdec/vdec.c
+index 68a3b75..b289e2f 100644
+--- a/drivers/media/platform/meson/vdec/vdec.c
++++ b/drivers/media/platform/meson/vdec/vdec.c
+@@ -454,6 +454,7 @@ vdec_try_fmt_common(struct amvdec_session *sess, u32 size,
+ 	struct v4l2_plane_pix_format *pfmt = pixmp->plane_fmt;
+ 	const struct amvdec_format *fmts = sess->core->platform->formats;
+ 	const struct amvdec_format *fmt_out;
++	u32 output_size = get_output_size(pixmp->width, pixmp->height);
+ 
+ 	memset(pfmt[0].reserved, 0, sizeof(pfmt[0].reserved));
+ 	memset(pixmp->reserved, 0, sizeof(pixmp->reserved));
+@@ -465,37 +466,39 @@ vdec_try_fmt_common(struct amvdec_session *sess, u32 size,
+ 			fmt_out = find_format(fmts, size, pixmp->pixelformat);
+ 		}
+ 
+-		pfmt[0].sizeimage =
+-			get_output_size(pixmp->width, pixmp->height);
++		pfmt[0].sizeimage = output_size;
+ 		pfmt[0].bytesperline = 0;
+ 		pixmp->num_planes = 1;
+ 	} else if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
++		u32 bytesperline;
++
+ 		fmt_out = sess->fmt_out;
++
++		if (fmt_out->flags & AMFMT_ALLOC_MAX_SIZE)
++			bytesperline = fmt_out->max_width;
++		else
++			bytesperline = ALIGN(pixmp->width, 64);
++
+ 		if (!vdec_supports_pixfmt_cap(fmt_out, pixmp->pixelformat))
+ 			pixmp->pixelformat = fmt_out->pixfmts_cap[0];
+ 
+ 		memset(pfmt[1].reserved, 0, sizeof(pfmt[1].reserved));
+ 		if (pixmp->pixelformat == V4L2_PIX_FMT_NV12M) {
+-			pfmt[0].sizeimage =
+-				get_output_size(pixmp->width, pixmp->height);
+-			pfmt[0].bytesperline = ALIGN(pixmp->width, 64);
++			pfmt[0].sizeimage = output_size;
++			pfmt[0].bytesperline = bytesperline;
+ 
+-			pfmt[1].sizeimage =
+-			      get_output_size(pixmp->width, pixmp->height) / 2;
+-			pfmt[1].bytesperline = ALIGN(pixmp->width, 64);
++			pfmt[1].sizeimage = output_size / 2;
++			pfmt[1].bytesperline = bytesperline;
+ 			pixmp->num_planes = 2;
+ 		} else if (pixmp->pixelformat == V4L2_PIX_FMT_YUV420M) {
+-			pfmt[0].sizeimage =
+-				get_output_size(pixmp->width, pixmp->height);
+-			pfmt[0].bytesperline = ALIGN(pixmp->width, 64);
++			pfmt[0].sizeimage = output_size;
++			pfmt[0].bytesperline = bytesperline;
+ 
+-			pfmt[1].sizeimage =
+-			      get_output_size(pixmp->width, pixmp->height) / 4;
+-			pfmt[1].bytesperline = ALIGN(pixmp->width, 64) / 2;
++			pfmt[1].sizeimage = output_size / 4;
++			pfmt[1].bytesperline = bytesperline / 2;
+ 
+-			pfmt[2].sizeimage =
+-			      get_output_size(pixmp->width, pixmp->height) / 4;
+-			pfmt[2].bytesperline = ALIGN(pixmp->width, 64) / 2;
++			pfmt[2].sizeimage = output_size / 4;
++			pfmt[2].bytesperline = bytesperline / 2;
+ 			pixmp->num_planes = 3;
+ 		} else if (pixmp->pixelformat == V4L2_PIX_FMT_AM21C) {
+ 			pfmt[0].sizeimage =
+diff --git a/drivers/media/platform/meson/vdec/vdec.h b/drivers/media/platform/meson/vdec/vdec.h
+index 232d94a..bebe936 100644
+--- a/drivers/media/platform/meson/vdec/vdec.h
++++ b/drivers/media/platform/meson/vdec/vdec.h
+@@ -139,7 +139,7 @@ struct amvdec_codec_ops {
+  *			  enough to contain the maximum picture size
+  */
+ enum amvdec_format_flag {
+-	AMFMT_ALLOC_MAX_SIZE = 0x00000001,
++	AMFMT_ALLOC_MAX_SIZE = 0x01,
+ };
+ 
+ /**
+diff --git a/drivers/media/platform/meson/vdec/vdec_helpers.c b/drivers/media/platform/meson/vdec/vdec_helpers.c
+index b4a7df4..85d5d34 100644
+--- a/drivers/media/platform/meson/vdec/vdec_helpers.c
++++ b/drivers/media/platform/meson/vdec/vdec_helpers.c
+@@ -179,6 +179,7 @@ static int set_canvas_nv12m(struct amvdec_session *sess,
+ int amvdec_set_canvases(struct amvdec_session *sess,
+ 			u32 reg_base[], u32 reg_num[])
+ {
++	const struct amvdec_format *fmt_out = sess->fmt_out;
+ 	struct v4l2_m2m_buffer *buf;
+ 	u32 pixfmt = sess->pixfmt_cap;
+ 	u32 width = ALIGN(sess->width, 64);
+@@ -188,6 +189,11 @@ int amvdec_set_canvases(struct amvdec_session *sess,
+ 	u32 reg_base_cur = 0;
+ 	int ret;
+ 
++	if (fmt_out->flags & AMFMT_ALLOC_MAX_SIZE) {
++		width = fmt_out->max_width;
++		height = fmt_out->max_height;
++	}
++
+ 	v4l2_m2m_for_each_dst_buf(sess->m2m_ctx, buf) {
+ 		if (!reg_base[reg_base_cur])
+ 			return -EINVAL;
+-- 
+2.7.4
+
