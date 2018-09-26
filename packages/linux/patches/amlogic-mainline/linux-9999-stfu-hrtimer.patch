@@ -1,0 +1,11 @@
+--- a/kernel/time/hrtimer.c	2019-03-22 13:09:34.000000000 +0000
++++ b/kernel/time/hrtimer.c	2019-03-31 12:43:42.073562891 +0000
+@@ -905,7 +905,7 @@ u64 hrtimer_forward(struct hrtimer *time
+ 	if (delta < 0)
+ 		return 0;
+ 
+-	if (WARN_ON(timer->state & HRTIMER_STATE_ENQUEUED))
++	if (timer->state & HRTIMER_STATE_ENQUEUED)
+ 		return 0;
+ 
+ 	if (interval < hrtimer_resolution)

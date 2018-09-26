@@ -1,0 +1,123 @@
+From d9763d0faf2d2ed0c2102518df7bbd7aebde61aa Mon Sep 17 00:00:00 2001
+From: chewitt <github@chrishewitt.net>
+Date: Sun, 2 Dec 2018 07:56:40 +0000
+Subject: [PATCH 1/4] amlogic: meson-gx-socinfo: fix socid output
+
+This allows the SoC ID to match against meson_gx_package_id correctly.
+
+e.g. before:
+
+[    0.211347] soc soc0: Amlogic Meson GXBB (Unknown) Revision 1f:c (13:1) Detected
+
+e.g. after:
+
+[    0.201241] soc soc0: Amlogic Meson GXBB (S905H) Revision 1f:c (13:1) Detected
+
+Signed-off-by: chewitt <github@chrishewitt.net>
+---
+ drivers/soc/amlogic/meson-gx-socinfo.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/soc/amlogic/meson-gx-socinfo.c b/drivers/soc/amlogic/meson-gx-socinfo.c
+index 37ea0a1..13285d9 100644
+--- a/drivers/soc/amlogic/meson-gx-socinfo.c
++++ b/drivers/soc/amlogic/meson-gx-socinfo.c
+@@ -81,7 +81,7 @@ static inline unsigned int socinfo_to_misc(u32 socinfo)
+ 
+ static const char *socinfo_to_package_id(u32 socinfo)
+ {
+-	unsigned int pack = socinfo_to_pack(socinfo) & 0xf0;
++	unsigned int pack = socinfo_to_pack(socinfo);
+ 	unsigned int major = socinfo_to_major(socinfo);
+ 	int i;
+ 
+-- 
+2.7.4
+
+From 6371a407f890068dd0221a228835abbd61d4dba7 Mon Sep 17 00:00:00 2001
+From: chewitt <github@chrishewitt.net>
+Date: Sun, 2 Dec 2018 08:06:48 +0000
+Subject: [PATCH 2/4] amlogic: meson-gx-socinfo: change S905H designation to
+ S905-H
+
+Amlogic uses a -H suffix to denote 'licensed' chips (widevine L1 etc.)
+so change S905H used in WeTek Hub and Play2 to S905-H. This creates
+visual distinction with other S905 letters which denote chip family
+e.g. S905X, S905D and S905W. Future additions should observe the same
+format e.g. S905D with licenses should be documented as S905D-H.
+
+Signed-off-by: chewitt <github@chrishewitt.net>
+---
+ drivers/soc/amlogic/meson-gx-socinfo.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/soc/amlogic/meson-gx-socinfo.c b/drivers/soc/amlogic/meson-gx-socinfo.c
+index 13285d9..c77a1c6 100644
+--- a/drivers/soc/amlogic/meson-gx-socinfo.c
++++ b/drivers/soc/amlogic/meson-gx-socinfo.c
+@@ -45,7 +45,7 @@ static const struct meson_gx_package_id {
+ 	unsigned int pack_id;
+ } soc_packages[] = {
+ 	{ "S905", 0x1f, 0 },
+-	{ "S905H", 0x1f, 0x13 },
++	{ "S905-H", 0x1f, 0x13 },
+ 	{ "S905M", 0x1f, 0x20 },
+ 	{ "S905D", 0x21, 0 },
+ 	{ "S905X", 0x21, 0x80 },
+-- 
+2.7.4
+
+From 2bf25a304e9847f395978b38516c0bf14dc357b5 Mon Sep 17 00:00:00 2001
+From: chewitt <github@chrishewitt.net>
+Date: Sun, 2 Dec 2018 08:25:09 +0000
+Subject: [PATCH 3/4] amlogic: meson-gx-socinfo: add SoC ID for Khadas VIM
+
+adds the S905X chip used in the Khadas VIM(1)
+
+Signed-off-by: chewitt <github@chrishewitt.net>
+---
+ drivers/soc/amlogic/meson-gx-socinfo.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/soc/amlogic/meson-gx-socinfo.c b/drivers/soc/amlogic/meson-gx-socinfo.c
+index c77a1c6..e70b555 100644
+--- a/drivers/soc/amlogic/meson-gx-socinfo.c
++++ b/drivers/soc/amlogic/meson-gx-socinfo.c
+@@ -49,6 +49,7 @@ static const struct meson_gx_package_id {
+ 	{ "S905M", 0x1f, 0x20 },
+ 	{ "S905D", 0x21, 0 },
+ 	{ "S905X", 0x21, 0x80 },
++	{ "S905X", 0x21, 0x82 },
+ 	{ "S905W", 0x21, 0xa0 },
+ 	{ "S905L", 0x21, 0xc0 },
+ 	{ "S905M2", 0x21, 0xe0 },
+-- 
+2.7.4
+
+From d009b0d4130538fa045c0846ae0d39826348add2 Mon Sep 17 00:00:00 2001
+From: chewitt <github@chrishewitt.net>
+Date: Sun, 2 Dec 2018 08:27:54 +0000
+Subject: [PATCH 4/4] amlogic: meson-gx-socinfo: add SoC ID for Khadas VIM2
+
+adds the S912 SoC used in the Khadas VIM2
+
+Signed-off-by: chewitt <github@chrishewitt.net>
+---
+ drivers/soc/amlogic/meson-gx-socinfo.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/soc/amlogic/meson-gx-socinfo.c b/drivers/soc/amlogic/meson-gx-socinfo.c
+index e70b555..6d32bcd 100644
+--- a/drivers/soc/amlogic/meson-gx-socinfo.c
++++ b/drivers/soc/amlogic/meson-gx-socinfo.c
+@@ -54,6 +54,7 @@ static const struct meson_gx_package_id {
+ 	{ "S905L", 0x21, 0xc0 },
+ 	{ "S905M2", 0x21, 0xe0 },
+ 	{ "S912", 0x22, 0 },
++	{ "S912", 0x22, 0x82 },
+ 	{ "962X", 0x24, 0x10 },
+ 	{ "962E", 0x24, 0x20 },
+ 	{ "A113X", 0x25, 0x37 },
+-- 
+2.7.4
+
