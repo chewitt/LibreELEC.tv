@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
+
+mcopy "$RELEASE_DIR/3rdparty/bootloader/dtb.img" ::
+mcopy "$RELEASE_DIR/3rdparty/bootloader/aml_autoscript" ::
+mcopy "$RELEASE_DIR/3rdparty/bootloader/s905_autoscript" ::
