@@ -1,0 +1,9 @@
+  # Configuration for u-boot
+    UBOOT_SYSTEM="NanoPi_K2"
+
+  # Kernel extra targets to build
+    KERNEL_UBOOT_EXTRA_TARGET="amlogic/meson-gxbb-nanopi-k2.dtb"
+
+  # additional packages to install:
+  # e.g. ADDITIONAL_PACKAGES="PACKAGE1 PACKAGE2"
+    ADDITIONAL_PACKAGES+=" amlogic-boot-fip"
