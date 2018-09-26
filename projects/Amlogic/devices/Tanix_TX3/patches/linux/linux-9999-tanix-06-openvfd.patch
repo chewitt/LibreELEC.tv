@@ -1,0 +1,13 @@
+--- a/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts	2018-08-08 18:34:29.894870483 +0100
++++ b/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts	2018-08-08 20:01:55.645179990 +0100
+@@ -19,4 +19,10 @@
+ 		device_type = "memory";
+ 		reg = <0x0 0x0 0x0 0x40000000>; /* 1 GiB or 2 GiB */
+ 	};
++
++	openvfd {
++		compatible = "open,vfd";
++		dev_name = "openvfd";
++		status = "okay";
++	};
+ };
