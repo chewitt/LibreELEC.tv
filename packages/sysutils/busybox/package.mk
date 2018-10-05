@@ -125,7 +125,12 @@ makeinstall_target() {
     cp $PKG_DIR/scripts/apt-get $INSTALL/usr/bin/
     cp $PKG_DIR/scripts/sudo $INSTALL/usr/bin/
     cp $PKG_DIR/scripts/pastebinit $INSTALL/usr/bin/
-    ln -sf pastebinit $INSTALL/usr/bin/paste
+      ln -sf pastebinit $INSTALL/usr/bin/paste
+    cp $PKG_DIR/scripts/console-helper $INSTALL/usr/bin/
+      ln -sf console-helper $INSTALL/usr/bin/codecinfo
+      ln -sf console-helper $INSTALL/usr/bin/playerdebug
+      ln -sf console-helper $INSTALL/usr/bin/screenshot
+      ln -sf console-helper $INSTALL/usr/bin/wanip
 
   mkdir -p $INSTALL/usr/lib/libreelec
     cp $PKG_DIR/scripts/functions $INSTALL/usr/lib/libreelec

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
+
+COMMAND=$(basename "$0")
+
+case $COMMAND in
+  codecinfo)
+    kodi-send --host="127.0.0.1" --action="codecinfo"
+    ;;
+  playerdebug)
+    kodi-send --host="127.0.0.1" --action="playerdebug"
+    ;;
+  screenshot)
+    kodi-send --host="127.0.0.1" --action="TakeScreenshot"
+    ;;
+  wanip)
+    curl -s icanhazip.com
+    ;;
+esac
