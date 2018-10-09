@@ -1,0 +1,255 @@
+From 9681d4b503866bbcceed79d885f4f07fa8613d5c Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Tue, 2 Oct 2018 16:57:33 -0700
+Subject: [PATCH 2/5] CDRMUtils: rename planes so we know they are kodi
+ specific
+
+---
+ xbmc/windowing/gbm/DRMUtils.cpp | 10 +++++-----
+ xbmc/windowing/gbm/DRMUtils.h   |  4 ++--
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/xbmc/windowing/gbm/DRMUtils.cpp b/xbmc/windowing/gbm/DRMUtils.cpp
+index d7faa39ed015..c4131b994692 100644
+--- a/xbmc/windowing/gbm/DRMUtils.cpp
++++ b/xbmc/windowing/gbm/DRMUtils.cpp
+@@ -344,7 +344,7 @@ drmModePlanePtr CDRMUtils::FindPlane(drmModePlaneResPtr resources, int crtc_inde
+         {
+           switch (type)
+           {
+-            case VIDEO_PLANE:
++            case KODI_VIDEO_PLANE:
+             {
+               if (SupportsFormat(plane, DRM_FORMAT_NV12) ||
+                   SupportsFormat(plane, DRM_FORMAT_YUV420))
+@@ -357,7 +357,7 @@ drmModePlanePtr CDRMUtils::FindPlane(drmModePlaneResPtr resources, int crtc_inde
+ 
+               break;
+             }
+-            case GUI_PLANE:
++            case KODI_GUI_PLANE:
+             {
+               uint32_t plane_id = 0;
+               if (m_primary_plane->plane)
+@@ -400,14 +400,14 @@ bool CDRMUtils::FindPlanes()
+     return false;
+   }
+ 
+-  m_primary_plane->plane = FindPlane(plane_resources, m_crtc_index, VIDEO_PLANE);
+-  m_overlay_plane->plane = FindPlane(plane_resources, m_crtc_index, GUI_PLANE);
++  m_primary_plane->plane = FindPlane(plane_resources, m_crtc_index, KODI_VIDEO_PLANE);
++  m_overlay_plane->plane = FindPlane(plane_resources, m_crtc_index, KODI_GUI_PLANE);
+ 
+   if (m_overlay_plane->plane == nullptr && m_primary_plane->plane != nullptr)
+   {
+     drmModeFreePlane(m_primary_plane->plane);
+     m_primary_plane->plane = nullptr;
+-    m_overlay_plane->plane = FindPlane(plane_resources, m_crtc_index, GUI_PLANE);
++    m_overlay_plane->plane = FindPlane(plane_resources, m_crtc_index, KODI_GUI_PLANE);
+   }
+ 
+   drmModeFreePlaneResources(plane_resources);
+diff --git a/xbmc/windowing/gbm/DRMUtils.h b/xbmc/windowing/gbm/DRMUtils.h
+index 06da279c3c1a..a1c59e53f06d 100644
+--- a/xbmc/windowing/gbm/DRMUtils.h
++++ b/xbmc/windowing/gbm/DRMUtils.h
+@@ -20,8 +20,8 @@
+ 
+ enum EPLANETYPE
+ {
+-  VIDEO_PLANE,
+-  GUI_PLANE
++  KODI_VIDEO_PLANE,
++  KODI_GUI_PLANE
+ };
+ 
+ struct drm_object
+
+From 081af9cc633a58ae9e5aab2cfd0c044dfff5c2a7 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Tue, 2 Oct 2018 17:05:45 -0700
+Subject: [PATCH 3/5] CDRMUtils: add 10 bit overlay plane support
+
+---
+ xbmc/windowing/gbm/DRMUtils.cpp | 30 ++++++++++++++++++++++++++----
+ xbmc/windowing/gbm/DRMUtils.h   |  5 +++--
+ 2 files changed, 29 insertions(+), 6 deletions(-)
+
+diff --git a/xbmc/windowing/gbm/DRMUtils.cpp b/xbmc/windowing/gbm/DRMUtils.cpp
+index c4131b994692..7dd087ff4d7f 100644
+--- a/xbmc/windowing/gbm/DRMUtils.cpp
++++ b/xbmc/windowing/gbm/DRMUtils.cpp
+@@ -373,6 +373,24 @@ drmModePlanePtr CDRMUtils::FindPlane(drmModePlaneResPtr resources, int crtc_inde
+                 return plane;
+               }
+ 
++              break;
++            }
++            case KODI_GUI_10_PLANE:
++            {
++              uint32_t plane_id = 0;
++              if (m_primary_plane->plane)
++                plane_id = m_primary_plane->plane->plane_id;
++
++              if (plane->plane_id != plane_id &&
++                  (plane_id == 0 || SupportsFormat(plane, DRM_FORMAT_ARGB2101010)) &&
++                  SupportsFormat(plane, DRM_FORMAT_XRGB2101010))
++              {
++                CLog::Log(LOGDEBUG, "CDRMUtils::%s - found gui 10 plane %u", __FUNCTION__, plane->plane_id);
++                drmModeFreeProperty(p);
++                drmModeFreeObjectProperties(props);
++                return plane;
++              }
++
+               break;
+             }
+           }
+@@ -401,13 +419,15 @@ bool CDRMUtils::FindPlanes()
+   }
+ 
+   m_primary_plane->plane = FindPlane(plane_resources, m_crtc_index, KODI_VIDEO_PLANE);
+-  m_overlay_plane->plane = FindPlane(plane_resources, m_crtc_index, KODI_GUI_PLANE);
++  m_overlay_plane->plane = FindPlane(plane_resources, m_crtc_index, KODI_GUI_10_PLANE);
++  m_overlay_plane->format = DRM_FORMAT_XRGB2101010;
+ 
+-  if (m_overlay_plane->plane == nullptr && m_primary_plane->plane != nullptr)
++  /* fallback to 8bit plane if 10bit plane doesn't exist */
++  if (m_overlay_plane->plane == nullptr)
+   {
+-    drmModeFreePlane(m_primary_plane->plane);
+-    m_primary_plane->plane = nullptr;
++    drmModeFreePlane(m_overlay_plane->plane);
+     m_overlay_plane->plane = FindPlane(plane_resources, m_crtc_index, KODI_GUI_PLANE);
++    m_overlay_plane->format = DRM_FORMAT_XRGB8888;
+   }
+ 
+   drmModeFreePlaneResources(plane_resources);
+@@ -439,6 +459,8 @@ bool CDRMUtils::FindPlanes()
+     CLog::Log(LOGDEBUG, "CDRMUtils::%s - no drm modifiers present for the overlay plane", __FUNCTION__);
+     m_overlay_plane->modifiers_map.emplace(DRM_FORMAT_ARGB8888, std::vector<uint64_t>{DRM_FORMAT_MOD_LINEAR});
+     m_overlay_plane->modifiers_map.emplace(DRM_FORMAT_XRGB8888, std::vector<uint64_t>{DRM_FORMAT_MOD_LINEAR});
++    m_overlay_plane->modifiers_map.emplace(DRM_FORMAT_XRGB2101010, std::vector<uint64_t>{DRM_FORMAT_MOD_LINEAR});
++    m_overlay_plane->modifiers_map.emplace(DRM_FORMAT_XRGB2101010, std::vector<uint64_t>{DRM_FORMAT_MOD_LINEAR});
+   }
+ 
+   return true;
+diff --git a/xbmc/windowing/gbm/DRMUtils.h b/xbmc/windowing/gbm/DRMUtils.h
+index a1c59e53f06d..952e0a934550 100644
+--- a/xbmc/windowing/gbm/DRMUtils.h
++++ b/xbmc/windowing/gbm/DRMUtils.h
+@@ -21,7 +21,8 @@
+ enum EPLANETYPE
+ {
+   KODI_VIDEO_PLANE,
+-  KODI_GUI_PLANE
++  KODI_GUI_PLANE,
++  KODI_GUI_10_PLANE
+ };
+ 
+ struct drm_object
+@@ -35,7 +36,7 @@ struct drm_object
+ struct plane : drm_object
+ {
+   drmModePlanePtr plane = nullptr;
+-  uint32_t format = DRM_FORMAT_XRGB8888;
++  uint32_t format{0};
+   std::map<uint32_t, std::vector<uint64_t>> modifiers_map;
+ };
+ 
+
+From 34ba7500477b2d9a7fd581d5e3e5027c9323384a Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Wed, 3 Oct 2018 11:09:05 -0700
+Subject: [PATCH 4/5] CDRMUtils: only support NV12 for now (we can add more
+ formats later)
+
+---
+ xbmc/windowing/gbm/DRMUtils.cpp | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/xbmc/windowing/gbm/DRMUtils.cpp b/xbmc/windowing/gbm/DRMUtils.cpp
+index 7dd087ff4d7f..952b3986936f 100644
+--- a/xbmc/windowing/gbm/DRMUtils.cpp
++++ b/xbmc/windowing/gbm/DRMUtils.cpp
+@@ -346,8 +346,7 @@ drmModePlanePtr CDRMUtils::FindPlane(drmModePlaneResPtr resources, int crtc_inde
+           {
+             case KODI_VIDEO_PLANE:
+             {
+-              if (SupportsFormat(plane, DRM_FORMAT_NV12) ||
+-                  SupportsFormat(plane, DRM_FORMAT_YUV420))
++              if (SupportsFormat(plane, DRM_FORMAT_NV12))
+               {
+                 CLog::Log(LOGDEBUG, "CDRMUtils::%s - found video plane %u", __FUNCTION__, plane->plane_id);
+                 drmModeFreeProperty(p);
+
+From d28796da3bdb5759d36f3a34304b61c18a1799ae Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Tue, 2 Oct 2018 17:10:11 -0700
+Subject: [PATCH 5/5] CGBMUtils: use the format from the drm plane
+
+---
+ xbmc/windowing/gbm/GBMUtils.cpp     | 6 +++---
+ xbmc/windowing/gbm/GBMUtils.h       | 2 +-
+ xbmc/windowing/gbm/WinSystemGbm.cpp | 5 ++++-
+ 3 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/xbmc/windowing/gbm/GBMUtils.cpp b/xbmc/windowing/gbm/GBMUtils.cpp
+index a48d6cc4f84a..d3f0231ba72c 100644
+--- a/xbmc/windowing/gbm/GBMUtils.cpp
++++ b/xbmc/windowing/gbm/GBMUtils.cpp
+@@ -36,7 +36,7 @@ void CGBMUtils::DestroyDevice()
+   }
+ }
+ 
+-bool CGBMUtils::CreateSurface(int width, int height, const uint64_t *modifiers, const int modifiers_count)
++bool CGBMUtils::CreateSurface(int width, int height, uint32_t format, const uint64_t *modifiers, const int modifiers_count)
+ {
+   if (m_surface)
+     CLog::Log(LOGWARNING, "CGBMUtils::%s - surface already created", __FUNCTION__);
+@@ -45,7 +45,7 @@ bool CGBMUtils::CreateSurface(int width, int height, const uint64_t *modifiers,
+   m_surface = gbm_surface_create_with_modifiers(m_device,
+                                                 width,
+                                                 height,
+-                                                GBM_FORMAT_ARGB8888,
++                                                format,
+                                                 modifiers,
+                                                 modifiers_count);
+ #endif
+@@ -54,7 +54,7 @@ bool CGBMUtils::CreateSurface(int width, int height, const uint64_t *modifiers,
+     m_surface = gbm_surface_create(m_device,
+                                    width,
+                                    height,
+-                                   GBM_FORMAT_ARGB8888,
++                                   format,
+                                    GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+   }
+ 
+diff --git a/xbmc/windowing/gbm/GBMUtils.h b/xbmc/windowing/gbm/GBMUtils.h
+index 2ec2da5bdf18..00d179d010c5 100644
+--- a/xbmc/windowing/gbm/GBMUtils.h
++++ b/xbmc/windowing/gbm/GBMUtils.h
+@@ -17,7 +17,7 @@ class CGBMUtils
+   ~CGBMUtils() = default;
+   bool CreateDevice(int fd);
+   void DestroyDevice();
+-  bool CreateSurface(int width, int height, const uint64_t *modifiers, const int modifiers_count);
++  bool CreateSurface(int width, int height, uint32_t format, const uint64_t *modifiers, const int modifiers_count);
+   void DestroySurface();
+   struct gbm_bo *LockFrontBuffer();
+   void ReleaseBuffer();
+diff --git a/xbmc/windowing/gbm/WinSystemGbm.cpp b/xbmc/windowing/gbm/WinSystemGbm.cpp
+index 12f2da635de8..09bbbb8ab8ea 100644
+--- a/xbmc/windowing/gbm/WinSystemGbm.cpp
++++ b/xbmc/windowing/gbm/WinSystemGbm.cpp
+@@ -129,7 +129,10 @@ bool CWinSystemGbm::CreateNewWindow(const std::string& name,
+ 
+   std::vector<uint64_t> *modifiers = m_DRM->GetOverlayPlaneModifiersForFormat(m_DRM->GetOverlayPlane()->format);
+ 
+-  if (!m_GBM->CreateSurface(res.iWidth, res.iHeight, modifiers->data(), modifiers->size()))
++  /* the gbm format needs alpha support */
++  uint32_t format = CDRMUtils::FourCCWithAlpha(m_DRM->GetOverlayPlane()->format);
++
++  if (!m_GBM->CreateSurface(res.iWidth, res.iHeight, format, modifiers->data(), modifiers->size()))
+   {
+     CLog::Log(LOGERROR, "CWinSystemGbm::%s - failed to initialize GBM", __FUNCTION__);
+     return false;

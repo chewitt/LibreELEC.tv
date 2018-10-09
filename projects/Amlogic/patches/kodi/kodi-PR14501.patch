@@ -1,0 +1,235 @@
+From 864967753bd67e154baa17ac5cee30f6d0613f57 Mon Sep 17 00:00:00 2001
+From: wsnipex <wsnipex@a1.net>
+Date: Fri, 28 Sep 2018 12:14:05 +0200
+Subject: [PATCH] fix CVE-2017-5982
+
+thanks to Rechi for the windows part
+---
+ xbmc/network/WebServer.cpp                    |   5 +
+ .../httprequesthandler/HTTPImageHandler.cpp   |   4 +-
+ .../HTTPWebinterfaceHandler.cpp               |   4 +
+ xbmc/utils/FileUtils.cpp                      | 112 +++++++++++++++++-
+ xbmc/utils/FileUtils.h                        |   1 +
+ 5 files changed, 123 insertions(+), 3 deletions(-)
+
+diff --git a/xbmc/network/WebServer.cpp b/xbmc/network/WebServer.cpp
+index 2c8cdd1fa427..ca658ac107dd 100644
+--- a/xbmc/network/WebServer.cpp
++++ b/xbmc/network/WebServer.cpp
+@@ -27,6 +27,7 @@
+ #include "URL.h"
+ #include "Util.h"
+ #include "utils/Base64.h"
++#include "utils/FileUtils.h"
+ #include "utils/log.h"
+ #include "utils/Mime.h"
+ #include "utils/StringUtils.h"
+@@ -733,6 +734,10 @@ int CWebServer::CreateFileDownloadResponse(const std::shared_ptr<IHTTPRequestHan
+   std::shared_ptr<XFILE::CFile> file = std::make_shared<XFILE::CFile>();
+   std::string filePath = handler->GetResponseFile();
+ 
++  // access check
++  if (!CFileUtils::CheckFileAccessAllowed(filePath))
++    return SendErrorResponse(request, MHD_HTTP_NOT_FOUND, request.method);
++
+   if (!file->Open(filePath, XFILE::READ_NO_CACHE))
+   {
+     CLog::Log(LOGERROR, "CWebServer[%hu]: Failed to open %s", m_port, filePath.c_str());
+diff --git a/xbmc/network/httprequesthandler/HTTPImageHandler.cpp b/xbmc/network/httprequesthandler/HTTPImageHandler.cpp
+index a0417e603755..75e89b1997ff 100644
+--- a/xbmc/network/httprequesthandler/HTTPImageHandler.cpp
++++ b/xbmc/network/httprequesthandler/HTTPImageHandler.cpp
+@@ -10,6 +10,8 @@
+ #include "URL.h"
+ #include "filesystem/ImageFile.h"
+ #include "network/WebServer.h"
++#include "utils/FileUtils.h"
++
+ 
+ CHTTPImageHandler::CHTTPImageHandler(const HTTPRequest &request)
+   : CHTTPFileHandler(request)
+@@ -24,7 +26,7 @@ CHTTPImageHandler::CHTTPImageHandler(const HTTPRequest &request)
+ 
+     XFILE::CImageFile imageFile;
+     const CURL pathToUrl(file);
+-    if (imageFile.Exists(pathToUrl))
++    if (imageFile.Exists(pathToUrl) && CFileUtils::CheckFileAccessAllowed(file))
+     {
+       responseStatus = MHD_HTTP_OK;
+       struct __stat64 statBuffer;
+diff --git a/xbmc/network/httprequesthandler/HTTPWebinterfaceHandler.cpp b/xbmc/network/httprequesthandler/HTTPWebinterfaceHandler.cpp
+index 32edaefabbf7..6c091783abb0 100644
+--- a/xbmc/network/httprequesthandler/HTTPWebinterfaceHandler.cpp
++++ b/xbmc/network/httprequesthandler/HTTPWebinterfaceHandler.cpp
+@@ -13,6 +13,7 @@
+ #include "addons/Webinterface.h"
+ #include "filesystem/Directory.h"
+ #include "filesystem/File.h"
++#include "utils/FileUtils.h"
+ #include "utils/StringUtils.h"
+ #include "utils/URIUtils.h"
+ 
+@@ -61,6 +62,9 @@ int CHTTPWebinterfaceHandler::ResolveUrl(const std::string &url, std::string &pa
+     }
+   }
+ 
++  if (!CFileUtils::CheckFileAccessAllowed(path))
++    return MHD_HTTP_NOT_FOUND;
++
+   if (!XFILE::CFile::Exists(path))
+     return MHD_HTTP_NOT_FOUND;
+ 
+diff --git a/xbmc/utils/FileUtils.cpp b/xbmc/utils/FileUtils.cpp
+index 6b5a729d193e..96d7ff4a42d4 100644
+--- a/xbmc/utils/FileUtils.cpp
++++ b/xbmc/utils/FileUtils.cpp
+@@ -5,6 +5,7 @@
+  *  SPDX-License-Identifier: GPL-2.0-or-later
+  *  See LICENSES/README.md for more information.
+  */
++
+ #include "FileUtils.h"
+ #include "ServiceBroker.h"
+ #include "guilib/GUIKeyboardFactory.h"
+@@ -13,9 +14,9 @@
+ #include "JobManager.h"
+ #include "FileOperationJob.h"
+ #include "URIUtils.h"
+-#include "filesystem/StackDirectory.h"
+ #include "filesystem/MultiPathDirectory.h"
+-#include <vector>
++#include "filesystem/SpecialProtocol.h"
++#include "filesystem/StackDirectory.h"
+ #include "settings/MediaSourceSettings.h"
+ #include "Util.h"
+ #include "StringUtils.h"
+@@ -23,6 +24,13 @@
+ #include "settings/Settings.h"
+ #include "utils/Variant.h"
+ 
++#if defined(TARGET_WINDOWS)
++#include "platform/win32/WIN32Util.h"
++#include "utils/CharsetConverter.h"
++#endif
++
++#include <vector>
++
+ using namespace XFILE;
+ 
+ bool CFileUtils::DeleteItem(const std::string &strPath)
+@@ -201,3 +209,103 @@ CDateTime CFileUtils::GetModificationDate(const std::string& strFileNameAndPath,
+   }
+   return dateAdded;
+ }
++
++bool CFileUtils::CheckFileAccessAllowed(const std::string &filePath)
++{
++  // DENY access to paths matching
++  const std::vector<std::string> blacklist = {
++    "passwords.xml",
++    "sources.xml",
++    "guisettings.xml",
++    "advancedsettings.xml",
++    "/.ssh/",
++  };
++  // ALLOW kodi paths
++  // TODO: most likely many more needed
++  const std::vector<std::string> whitelist = {
++    CSpecialProtocol::TranslatePath("special://home"),
++    CSpecialProtocol::TranslatePath("special://xbmc")
++  };
++
++  // image urls come in the form of image://... sometimes with a / appended at the end
++  // strip this off to get the real file path
++  bool isImage = false;
++  std::string decodePath = CURL::Decode(filePath);
++  size_t pos = decodePath.find("image://");
++  if (pos != std::string::npos)
++  {
++    isImage = true;
++    decodePath.erase(pos, 8);
++    URIUtils::RemoveSlashAtEnd(decodePath);
++  }
++
++  // check blacklist
++  for (const auto &b : blacklist)
++  {
++    if (decodePath.find(b) != std::string::npos)
++    {
++      CLog::Log(LOGERROR,"%s denied access to %s",  __FUNCTION__, decodePath.c_str());
++      return false;
++    }
++  }
++
++#if defined(TARGET_POSIX)
++  std::string whiteEntry;
++  char *fullpath = realpath(decodePath.c_str(), nullptr);
++
++  // if this is a locally existing file, check access permissions
++  if (fullpath)
++  {
++    const std::string realPath = fullpath;
++    free(fullpath);
++
++    CLog::Log(LOGDEBUG,"%s filePath: %s decodePath: %s realpath: %s",  __FUNCTION__, filePath.c_str(), decodePath.c_str(), realPath.c_str()); // TODO: remove
++
++    // check whitelist
++    for (const auto &w : whitelist)
++    {
++      char *realtemp = realpath(w.c_str(), nullptr);
++      if (realtemp)
++      {
++        whiteEntry = realtemp;
++        free(realtemp);
++      }
++      if (StringUtils::StartsWith(realPath, whiteEntry))
++        return true;
++    }
++    // check sources with realPath
++    return CFileUtils::RemoteAccessAllowed(realPath);
++  }
++#elif defined(TARGET_WINDOWS)
++  CURL url(decodePath);
++  if (url.GetProtocol().empty())
++  {
++    std::wstring decodePathW;
++    g_charsetConverter.utf8ToW(decodePath, decodePathW, false);
++    CWIN32Util::AddExtraLongPathPrefix(decodePathW);
++    DWORD bufSize = GetFullPathNameW(decodePathW.c_str(), 0, nullptr, nullptr);
++    if (bufSize > 0)
++    {
++      std::wstring fullpathW;
++      fullpathW.resize(bufSize);
++      if (GetFullPathNameW(decodePathW.c_str(), bufSize, const_cast<wchar_t*>(fullpathW.c_str()), nullptr) <= bufSize - 1)
++      {
++        CWIN32Util::RemoveExtraLongPathPrefix(fullpathW);
++        std::string fullpath;
++        g_charsetConverter.wToUTF8(fullpathW, fullpath, false);
++        for (const std::string& whiteEntry : whitelist)
++        {
++          if (StringUtils::StartsWith(fullpath, whiteEntry))
++            return true;
++        }
++        return CFileUtils::RemoteAccessAllowed(fullpath);
++      }
++    }
++  }
++#endif
++  // if it isn't a local file, it must be a vfs entry
++  CLog::Log(LOGDEBUG,"%s filePath: %s decodePath: %s",  __FUNCTION__, filePath.c_str(), decodePath.c_str()); // TODO: remove
++  if (! isImage)
++    return CFileUtils::RemoteAccessAllowed(decodePath);
++  return true;
++}
+diff --git a/xbmc/utils/FileUtils.h b/xbmc/utils/FileUtils.h
+index 13bb162065a2..fe76e6aef733 100644
+--- a/xbmc/utils/FileUtils.h
++++ b/xbmc/utils/FileUtils.h
+@@ -14,6 +14,7 @@
+ class CFileUtils
+ {
+ public:
++  static bool CheckFileAccessAllowed(const std::string &filePath);
+   static bool DeleteItem(const CFileItemPtr &item);
+   static bool DeleteItem(const std::string &strPath);
+   static bool RenameFile(const std::string &strFile);

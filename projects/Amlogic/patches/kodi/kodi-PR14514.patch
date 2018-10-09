@@ -1,0 +1,226 @@
+From 53d1829c68447ee0a17a940154157762540d1bfe Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Wed, 3 Oct 2018 14:41:22 -0700
+Subject: [PATCH 1/2] CDRMUtils: add static helper functions to convert to and
+ from alpha formats
+
+---
+ xbmc/windowing/gbm/DRMAtomic.cpp |  4 ++--
+ xbmc/windowing/gbm/DRMUtils.cpp  | 10 ++++++++++
+ xbmc/windowing/gbm/DRMUtils.h    |  3 +++
+ 3 files changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/xbmc/windowing/gbm/DRMAtomic.cpp b/xbmc/windowing/gbm/DRMAtomic.cpp
+index ae85601493c4..acfad96c58db 100644
+--- a/xbmc/windowing/gbm/DRMAtomic.cpp
++++ b/xbmc/windowing/gbm/DRMAtomic.cpp
+@@ -99,9 +99,9 @@ void CDRMAtomic::FlipPage(struct gbm_bo *bo, bool rendered, bool videoLayer)
+   if (rendered)
+   {
+     if (videoLayer)
+-      m_overlay_plane->format = DRM_FORMAT_ARGB8888;
++      m_overlay_plane->format = CDRMUtils::FourCCWithAlpha(m_overlay_plane->format);
+     else
+-      m_overlay_plane->format = DRM_FORMAT_XRGB8888;
++      m_overlay_plane->format = CDRMUtils::FourCCWithoutAlpha(m_overlay_plane->format);
+ 
+     drm_fb = CDRMUtils::DrmFbGetFromBo(bo);
+     if (!drm_fb)
+diff --git a/xbmc/windowing/gbm/DRMUtils.cpp b/xbmc/windowing/gbm/DRMUtils.cpp
+index 86d56abf32ff..d7faa39ed015 100644
+--- a/xbmc/windowing/gbm/DRMUtils.cpp
++++ b/xbmc/windowing/gbm/DRMUtils.cpp
+@@ -727,3 +727,13 @@ std::vector<RESOLUTION_INFO> CDRMUtils::GetModes()
+ 
+   return resolutions;
+ }
++
++uint32_t CDRMUtils::FourCCWithAlpha(uint32_t fourcc)
++{
++  return (fourcc & 0xFFFFFF00) | static_cast<uint32_t>('A');
++}
++
++uint32_t CDRMUtils::FourCCWithoutAlpha(uint32_t fourcc)
++{
++  return (fourcc & 0xFFFFFF00) | static_cast<uint32_t>('X');
++}
+diff --git a/xbmc/windowing/gbm/DRMUtils.h b/xbmc/windowing/gbm/DRMUtils.h
+index d231747a5a41..06da279c3c1a 100644
+--- a/xbmc/windowing/gbm/DRMUtils.h
++++ b/xbmc/windowing/gbm/DRMUtils.h
+@@ -89,6 +89,9 @@ class CDRMUtils
+   virtual bool AddProperty(struct drm_object *object, const char *name, uint64_t value) { return false; }
+   virtual bool SetProperty(struct drm_object *object, const char *name, uint64_t value) { return false; }
+ 
++  static uint32_t FourCCWithAlpha(uint32_t fourcc);
++  static uint32_t FourCCWithoutAlpha(uint32_t fourcc);
++
+ protected:
+   bool OpenDrm(bool needConnector);
+   uint32_t GetPropertyId(struct drm_object *object, const char *name);
+
+From b902f8bd346b87ec187d7232f19c3175b826a60d Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Tue, 2 Oct 2018 12:14:36 -0700
+Subject: [PATCH 2/2] EGLUtils: rework the way we choose the egl config
+
+This changes the egl config selection to be more inline with
+what upstream projects do (read weston) This will also allow us
+more control in the future to select different contexts.
+---
+ xbmc/utils/EGLUtils.cpp                       | 68 +++++++++++++------
+ xbmc/utils/EGLUtils.h                         |  5 +-
+ xbmc/windowing/gbm/WinSystemGbmEGLContext.cpp |  5 +-
+ 3 files changed, 53 insertions(+), 25 deletions(-)
+
+diff --git a/xbmc/utils/EGLUtils.cpp b/xbmc/utils/EGLUtils.cpp
+index 24641a7d2047..a31e04884d9b 100644
+--- a/xbmc/utils/EGLUtils.cpp
++++ b/xbmc/utils/EGLUtils.cpp
+@@ -93,7 +93,7 @@ bool CEGLContextUtils::CreateDisplay(EGLNativeDisplayType nativeDisplay, EGLint
+   return InitializeDisplay(renderableType, renderingApi);
+ }
+ 
+-bool CEGLContextUtils::CreatePlatformDisplay(void* nativeDisplay, EGLNativeDisplayType nativeDisplayLegacy, EGLint renderableType, EGLint renderingApi)
++bool CEGLContextUtils::CreatePlatformDisplay(void* nativeDisplay, EGLNativeDisplayType nativeDisplayLegacy, EGLint renderableType, EGLint renderingApi, EGLint visualId)
+ {
+   if (m_eglDisplay != EGL_NO_DISPLAY)
+   {
+@@ -123,10 +123,11 @@ bool CEGLContextUtils::CreatePlatformDisplay(void* nativeDisplay, EGLNativeDispl
+   {
+     return CreateDisplay(nativeDisplayLegacy, renderableType, renderingApi);
+   }
+-  return InitializeDisplay(renderableType, renderingApi);
++
++  return InitializeDisplay(renderableType, renderingApi, visualId);
+ }
+ 
+-bool CEGLContextUtils::InitializeDisplay(EGLint renderableType, EGLint renderingApi)
++bool CEGLContextUtils::InitializeDisplay(EGLint renderableType, EGLint renderingApi, EGLint visualId)
+ {
+   int major, minor;
+   if (!eglInitialize(m_eglDisplay, &major, &minor))
+@@ -144,42 +145,65 @@ bool CEGLContextUtils::InitializeDisplay(EGLint renderableType, EGLint rendering
+     return false;
+   }
+ 
++  if (!ChooseConfig(renderableType, visualId))
++    return false;
++
++  return true;
++}
++
++bool CEGLContextUtils::ChooseConfig(EGLint renderableType, EGLint visualId)
++{
++  EGLint numMatched{0};
++
+   EGLint surfaceType = EGL_WINDOW_BIT;
+   // for the non-trivial dirty region modes, we need the EGL buffer to be preserved across updates
+   if (g_advancedSettings.m_guiAlgorithmDirtyRegions == DIRTYREGION_SOLVER_COST_REDUCTION ||
+       g_advancedSettings.m_guiAlgorithmDirtyRegions == DIRTYREGION_SOLVER_UNION)
+     surfaceType |= EGL_SWAP_BEHAVIOR_PRESERVED_BIT;
+ 
+-  EGLint attribs[] =
+-  {
+-    EGL_RED_SIZE, 8,
+-    EGL_GREEN_SIZE, 8,
+-    EGL_BLUE_SIZE, 8,
+-    EGL_ALPHA_SIZE, 8,
+-    EGL_DEPTH_SIZE, 16,
+-    EGL_STENCIL_SIZE, 0,
+-    EGL_SAMPLE_BUFFERS, 0,
+-    EGL_SAMPLES, 0,
+-    EGL_SURFACE_TYPE, surfaceType,
+-    EGL_RENDERABLE_TYPE, renderableType,
+-    EGL_NONE
+-  };
+-
+-  EGLint neglconfigs = 0;
+-  if (eglChooseConfig(m_eglDisplay, attribs, &m_eglConfig, 1, &neglconfigs) != EGL_TRUE)
++  CEGLAttributes<10> attribs;
++  attribs.Add({{EGL_RED_SIZE, 8},
++               {EGL_GREEN_SIZE, 8},
++               {EGL_BLUE_SIZE, 8},
++               {EGL_ALPHA_SIZE, 2},
++               {EGL_DEPTH_SIZE, 16},
++               {EGL_STENCIL_SIZE, 0},
++               {EGL_SAMPLE_BUFFERS, 0},
++               {EGL_SAMPLES, 0},
++               {EGL_SURFACE_TYPE, surfaceType},
++               {EGL_RENDERABLE_TYPE, renderableType}});
++
++  if (eglChooseConfig(m_eglDisplay, attribs.Get(), nullptr, 0, &numMatched) != EGL_TRUE)
+   {
+     CEGLUtils::LogError("failed to query number of EGL configs");
+     Destroy();
+     return false;
+   }
+ 
+-  if (neglconfigs <= 0)
++  std::vector<EGLConfig> eglConfigs(numMatched);
++
++  if (eglChooseConfig(m_eglDisplay, attribs.Get(), eglConfigs.data(), numMatched, &numMatched) != EGL_TRUE)
+   {
+-    CLog::Log(LOGERROR, "No suitable EGL configs found");
++    CEGLUtils::LogError("failed to find EGL configs with appropriate attributes");
+     Destroy();
+     return false;
+   }
+ 
++  for (const auto &eglConfig: eglConfigs)
++  {
++    m_eglConfig = eglConfig;
++
++    if (visualId == 0)
++      break;
++
++    EGLint id{0};
++    if (eglGetConfigAttrib(m_eglDisplay, m_eglConfig, EGL_NATIVE_VISUAL_ID, &id) != EGL_TRUE)
++      CEGLUtils::LogError("failed to query EGL attibute EGL_NATIVE_VISUAL_ID");
++
++    if (visualId == id)
++      break;
++  }
++
+   return true;
+ }
+ 
+diff --git a/xbmc/utils/EGLUtils.h b/xbmc/utils/EGLUtils.h
+index 9a312dc51e08..9337ce11aae3 100644
+--- a/xbmc/utils/EGLUtils.h
++++ b/xbmc/utils/EGLUtils.h
+@@ -131,7 +131,7 @@ class CEGLContextUtils final
+    * \param nativeDisplay native display to use with eglGetPlatformDisplayEXT
+    * \param nativeDisplayLegacy native display to use with eglGetDisplay
+    */
+-  bool CreatePlatformDisplay(void* nativeDisplay, EGLNativeDisplayType nativeDisplayLegacy, EGLint renderableType, EGLint renderingApi);
++  bool CreatePlatformDisplay(void* nativeDisplay, EGLNativeDisplayType nativeDisplayLegacy, EGLint renderableType, EGLint renderingApi, EGLint visualId = 0);
+ 
+   bool CreateSurface(EGLNativeWindowType nativeWindow);
+   bool CreatePlatformSurface(void* nativeWindow, EGLNativeWindowType nativeWindowLegacy);
+@@ -162,7 +162,8 @@ class CEGLContextUtils final
+   }
+ 
+ private:
+-  bool InitializeDisplay(EGLint renderableType, EGLint renderingApi);
++  bool InitializeDisplay(EGLint renderableType, EGLint renderingApi, EGLint visualId = 0);
++  bool ChooseConfig(EGLint renderableType, EGLint visualId);
+   void SurfaceAttrib();
+ 
+   EGLenum m_platform{EGL_NONE};
+diff --git a/xbmc/windowing/gbm/WinSystemGbmEGLContext.cpp b/xbmc/windowing/gbm/WinSystemGbmEGLContext.cpp
+index 79e723b3e555..dc7f22fb822f 100644
+--- a/xbmc/windowing/gbm/WinSystemGbmEGLContext.cpp
++++ b/xbmc/windowing/gbm/WinSystemGbmEGLContext.cpp
+@@ -22,7 +22,10 @@ bool CWinSystemGbmEGLContext::InitWindowSystemEGL(EGLint renderableType, EGLint
+     return false;
+   }
+ 
+-  if (!m_eglContext.CreatePlatformDisplay(m_GBM->GetDevice(), m_GBM->GetDevice(), renderableType, apiType))
++  // we need to provide an alpha format to egl to workaround a mesa bug
++  int visualId = CDRMUtils::FourCCWithAlpha(CWinSystemGbm::GetDrm()->GetOverlayPlane()->format);
++
++  if (!m_eglContext.CreatePlatformDisplay(m_GBM->GetDevice(), m_GBM->GetDevice(), renderableType, apiType, visualId))
+   {
+     return false;
+   }
