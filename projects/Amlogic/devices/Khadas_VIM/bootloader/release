@@ -4,5 +4,14 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 mkdir -p $RELEASE_DIR/3rdparty/bootloader
-  cp -a $(get_build_dir linux)/arch/$TARGET_KERNEL_ARCH/boot/dtb.img $RELEASE_DIR/3rdparty/bootloader
-  cp -a $(get_build_dir aml_autoscript)/* $RELEASE_DIR/3rdparty/bootloader
+cp -a $(get_build_dir aml_autoscript)/* $RELEASE_DIR/3rdparty/bootloader
+
+mkdir -p $RELEASE_DIR/3rdparty/bootloader/dtb
+  LINUX_DTS_DIR=$(get_build_dir linux)/arch/$TARGET_KERNEL_ARCH/boot/dts
+  for dtb in $LINUX_DTS_DIR/amlogic/meson-gxl*.dtb ; do
+      cp -a $dtb $RELEASE_DIR/3rdparty/bootloader/dtb
+  done
+
+INSTBOOT_DIR=$RELEASE_DIR/3rdparty/instboot
+mkdir -p $INSTBOOT_DIR
+cp -a $INSTALL/instboot/* $INSTBOOT_DIR

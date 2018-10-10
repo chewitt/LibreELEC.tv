@@ -1,0 +1,138 @@
+--- a/src/resources/lib/modules/services.py
++++ b/src/resources/lib/modules/services.py
+@@ -47,6 +47,13 @@
+     OPT_SSH_NOPASSWD = None
+     AVAHI_DAEMON = None
+     CRON_DAEMON = None
++
++#    D_FULL_SET = None
++    NAND_UBOOT = '/flash/uboot.sh',
++    NAND_INSTALL = '/flash/inst.sh',
++    NAND_DDBR = '/flash/ddbr.sh',
++    NAND_REBOOT = '/flash/reboot.sh',
++
+     menu = {'4': {
+         'name': 32001,
+         'menuLoader': 'load_menu',
+@@ -259,6 +266,37 @@
+                             },
+                         },
+                     },
++                'nand': {
++                    'order': 7,
++                    'name': 32820,
++                    'not_supported': [],
++                    'settings': {
++                        'nand_uboot': {
++                            'order': 1,
++                            'name': 32821,
++                            'value': '0',
++                            'action': 'uboot_nand',
++                            'type': 'button',
++                            'InfoText': 2821,
++                            },
++                        'nand_install': {
++                            'order': 2,
++                            'name': 32822,
++                            'value': '0',
++                            'action': 'install_nand',
++                            'type': 'button',
++                            'InfoText': 2822,
++                            },
++                        'nand_ddbr': {
++                            'order': 3,
++                            'name': 32823,
++                            'value': '0',
++                            'action': 'ddbr_nand',
++                            'type': 'button',
++                            'InfoText': 2823,
++                            },
++                        },
++                    },
+                 }
+ 
+             self.oe = oeMain
+@@ -381,6 +419,10 @@
+                         self.struct['bluez']['settings']['obex_root']['hidden'] = True
+                 else:
+                     self.struct['bluez']['hidden'] = 'true'
++
++#            # Nand
++#            self.struct['nand']['settings']['full_set']['value'] = \
++#            self.oe.get_service_option('nand', 'FULL_SET', self.D_FULL_SET).replace('"', '')
+ 
+             self.oe.dbg_log('services::load_values', 'exit_function', 0)
+         except Exception, e:
+@@ -484,6 +526,72 @@
+             self.oe.set_busy(0)
+             self.oe.dbg_log('services::initialize_cron', 'ERROR: (%s)' % repr(e), 4)
+ 
++    def uboot_nand(self, listItem=None):
++        try:
++            self.oe.dbg_log('services::uboot_nand', 'enter_function', 0)
++            if os.path.exists(self.NAND_UBOOT):
++                dialog = xbmcgui.Dialog()
++                ret = dialog.yesno('Attention!', 'Install new u-bootin internal memory?')
++                if ret:
++                    self.oe.notify(self.oe._(32363), 'Installation...')
++                    self.oe.set_busy(1)
++                    message = self.oe.execute(self.NAND_UBOOT, 1).strip()
++                    self.oe.set_busy(0)
++                    if message == 'Done! Install new u-boot completed.':
++                        dialog = xbmcgui.Dialog()
++                        ret = dialog.yesno('Install completed', 'Reboot system now?')
++                        if ret:
++                            self.oe.execute(self.NAND_REBOOT, 0)
++                    else:
++                        dialog = xbmcgui.Dialog()
++                        dialog.notification('Install',
++                                        '%s' % message,
++                                        xbmcgui.NOTIFICATION_INFO, 3000)
++        except Exception, e:
++            self.oe.dbg_log('services::uboot_nand', 'ERROR: (' + repr(e) + ')')
++
++    def install_nand(self, listItem=None):
++        try:
++            self.oe.dbg_log('services::install_nand', 'enter_function', 0)
++            if os.path.exists(self.NAND_INSTALL):
++                dialog = xbmcgui.Dialog()
++                ret = dialog.yesno('Attention!', 'Install the system in internal memory?')
++                if ret:
++                    self.oe.notify(self.oe._(32363), 'Installation...')
++                    self.oe.set_busy(1)
++                    message = self.oe.execute(self.NAND_INSTALL, 1).strip()
++                    self.oe.set_busy(0)
++                    if message == 'Done! Install LibreELEC completed.':
++                        dialog = xbmcgui.Dialog()
++                        ret = dialog.yesno('Install completed', 'Reboot system now?')
++                        if ret:
++                            self.oe.execute(self.NAND_REBOOT, 0)
++                    else:
++                        dialog = xbmcgui.Dialog()
++                        dialog.notification('Install',
++                                        '%s' % message,
++                                        xbmcgui.NOTIFICATION_INFO, 3000)
++        except Exception, e:
++            self.oe.dbg_log('services::install_nand', 'ERROR: (' + repr(e) + ')')
++
++    def ddbr_nand(self, listItem=None):
++        try:
++            self.oe.dbg_log('services::ddbr_nand', 'enter_function', 0)
++            if os.path.exists(self.NAND_DDBR):
++                dialog = xbmcgui.Dialog()
++                ret = dialog.yesno('Attention!', 'Create full backup eMMC?')
++                if ret:
++                    self.oe.notify(self.oe._(32363), 'Backup...')
++                    self.oe.set_busy(1)
++                    message = self.oe.execute(self.NAND_DDBR, 1).strip()
++                    self.oe.set_busy(0)
++                    dialog = xbmcgui.Dialog()
++                    dialog.notification('DDBR backup',
++                                        '%s' % message,
++                                        xbmcgui.NOTIFICATION_INFO, 3000)
++        except Exception, e:
++            self.oe.dbg_log('services::ddbr_nand', 'ERROR: (' + repr(e) + ')')
++
+     def init_bluetooth(self, **kwargs):
+         try:
+             self.oe.dbg_log('services::init_bluetooth', 'enter_function', 0)
