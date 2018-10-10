@@ -1,0 +1,36 @@
+--- a/language/English/strings.po
++++ b/language/English/strings.po
+@@ -867,3 +867,33 @@
+ msgctxt "#32399"
+ msgid "Public"
+ msgstr ""
++
++########## eMMC #########
++
++msgctxt "#32820"
++msgid "Install Libreelec to eMMC"
++msgstr ""
++
++msgctxt "#32821"
++msgid "Install to eMMC"
++msgstr ""
++
++msgctxt "#2821"
++msgid "Transfer all settings to a new system."
++msgstr ""
++
++msgctxt "#32822"
++msgid "Install ..."
++msgstr ""
++
++msgctxt "#2822"
++msgid "This will erase BOOT, SYSTEM, DATA and DTB on your device."
++msgstr ""
++
++msgctxt "#32823"
++msgid "Full backup eMMC"
++msgstr ""
++
++msgctxt "#2823"
++msgid "Create full backup eMMC."
++msgstr ""

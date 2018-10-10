@@ -4,17 +4,14 @@
   # Configuration for u-boot
     UBOOT_VERSION="vendor"
 
+  # Configuration for u-boot
+    UBOOT_SYSTEM="Khadas_VIM2"
+
   # Kernel extra targets to build
     KERNEL_UBOOT_EXTRA_TARGET="amlogic/meson-gxm-khadas-vim2.dtb"
 
-  # Build Android kernel image using mkbootimg
-    BUILD_ANDROID_BOOTIMG="yes"
-
-  # Additional options to be passed to Android mkbootimg
-    ANDROID_BOOTIMG_OPTIONS="--base 0x0 --kernel_offset 0x1080000"
-
-  # kernel image name
-    KERNEL_NAME="kernel.img"
+  # Additional kernel make parameters (for example to specify the u-boot loadaddress)
+    KERNEL_MAKE_EXTRACMD=" dtbs"
 
   # MALI GPU family (dvalin,gondol,midgard,utgard)
     MALI_FAMILY="midgard"
@@ -33,7 +30,7 @@
   # additional Firmware to use (dvb-firmware, misc-firmware, wlan-firmware)
   # Space separated list is supported,
   # e.g. FIRMWARE="dvb-firmware misc-firmware wlan-firmware"
-    FIRMWARE="brcmfmac_sdio-firmware-aml meson-firmware"
+    FIRMWARE+=" brcmfmac_sdio-firmware-aml"
 
   # add OOTB support for IR remote
     IR_REMOTE_KEYMAPS+=" khadas_vim"

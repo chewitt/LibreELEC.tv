@@ -52,6 +52,9 @@
   # default:  default mainline kernel
     LINUX="amlogic-mainline"
 
+  # kernel image name
+    KERNEL_NAME="Image"
+
 ################################################################################
 # setup build defaults
 ################################################################################
