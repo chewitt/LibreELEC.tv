@@ -1,0 +1,1106 @@
+From 4e1718e608748009f2ed4a2fa176ebf9ea780184 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:10:20 -0800
+Subject: [PATCH 01/11] CLinuxRendererGLES: update VBO's to be similar to
+ CLinuxRendererGL
+
+---
+ .../VideoRenderers/LinuxRendererGLES.cpp      | 186 +++++++++++++-----
+ 1 file changed, 140 insertions(+), 46 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+index ec4df2690421..f5968507604d 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+@@ -1016,45 +1016,107 @@ void CLinuxRendererGLES::RenderToFBO(int index, int field)
+ 
+   // 1st Pass to video frame size
+   GLubyte idx[4] = {0, 1, 3, 2}; // determines order of triangle strip
+-  GLfloat vert[4][3];
+-  GLfloat tex[3][4][2];
++  GLuint vertexVBO;
++  GLuint indexVBO;
++  struct PackedVertex
++  {
++    float x, y, z;
++    float u1, v1;
++    float u2, v2;
++    float u3, v3;
++  };
++
++  std::array<PackedVertex, 4> vertex;
+ 
+   GLint vertLoc = pYUVShader->GetVertexLoc();
+   GLint Yloc = pYUVShader->GetYcoordLoc();
+   GLint Uloc = pYUVShader->GetUcoordLoc();
+   GLint Vloc = pYUVShader->GetVcoordLoc();
+ 
+-  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, 0, 0, vert);
+-  glVertexAttribPointer(Yloc, 2, GL_FLOAT, 0, 0, tex[0]);
+-  glVertexAttribPointer(Uloc, 2, GL_FLOAT, 0, 0, tex[1]);
+-  glVertexAttribPointer(Vloc, 2, GL_FLOAT, 0, 0, tex[2]);
++  // top left
++  vertex[0].x = 0.0f;
++  vertex[0].y = 0.0f;
++  vertex[0].z = 0.0f;
++  vertex[0].u1 = planes[0].rect.x1;
++  vertex[0].v1 = planes[0].rect.y1;
++  vertex[0].u2 = planes[1].rect.x1;
++  vertex[0].v2 = planes[1].rect.y1;
++  vertex[0].u3 = planes[2].rect.x1;
++  vertex[0].v3 = planes[2].rect.y1;
++
++  // top right
++  vertex[1].x = m_fbo.width;
++  vertex[1].y = 0.0f;
++  vertex[1].z = 0.0f;
++  vertex[1].u1 = planes[0].rect.x2;
++  vertex[1].v1 = planes[0].rect.y1;
++  vertex[1].u2 = planes[1].rect.x2;
++  vertex[1].v2 = planes[1].rect.y1;
++  vertex[1].u3 = planes[2].rect.x2;
++  vertex[1].v3 = planes[2].rect.y1;
++
++  // bottom right
++  vertex[2].x = m_fbo.width;
++  vertex[2].y = m_fbo.height;
++  vertex[2].z = 0.0f;
++  vertex[2].u1 = planes[0].rect.x2;
++  vertex[2].v1 = planes[0].rect.y2;
++  vertex[2].u2 = planes[1].rect.x2;
++  vertex[2].v2 = planes[1].rect.y2;
++  vertex[2].u3 = planes[2].rect.x2;
++  vertex[2].v3 = planes[2].rect.y2;
++
++  // bottom left
++  vertex[3].x = 0.0f;
++  vertex[3].y = m_fbo.height;
++  vertex[3].z = 0.0f;
++  vertex[3].u1 = planes[0].rect.x1;
++  vertex[3].v1 = planes[0].rect.y2;
++  vertex[3].u2 = planes[1].rect.x1;
++  vertex[3].v2 = planes[1].rect.y2;
++  vertex[3].u3 = planes[2].rect.x1;
++  vertex[3].v3 = planes[2].rect.y2;
++
++  glGenBuffers(1, &vertexVBO);
++  glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
++  glBufferData(GL_ARRAY_BUFFER, sizeof(PackedVertex) * vertex.size(), vertex.data(), GL_STATIC_DRAW);
++
++  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, 0, sizeof(PackedVertex), reinterpret_cast<const GLvoid*>(offsetof(PackedVertex, x)));
++  glVertexAttribPointer(Yloc, 2, GL_FLOAT, 0, sizeof(PackedVertex), reinterpret_cast<const GLvoid*>(offsetof(PackedVertex, u1)));
++  glVertexAttribPointer(Uloc, 2, GL_FLOAT, 0, sizeof(PackedVertex), reinterpret_cast<const GLvoid*>(offsetof(PackedVertex, u2)));
++  if (Vloc != -1)
++  {
++    glVertexAttribPointer(Vloc, 2, GL_FLOAT, 0, sizeof(PackedVertex), reinterpret_cast<const GLvoid*>(offsetof(PackedVertex, u3)));
++  }
+ 
+   glEnableVertexAttribArray(vertLoc);
+   glEnableVertexAttribArray(Yloc);
+   glEnableVertexAttribArray(Uloc);
+-  glEnableVertexAttribArray(Vloc);
+-
+-  // Setup vertex position values
+-  // Set vertex coordinates
+-  vert[0][0] = vert[3][0] = 0.0f;
+-  vert[0][1] = vert[1][1] = 0.0f;
+-  vert[1][0] = vert[2][0] = m_fbo.width;
+-  vert[2][1] = vert[3][1] = m_fbo.height;
+-  vert[0][2] = vert[1][2] = vert[2][2] = vert[3][2] = 0.0f;
+-
+-  // Setup texture coordinates
+-  for (int i = 0; i < 3; i++)
++  if (Vloc != -1)
+   {
+-    tex[i][0][0] = tex[i][3][0] = planes[i].rect.x1;
+-    tex[i][0][1] = tex[i][1][1] = planes[i].rect.y1;
+-    tex[i][1][0] = tex[i][2][0] = planes[i].rect.x2;
+-    tex[i][2][1] = tex[i][3][1] = planes[i].rect.y2;
++    glEnableVertexAttribArray(Vloc);
+   }
+ 
+-  glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_BYTE, idx);
++  glGenBuffers(1, &indexVBO);
++  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVBO);
++  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte) * 4, idx, GL_STATIC_DRAW);
+ 
++  glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_BYTE, 0);
+   VerifyGLState();
+ 
++  glDisableVertexAttribArray(vertLoc);
++  glDisableVertexAttribArray(Yloc);
++  glDisableVertexAttribArray(Uloc);
++  if (Vloc != -1)
++  {
++    glDisableVertexAttribArray(Vloc);
++  }
++
++  glBindBuffer(GL_ARRAY_BUFFER, 0);
++  glDeleteBuffers(1, &vertexVBO);
++  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
++  glDeleteBuffers(1, &indexVBO);
++
+   pYUVShader->Disable();
+ 
+   glMatrixModview.PopLoad();
+@@ -1062,11 +1124,6 @@ void CLinuxRendererGLES::RenderToFBO(int index, int field)
+ 
+   VerifyGLState();
+ 
+-  glDisableVertexAttribArray(vertLoc);
+-  glDisableVertexAttribArray(Yloc);
+-  glDisableVertexAttribArray(Uloc);
+-  glDisableVertexAttribArray(Vloc);
+-
+   m_renderSystem->SetViewPort(viewport);
+ 
+   m_fbo.fbo.EndRender();
+@@ -1112,35 +1169,72 @@ void CLinuxRendererGLES::RenderFromFBO()
+   float imgheight = m_fbo.height / m_sourceHeight;
+ 
+   GLubyte idx[4] = {0, 1, 3, 2}; // determines order of triangle strip
+-  GLfloat vert[4][3];
+-  GLfloat tex[4][2];
++  GLuint vertexVBO;
++  GLuint indexVBO;
++  struct PackedVertex
++  {
++    float x, y, z;
++    float u1, v1;
++  };
++
++  std::array<PackedVertex, 4> vertex;
+ 
+   GLint vertLoc = m_pVideoFilterShader->GetVertexLoc();
+   GLint loc = m_pVideoFilterShader->GetcoordLoc();
+ 
+-  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, 0, 0, vert);
+-  glVertexAttribPointer(loc, 2, GL_FLOAT, 0, 0, tex);
++  // Setup vertex position values
++  // top left
++  vertex[0].x = m_rotatedDestCoords[0].x;
++  vertex[0].y = m_rotatedDestCoords[0].y;
++  vertex[0].z = 0.0f;
++  vertex[0].u1 = 0.0;
++  vertex[0].v1 = 0.0;
++
++  // top right
++  vertex[1].x = m_rotatedDestCoords[1].x;
++  vertex[1].y = m_rotatedDestCoords[1].y;
++  vertex[1].z = 0.0f;
++  vertex[1].u1 = imgwidth;
++  vertex[1].v1 = 0.0f;
++
++  // bottom right
++  vertex[2].x = m_rotatedDestCoords[2].x;
++  vertex[2].y = m_rotatedDestCoords[2].y;
++  vertex[2].z = 0.0f;
++  vertex[2].u1 = imgwidth;
++  vertex[2].v1 = imgheight;
++
++  // bottom left
++  vertex[3].x = m_rotatedDestCoords[3].x;
++  vertex[3].y = m_rotatedDestCoords[3].y;
++  vertex[3].z = 0.0f;
++  vertex[3].u1 = 0.0f;
++  vertex[3].v1 = imgheight;
++
++  glGenBuffers(1, &vertexVBO);
++  glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
++  glBufferData(GL_ARRAY_BUFFER, sizeof(PackedVertex) * vertex.size(), vertex.data(), GL_STATIC_DRAW);
++
++  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, 0, sizeof(PackedVertex), reinterpret_cast<const GLvoid*>(offsetof(PackedVertex, x)));
++  glVertexAttribPointer(loc, 2, GL_FLOAT, 0, sizeof(PackedVertex), reinterpret_cast<const GLvoid*>(offsetof(PackedVertex, u1)));
+ 
+   glEnableVertexAttribArray(vertLoc);
+   glEnableVertexAttribArray(loc);
+ 
+-  // Setup vertex position values
+-  for(int i = 0; i < 4; i++)
+-  {
+-    vert[i][0] = m_rotatedDestCoords[i].x;
+-    vert[i][1] = m_rotatedDestCoords[i].y;
+-    vert[i][2] = 0.0f; // set z to 0
+-  }
++  glGenBuffers(1, &indexVBO);
++  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVBO);
++  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte) * 4, idx, GL_STATIC_DRAW);
+ 
+-  // Setup texture coordinates
+-  tex[0][0] = tex[3][0] = 0.0f;
+-  tex[0][1] = tex[1][1] = 0.0f;
+-  tex[1][0] = tex[2][0] = imgwidth;
+-  tex[2][1] = tex[3][1] = imgheight;
++  glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_BYTE, 0);
++  VerifyGLState();
+ 
+-  glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_BYTE, idx);
++  glDisableVertexAttribArray(vertLoc);
++  glDisableVertexAttribArray(loc);
+ 
+-  VerifyGLState();
++  glBindBuffer(GL_ARRAY_BUFFER, 0);
++  glDeleteBuffers(1, &vertexVBO);
++  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
++  glDeleteBuffers(1, &indexVBO);
+ 
+   if (m_pVideoFilterShader)
+   {
+
+From a7011a49eabf625a0e3a12572fd1a1be0eb7890c Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:12:55 -0800
+Subject: [PATCH 02/11] CLinuxRendererGLES: remove single pass rendering and
+ always use FBO's
+
+---
+ .../VideoRenderers/LinuxRendererGLES.cpp      | 231 ++----------------
+ 1 file changed, 21 insertions(+), 210 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+index f5968507604d..fb431270949a 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+@@ -465,24 +465,31 @@ void CLinuxRendererGLES::UpdateVideoFilter()
+     m_pVideoFilterShader = nullptr;
+   }
+ 
+-  m_fbo.fbo.Cleanup();
+-
+   VerifyGLState();
+ 
++  if (!m_fbo.fbo.IsValid())
++  {
++    if (!m_fbo.fbo.Initialize())
++    {
++      CLog::Log(LOGERROR, "GLES: Error initializing FBO");
++    }
++
++    if (!m_fbo.fbo.CreateAndBindToTexture(GL_TEXTURE_2D, m_sourceWidth, m_sourceHeight, GL_RGBA))
++    {
++      CLog::Log(LOGERROR, "GLES: Error creating texture and binding to FBO");
++    }
++  }
++
+   switch (m_scalingMethod)
+   {
+   case VS_SCALINGMETHOD_NEAREST:
+-  {
+-    CLog::Log(LOGNOTICE, "GLES: Selecting single pass rendering");
+-    SetTextureFilter(GL_NEAREST);
+-    m_renderQuality = RQ_SINGLEPASS;
+-    return;
+-  }
+   case VS_SCALINGMETHOD_LINEAR:
+   {
+-    CLog::Log(LOGNOTICE, "GLES: Selecting single pass rendering");
+-    SetTextureFilter(GL_LINEAR);
+-    m_renderQuality = RQ_SINGLEPASS;
++    m_pVideoFilterShader = new DefaultFilterShader();
++    if (!m_pVideoFilterShader->CompileAndLink())
++    {
++      CLog::Log(LOGERROR, "GLES: Error compiling and linking video filter shader");
++    }
+     return;
+   }
+   case VS_SCALINGMETHOD_LANCZOS2:
+@@ -492,32 +499,13 @@ void CLinuxRendererGLES::UpdateVideoFilter()
+   case VS_SCALINGMETHOD_LANCZOS3:
+   case VS_SCALINGMETHOD_CUBIC:
+   {
+-    if (m_renderMethod & RENDER_GLSL)
+-    {
+-      if (!m_fbo.fbo.Initialize())
+-      {
+-        CLog::Log(LOGERROR, "GLES: Error initializing FBO");
+-        break;
+-      }
+-
+-      if (!m_fbo.fbo.CreateAndBindToTexture(GL_TEXTURE_2D, m_sourceWidth, m_sourceHeight, GL_RGBA))
+-      {
+-        CLog::Log(LOGERROR, "GLES: Error creating texture and binding to FBO");
+-        break;
+-      }
+-    }
+-
+     m_pVideoFilterShader = new ConvolutionFilterShader(m_scalingMethod);
+     if (!m_pVideoFilterShader->CompileAndLink())
+     {
+       CLog::Log(LOGERROR, "GLES: Error compiling and linking video filter shader");
+       break;
+     }
+-
+-    CLog::Log(LOGNOTICE, "GLES: Selecting multi pass rendering");
+-    SetTextureFilter(GL_LINEAR);
+-    m_renderQuality = RQ_MULTIPASS;
+-      return;
++    return;
+   }
+   case VS_SCALINGMETHOD_BICUBIC_SOFTWARE:
+   case VS_SCALINGMETHOD_LANCZOS_SOFTWARE:
+@@ -530,18 +518,6 @@ void CLinuxRendererGLES::UpdateVideoFilter()
+   default:
+     break;
+   }
+-
+-  CLog::Log(LOGERROR, "GLES: Falling back to bilinear due to failure to init scaler");
+-  if (m_pVideoFilterShader)
+-  {
+-    delete m_pVideoFilterShader;
+-    m_pVideoFilterShader = nullptr;
+-  }
+-
+-  m_fbo.fbo.Cleanup();
+-
+-  SetTextureFilter(GL_LINEAR);
+-  m_renderQuality = RQ_SINGLEPASS;
+ }
+ 
+ void CLinuxRendererGLES::LoadShaders(int field)
+@@ -724,163 +700,13 @@ void CLinuxRendererGLES::Render(unsigned int flags, int index)
+   else if (m_renderMethod & RENDER_GLSL)
+   {
+     UpdateVideoFilter();
+-    switch(m_renderQuality)
+-    {
+-    case RQ_LOW:
+-    case RQ_SINGLEPASS:
+-    {
+-      RenderSinglePass(index, m_currentField);
+-      VerifyGLState();
+-      break;
+-    }
+-    case RQ_MULTIPASS:
+-    {
+-      RenderToFBO(index, m_currentField);
+-      RenderFromFBO();
+-      VerifyGLState();
+-      break;
+-    }
+-    default:
+-      break;
+-    }
++    RenderToFBO(index, m_currentField);
++    RenderFromFBO();
+   }
+ 
+   AfterRenderHook(index);
+ }
+ 
+-void CLinuxRendererGLES::RenderSinglePass(int index, int field)
+-{
+-  CPictureBuffer &buf = m_buffers[index];
+-  CYuvPlane (&planes)[YuvImage::MAX_PLANES] = m_buffers[index].fields[field];
+-
+-  AVColorPrimaries srcPrim = GetSrcPrimaries(buf.m_srcPrimaries, buf.image.width, buf.image.height);
+-  if (srcPrim != m_srcPrimaries)
+-  {
+-    m_srcPrimaries = srcPrim;
+-    m_reloadShaders = true;
+-  }
+-
+-  bool toneMap = false;
+-
+-  if (m_videoSettings.m_ToneMapMethod != VS_TONEMAPMETHOD_OFF)
+-  {
+-    if (buf.hasLightMetadata || (buf.hasDisplayMetadata && buf.displayMetadata.has_luminance))
+-    {
+-      toneMap = true;
+-    }
+-  }
+-
+-  if (toneMap != m_toneMap)
+-  {
+-    m_reloadShaders = true;
+-  }
+-
+-  m_toneMap = toneMap;
+-
+-  if (m_reloadShaders)
+-  {
+-    LoadShaders(field);
+-  }
+-
+-  glDisable(GL_DEPTH_TEST);
+-
+-  // Y
+-  glActiveTexture(GL_TEXTURE0);
+-  glBindTexture(m_textureTarget, planes[0].id);
+-
+-  // U
+-  glActiveTexture(GL_TEXTURE1);
+-  glBindTexture(m_textureTarget, planes[1].id);
+-
+-  // V
+-  glActiveTexture(GL_TEXTURE2);
+-  glBindTexture(m_textureTarget, planes[2].id);
+-
+-  glActiveTexture(GL_TEXTURE0);
+-  VerifyGLState();
+-
+-  Shaders::BaseYUV2RGBGLSLShader *pYUVShader;
+-  if (field != FIELD_FULL)
+-  {
+-    pYUVShader = m_pYUVBobShader;
+-  }
+-  else
+-  {
+-    pYUVShader = m_pYUVProgShader;
+-  }
+-
+-  pYUVShader->SetBlack(m_videoSettings.m_Brightness * 0.01f - 0.5f);
+-  pYUVShader->SetContrast(m_videoSettings.m_Contrast * 0.02f);
+-  pYUVShader->SetWidth(planes[0].texwidth);
+-  pYUVShader->SetHeight(planes[0].texheight);
+-  pYUVShader->SetColParams(buf.m_srcColSpace, buf.m_srcBits, !buf.m_srcFullRange, buf.m_srcTextureBits);
+-  pYUVShader->SetDisplayMetadata(buf.hasDisplayMetadata, buf.displayMetadata,
+-                                 buf.hasLightMetadata, buf.lightMetadata);
+-  pYUVShader->SetToneMapParam(m_videoSettings.m_ToneMapParam);
+-
+-  if (field == FIELD_TOP)
+-  {
+-    pYUVShader->SetField(1);
+-  }
+-  else if(field == FIELD_BOT)
+-  {
+-    pYUVShader->SetField(0);
+-  }
+-
+-  pYUVShader->SetMatrices(glMatrixProject.Get(), glMatrixModview.Get());
+-  pYUVShader->Enable();
+-
+-  GLubyte idx[4] = {0, 1, 3, 2}; // determines order of triangle strip
+-  GLfloat m_vert[4][3];
+-  GLfloat m_tex[3][4][2];
+-
+-  GLint vertLoc = pYUVShader->GetVertexLoc();
+-  GLint Yloc = pYUVShader->GetYcoordLoc();
+-  GLint Uloc = pYUVShader->GetUcoordLoc();
+-  GLint Vloc = pYUVShader->GetVcoordLoc();
+-
+-  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, 0, 0, m_vert);
+-  glVertexAttribPointer(Yloc, 2, GL_FLOAT, 0, 0, m_tex[0]);
+-  glVertexAttribPointer(Uloc, 2, GL_FLOAT, 0, 0, m_tex[1]);
+-  glVertexAttribPointer(Vloc, 2, GL_FLOAT, 0, 0, m_tex[2]);
+-
+-  glEnableVertexAttribArray(vertLoc);
+-  glEnableVertexAttribArray(Yloc);
+-  glEnableVertexAttribArray(Uloc);
+-  glEnableVertexAttribArray(Vloc);
+-
+-  // Setup vertex position values
+-  for(int i = 0; i < 4; i++)
+-  {
+-    m_vert[i][0] = m_rotatedDestCoords[i].x;
+-    m_vert[i][1] = m_rotatedDestCoords[i].y;
+-    m_vert[i][2] = 0.0f;// set z to 0
+-  }
+-
+-  // Setup texture coordinates
+-  for (int i = 0; i < 3; i++)
+-  {
+-    m_tex[i][0][0] = m_tex[i][3][0] = planes[i].rect.x1;
+-    m_tex[i][0][1] = m_tex[i][1][1] = planes[i].rect.y1;
+-    m_tex[i][1][0] = m_tex[i][2][0] = planes[i].rect.x2;
+-    m_tex[i][2][1] = m_tex[i][3][1] = planes[i].rect.y2;
+-  }
+-
+-  glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_BYTE, idx);
+-
+-  VerifyGLState();
+-
+-  pYUVShader->Disable();
+-  VerifyGLState();
+-
+-  glDisableVertexAttribArray(vertLoc);
+-  glDisableVertexAttribArray(Yloc);
+-  glDisableVertexAttribArray(Uloc);
+-  glDisableVertexAttribArray(Vloc);
+-
+-  VerifyGLState();
+-}
+-
+ void CLinuxRendererGLES::RenderToFBO(int index, int field)
+ {
+   CPictureBuffer &buf = m_buffers[index];
+@@ -915,21 +741,6 @@ void CLinuxRendererGLES::RenderToFBO(int index, int field)
+     LoadShaders(m_currentField);
+   }
+ 
+-  if (!m_fbo.fbo.IsValid())
+-  {
+-    if (!m_fbo.fbo.Initialize())
+-    {
+-      CLog::Log(LOGERROR, "GLES: Error initializing FBO");
+-      return;
+-    }
+-
+-    if (!m_fbo.fbo.CreateAndBindToTexture(GL_TEXTURE_2D, m_sourceWidth, m_sourceHeight, GL_RGBA))
+-    {
+-      CLog::Log(LOGERROR, "GLES: Error creating texture and binding to FBO");
+-      return;
+-    }
+-  }
+-
+   glDisable(GL_DEPTH_TEST);
+ 
+   // Y
+
+From 27f8e8d453d37c463a1a8b203d3c3a54f1bd43a9 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:14:34 -0800
+Subject: [PATCH 03/11] CLinuxRendererGLES: remove single boiler plate for
+ rendermethods
+
+---
+ .../VideoRenderers/LinuxRendererGLES.cpp      | 81 ++++++-------------
+ 1 file changed, 26 insertions(+), 55 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+index fb431270949a..9efe63ac3db1 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+@@ -79,11 +79,6 @@ bool CLinuxRendererGLES::ValidateRenderTarget()
+     UpdateVideoFilter();
+     LoadShaders();
+ 
+-    if (m_renderMethod < 0)
+-    {
+-      return false;
+-    }
+-
+     for (int i = 0 ; i < m_NumYV12Buffers ; i++)
+     {
+       CreateTexture(i);
+@@ -526,50 +521,29 @@ void CLinuxRendererGLES::LoadShaders(int field)
+ 
+   if (!LoadShadersHook())
+   {
+-    int requestedMethod = CServiceBroker::GetSettingsComponent()->GetSettings()->GetInt(CSettings::SETTING_VIDEOPLAYER_RENDERMETHOD);
+-    CLog::Log(LOGDEBUG, "GLES: Requested render method: %d", requestedMethod);
+-
+     ReleaseShaders();
+ 
+-    switch(requestedMethod)
++    // Try GLSL shaders if supported and user requested auto or GLSL.
++    if (glCreateProgram())
+     {
+-      case RENDER_METHOD_AUTO:
+-      case RENDER_METHOD_GLSL:
+-      {
+-        // Try GLSL shaders if supported and user requested auto or GLSL.
+-        if (glCreateProgram())
+-        {
+-          // create regular scan shader
+-          CLog::Log(LOGNOTICE, "GLES: Selecting YUV 2 RGB shader");
+-
+-          EShaderFormat shaderFormat = GetShaderFormat();
+-          m_pYUVProgShader = new YUV2RGBProgressiveShader(shaderFormat, AVColorPrimaries::AVCOL_PRI_BT709, m_srcPrimaries, m_toneMap);
+-          m_pYUVProgShader->SetConvertFullColorRange(m_fullRange);
+-          m_pYUVBobShader = new YUV2RGBBobShader(shaderFormat, AVColorPrimaries::AVCOL_PRI_BT709, m_srcPrimaries, m_toneMap);
+-          m_pYUVBobShader->SetConvertFullColorRange(m_fullRange);
+-
+-          if ((m_pYUVProgShader && m_pYUVProgShader->CompileAndLink())
+-              && (m_pYUVBobShader && m_pYUVBobShader->CompileAndLink()))
+-          {
+-            m_renderMethod = RENDER_GLSL;
+-            UpdateVideoFilter();
+-            break;
+-          }
+-          else
+-          {
+-            ReleaseShaders();
+-            CLog::Log(LOGERROR, "GLES: Error enabling YUV2RGB GLSL shader");
+-            m_renderMethod = -1;
+-            break;
+-          }
+-        }
++      // create regular scan shader
++      CLog::Log(LOGNOTICE, "GLES: Selecting YUV 2 RGB shader");
+ 
+-        break;
++      EShaderFormat shaderFormat = GetShaderFormat();
++      m_pYUVProgShader = new YUV2RGBProgressiveShader(shaderFormat, AVColorPrimaries::AVCOL_PRI_BT709, m_srcPrimaries, m_toneMap);
++      m_pYUVProgShader->SetConvertFullColorRange(m_fullRange);
++      m_pYUVBobShader = new YUV2RGBBobShader(shaderFormat, AVColorPrimaries::AVCOL_PRI_BT709, m_srcPrimaries, m_toneMap);
++      m_pYUVBobShader->SetConvertFullColorRange(m_fullRange);
++
++      if ((m_pYUVProgShader && m_pYUVProgShader->CompileAndLink())
++          && (m_pYUVBobShader && m_pYUVBobShader->CompileAndLink()))
++      {
++        UpdateVideoFilter();
+       }
+-      default:
++      else
+       {
+-        m_renderMethod = -1 ;
+-        CLog::Log(LOGERROR, "GLES: render method not supported");
++        ReleaseShaders();
++        CLog::Log(LOGERROR, "GLES: Error enabling YUV2RGB GLSL shader");
+       }
+     }
+   }
+@@ -697,7 +671,7 @@ void CLinuxRendererGLES::Render(unsigned int flags, int index)
+   {
+     ;
+   }
+-  else if (m_renderMethod & RENDER_GLSL)
++  else
+   {
+     UpdateVideoFilter();
+     RenderToFBO(index, m_currentField);
+@@ -1546,18 +1520,15 @@ bool CLinuxRendererGLES::Supports(ESCALINGMETHOD method)
+       return false;
+     }
+ 
+-    if (m_renderMethod & RENDER_GLSL)
++    // spline36 and lanczos3 are only allowed through advancedsettings.xml
++    if(method != VS_SCALINGMETHOD_SPLINE36 &&
++       method != VS_SCALINGMETHOD_LANCZOS3)
+     {
+-      // spline36 and lanczos3 are only allowed through advancedsettings.xml
+-      if(method != VS_SCALINGMETHOD_SPLINE36 &&
+-         method != VS_SCALINGMETHOD_LANCZOS3)
+-      {
+-        return true;
+-      }
+-      else
+-      {
+-        return CServiceBroker::GetSettingsComponent()->GetAdvancedSettings()->m_videoEnableHighQualityHwScalers;
+-      }
++      return true;
++    }
++    else
++    {
++      return CServiceBroker::GetSettingsComponent()->GetAdvancedSettings()->m_videoEnableHighQualityHwScalers;
+     }
+   }
+ 
+
+From 59fbc16d224533be5961f02835dde3d22b26d390 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:15:50 -0800
+Subject: [PATCH 04/11] CLinuxRendererGLES: log the scaler method currently in
+ use
+
+---
+ .../VideoRenderers/LinuxRendererGLES.cpp      | 24 +++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+index 9efe63ac3db1..bb1e7e09b1f5 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+@@ -31,6 +31,25 @@
+ 
+ using namespace Shaders;
+ 
++std::map<int, std::string> ESCALINGMETHODSTR =
++{
++  {VS_SCALINGMETHOD_NEAREST, "VS_SCALINGMETHOD_NEAREST"},
++  {VS_SCALINGMETHOD_LINEAR, "VS_SCALINGMETHOD_LINEAR"},
++  {VS_SCALINGMETHOD_CUBIC, "VS_SCALINGMETHOD_CUBIC"},
++  {VS_SCALINGMETHOD_LANCZOS2, "VS_SCALINGMETHOD_LANCZOS2"},
++  {VS_SCALINGMETHOD_LANCZOS3_FAST, "VS_SCALINGMETHOD_LANCZOS3_FAST"},
++  {VS_SCALINGMETHOD_LANCZOS3, "VS_SCALINGMETHOD_LANCZOS3"},
++  {VS_SCALINGMETHOD_SINC8, "VS_SCALINGMETHOD_SINC8"},
++  {VS_SCALINGMETHOD_BICUBIC_SOFTWARE, "VS_SCALINGMETHOD_BICUBIC_SOFTWARE"},
++  {VS_SCALINGMETHOD_LANCZOS_SOFTWARE, "VS_SCALINGMETHOD_LANCZOS_SOFTWARE"},
++  {VS_SCALINGMETHOD_SINC_SOFTWARE, "VS_SCALINGMETHOD_SINC_SOFTWARE"},
++  {VS_SCALINGMETHOD_VDPAU_HARDWARE, "VS_SCALINGMETHOD_VDPAU_HARDWARE"},
++  {VS_SCALINGMETHOD_DXVA_HARDWARE, "VS_SCALINGMETHOD_DXVA_HARDWARE"},
++  {VS_SCALINGMETHOD_AUTO, "VS_SCALINGMETHOD_AUTO"},
++  {VS_SCALINGMETHOD_SPLINE36_FAST, "VS_SCALINGMETHOD_SPLINE36_FAST"},
++  {VS_SCALINGMETHOD_SPLINE36, "VS_SCALINGMETHOD_SPLINE36"},
++};
++
+ CLinuxRendererGLES::CLinuxRendererGLES()
+ {
+   m_textureTarget = GL_TEXTURE_2D;
+@@ -453,6 +472,11 @@ void CLinuxRendererGLES::UpdateVideoFilter()
+     CLog::Log(LOGWARNING, "CLinuxRendererGLES::UpdateVideoFilter - chosen scaling method %d, is not supported by renderer", static_cast<int>(m_scalingMethod));
+     m_scalingMethod = VS_SCALINGMETHOD_LINEAR;
+   }
++  else
++  {
++    auto scalingMethodStr = ESCALINGMETHODSTR.find(m_scalingMethod);
++    CLog::Log(LOGINFO, "CLinuxRendererGLESBase::UpdateVideoFilter - chosen scaling method {}", scalingMethodStr->second);
++  }
+ 
+   if (m_pVideoFilterShader)
+   {
+
+From 730e164cfe8e6a44af5cffb9fab84950ed46ba62 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:16:19 -0800
+Subject: [PATCH 05/11] CLinuxRendererGLES: remove some boiler plate now that
+ we only care about multipass rendering
+
+---
+ .../VideoRenderers/LinuxRendererGLES.cpp      | 36 ++++++-------------
+ 1 file changed, 11 insertions(+), 25 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+index bb1e7e09b1f5..6add061fae13 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+@@ -760,12 +760,6 @@ void CLinuxRendererGLES::RenderToFBO(int index, int field)
+   VerifyGLState();
+ 
+   Shaders::BaseYUV2RGBGLSLShader *pYUVShader = m_pYUVProgShader;
+-  // make sure the yuv shader is loaded and ready to go
+-  if (!pYUVShader || (!pYUVShader->OK()))
+-  {
+-    CLog::Log(LOGERROR, "GLES: YUV shader not active, cannot do multipass render");
+-    return;
+-  }
+ 
+   m_fbo.fbo.BeginRender();
+   VerifyGLState();
+@@ -950,28 +944,20 @@ void CLinuxRendererGLES::RenderFromFBO()
+ 
+   // 2nd Pass to screen size with optional video filter
+ 
+-  if (m_pVideoFilterShader)
++  GLint filter;
++  if (!m_pVideoFilterShader->GetTextureFilter(filter))
+   {
+-    GLint filter;
+-    if (!m_pVideoFilterShader->GetTextureFilter(filter))
+-    {
+-      filter = m_scalingMethod == VS_SCALINGMETHOD_NEAREST ? GL_NEAREST : GL_LINEAR;
+-    }
+-
+-    m_fbo.fbo.SetFiltering(GL_TEXTURE_2D, filter);
+-    m_pVideoFilterShader->SetSourceTexture(0);
+-    m_pVideoFilterShader->SetWidth(m_sourceWidth);
+-    m_pVideoFilterShader->SetHeight(m_sourceHeight);
+-    m_pVideoFilterShader->SetAlpha(1.0f);
+-    m_pVideoFilterShader->SetMatrices(glMatrixProject.Get(), glMatrixModview.Get());
+-    m_pVideoFilterShader->Enable();
+-  }
+-  else
+-  {
+-    GLint filter = m_scalingMethod == VS_SCALINGMETHOD_NEAREST ? GL_NEAREST : GL_LINEAR;
+-    m_fbo.fbo.SetFiltering(GL_TEXTURE_2D, filter);
++    filter = m_scalingMethod == VS_SCALINGMETHOD_NEAREST ? GL_NEAREST : GL_LINEAR;
+   }
+ 
++  m_fbo.fbo.SetFiltering(GL_TEXTURE_2D, filter);
++  m_pVideoFilterShader->SetSourceTexture(0);
++  m_pVideoFilterShader->SetWidth(m_sourceWidth);
++  m_pVideoFilterShader->SetHeight(m_sourceHeight);
++  m_pVideoFilterShader->SetAlpha(1.0f);
++  m_pVideoFilterShader->SetMatrices(glMatrixProject.Get(), glMatrixModview.Get());
++  m_pVideoFilterShader->Enable();
++
+   VerifyGLState();
+ 
+   float imgwidth = m_fbo.width / m_sourceWidth;
+
+From 8f580579550e40cae6d627637c63017e99b9749c Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:17:12 -0800
+Subject: [PATCH 06/11] CLinuxRendererGLES: remove unused method
+ SetTextureFilter
+
+---
+ .../VideoRenderers/LinuxRendererGLES.cpp      | 25 -------------------
+ .../VideoRenderers/LinuxRendererGLES.h        |  1 -
+ 2 files changed, 26 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+index 6add061fae13..34ac0a8d00af 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.cpp
+@@ -1450,31 +1450,6 @@ void CLinuxRendererGLES::DeleteNV12Texture(int index)
+   }
+ }
+ 
+-//********************************************************************************************************
+-// SurfaceTexture creation, deletion, copying + clearing
+-//********************************************************************************************************
+-void CLinuxRendererGLES::SetTextureFilter(GLenum method)
+-{
+-  for (int i = 0 ; i < m_NumYV12Buffers; i++)
+-  {
+-    CPictureBuffer& buf = m_buffers[i];
+-
+-    for (int f = FIELD_FULL; f <= FIELD_BOT; f++)
+-    {
+-      for (int p = 0; p < 3; p++)
+-      {
+-        if(glIsTexture(buf.fields[f][p].id))
+-        {
+-          glBindTexture(m_textureTarget, buf.fields[f][p].id);
+-          glTexParameteri(m_textureTarget, GL_TEXTURE_MIN_FILTER, method);
+-          glTexParameteri(m_textureTarget, GL_TEXTURE_MAG_FILTER, method);
+-          VerifyGLState();
+-        }
+-      }
+-    }
+-  }
+-}
+-
+ bool CLinuxRendererGLES::Supports(ERENDERFEATURE feature)
+ {
+   if (feature == RENDERFEATURE_GAMMA ||
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.h b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.h
+index f0a310ff931d..ee35d27f63b9 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.h
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.h
+@@ -98,7 +98,6 @@ class CLinuxRendererGLES : public CBaseRenderer
+   virtual bool ValidateRenderTarget();
+   virtual void LoadShaders(int field=FIELD_FULL);
+   virtual void ReleaseShaders();
+-  void SetTextureFilter(GLenum method);
+   void UpdateVideoFilter();
+   AVColorPrimaries GetSrcPrimaries(AVColorPrimaries srcPrimaries, unsigned int width, unsigned int height);
+ 
+
+From e908560ff651b39e469741371af0a0e7a3a6418b Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:17:45 -0800
+Subject: [PATCH 07/11] CLinuxRendererGLES: cleanup unused RenderMethod and
+ RenderQuality
+
+---
+ .../VideoRenderers/LinuxRendererGLES.h           | 16 ----------------
+ 1 file changed, 16 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.h b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.h
+index ee35d27f63b9..a9489093fa75 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.h
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGLES.h
+@@ -40,20 +40,6 @@ struct DRAWRECT
+   float bottom;
+ };
+ 
+-enum RenderMethod
+-{
+-  RENDER_GLSL = 0x01,
+-  RENDER_CUSTOM = 0x02,
+-};
+-
+-enum RenderQuality
+-{
+-  RQ_LOW = 1,
+-  RQ_SINGLEPASS,
+-  RQ_MULTIPASS,
+-  RQ_SOFTWARE
+-};
+-
+ class CEvent;
+ 
+ class CLinuxRendererGLES : public CBaseRenderer
+@@ -140,8 +126,6 @@ class CLinuxRendererGLES : public CBaseRenderer
+   bool m_bConfigured{false};
+   bool m_bValidated{false};
+   GLenum m_textureTarget;
+-  int m_renderMethod{RENDER_GLSL};
+-  RenderQuality m_renderQuality{RQ_SINGLEPASS};
+ 
+   // Raw data used by renderer
+   int m_currentField{FIELD_FULL};
+
+From 4582570d1b65a5cb829b3a7d6455589adfd7109e Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:18:39 -0800
+Subject: [PATCH 08/11] CRendererDRMPRIMEGLES: update VBO's to be similar to
+ CLinuxRendererGL
+
+---
+ .../HwDecRender/RendererDRMPRIMEGLES.cpp      | 48 ++++++++++++-------
+ 1 file changed, 32 insertions(+), 16 deletions(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp
+index 330823196fbc..c96a8fb212a8 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp
+@@ -139,28 +139,44 @@ bool CRendererDRMPRIMEGLES::RenderHook(int index)
+   {
+     float x, y, z;
+     float u1, v1;
+-  } vertex[4];
++  };
++
++  std::array<PackedVertex, 4> vertex;
+ 
+   GLint vertLoc = renderSystem->GUIShaderGetPos();
+   GLint loc = renderSystem->GUIShaderGetCoord0();
+ 
+-  for (unsigned int i = 0; i < 4; i++)
+-  {
+-    // Setup vertex position values
+-    vertex[i].x = m_rotatedDestCoords[i].x;
+-    vertex[i].y = m_rotatedDestCoords[i].y;
+-    vertex[i].z = 0.0f;
+-  }
+-
+-  // Setup texture coordinates
+-  vertex[0].u1 = vertex[3].u1 = plane.rect.x1;
+-  vertex[0].v1 = vertex[1].v1 = plane.rect.y1;
+-  vertex[1].u1 = vertex[2].u1 = plane.rect.x2;
+-  vertex[2].v1 = vertex[3].v1 = plane.rect.y2;
++  // top left
++  vertex[0].x = m_rotatedDestCoords[0].x;
++  vertex[0].y = m_rotatedDestCoords[0].y;
++  vertex[0].z = 0.0f;
++  vertex[0].u1 = plane.rect.x1;
++  vertex[0].v1 = plane.rect.y1;
++
++  // top right
++  vertex[1].x = m_rotatedDestCoords[1].x;
++  vertex[1].y = m_rotatedDestCoords[1].y;
++  vertex[1].z = 0.0f;
++  vertex[1].u1 = plane.rect.x2;
++  vertex[1].v1 = plane.rect.y1;
++
++  // bottom right
++  vertex[2].x = m_rotatedDestCoords[2].x;
++  vertex[2].y = m_rotatedDestCoords[2].y;
++  vertex[2].z = 0.0f;
++  vertex[2].u1 = plane.rect.x2;
++  vertex[2].v1 = plane.rect.y2;
++
++  // bottom left
++  vertex[3].x = m_rotatedDestCoords[3].x;
++  vertex[3].y = m_rotatedDestCoords[3].y;
++  vertex[3].z = 0.0f;
++  vertex[3].u1 = plane.rect.x1;
++  vertex[3].v1 = plane.rect.y2;;
+ 
+   glGenBuffers(1, &vertexVBO);
+   glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
+-  glBufferData(GL_ARRAY_BUFFER, sizeof(PackedVertex)*4, &vertex[0], GL_STATIC_DRAW);
++  glBufferData(GL_ARRAY_BUFFER, sizeof(PackedVertex) * vertex.size(), vertex.data(), GL_STATIC_DRAW);
+ 
+   glVertexAttribPointer(vertLoc, 3, GL_FLOAT, 0, sizeof(PackedVertex), reinterpret_cast<const GLvoid*>(offsetof(PackedVertex, x)));
+   glVertexAttribPointer(loc, 2, GL_FLOAT, 0, sizeof(PackedVertex), reinterpret_cast<const GLvoid*>(offsetof(PackedVertex, u1)));
+@@ -170,7 +186,7 @@ bool CRendererDRMPRIMEGLES::RenderHook(int index)
+ 
+   glGenBuffers(1, &indexVBO);
+   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVBO);
+-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte)*4, idx, GL_STATIC_DRAW);
++  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte) * 4, idx, GL_STATIC_DRAW);
+ 
+   glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_BYTE, 0);
+ 
+
+From 6ad1f17aa8f4fd035f49caf7b1e4152963f129e0 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:19:05 -0800
+Subject: [PATCH 09/11] CRendererDRMPRIMEGLES: remove unused member
+ m_renderMethod
+
+---
+ .../VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp          | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp
+index c96a8fb212a8..bb682034c8f6 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp
+@@ -114,7 +114,6 @@ bool CRendererDRMPRIMEGLES::LoadShadersHook()
+ {
+   CLog::Log(LOGNOTICE, "Using DRMPRIMEGLES render method");
+   m_textureTarget = GL_TEXTURE_2D;
+-  m_renderMethod = RENDER_CUSTOM;
+   return true;
+ }
+ 
+
+From bae5efa79d45dd3dfe4ff0c210d645c23faf87b6 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:20:11 -0800
+Subject: [PATCH 10/11] CRendererDRMPRIMEGLES: add override methods for
+ ERENDERFEATURE and ESCALINGMETHOD
+
+---
+ .../HwDecRender/RendererDRMPRIMEGLES.cpp      | 24 +++++++++++++++++++
+ .../HwDecRender/RendererDRMPRIMEGLES.h        |  3 +++
+ 2 files changed, 27 insertions(+)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp
+index bb682034c8f6..82aabdba5dfc 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.cpp
+@@ -203,3 +203,27 @@ bool CRendererDRMPRIMEGLES::RenderHook(int index)
+ 
+   return true;
+ }
++
++bool CRendererDRMPRIMEGLES::Supports(ERENDERFEATURE feature)
++{
++  if (feature == RENDERFEATURE_STRETCH ||
++      feature == RENDERFEATURE_ZOOM ||
++      feature == RENDERFEATURE_VERTICAL_SHIFT ||
++      feature == RENDERFEATURE_PIXEL_RATIO ||
++      feature == RENDERFEATURE_ROTATION)
++  {
++    return true;
++  }
++
++  return false;
++}
++
++bool CRendererDRMPRIMEGLES::Supports(ESCALINGMETHOD method)
++{
++  if(method == VS_SCALINGMETHOD_LINEAR)
++  {
++    return true;
++  }
++
++  return false;
++}
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.h b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.h
+index f879b6cf5a38..1aa6a0891569 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.h
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererDRMPRIMEGLES.h
+@@ -25,6 +25,9 @@ class CRendererDRMPRIMEGLES : public CLinuxRendererGLES
+   bool Configure(const VideoPicture &picture, float fps, unsigned int orientation) override;
+   void ReleaseBuffer(int index) override;
+ 
++  bool Supports(ERENDERFEATURE feature) override;
++  bool Supports(ESCALINGMETHOD method) override;
++
+ protected:
+   // CLinuxRendererGLES overrides
+   bool LoadShadersHook() override;
+
+From 7f276747653f399439f6414432b2174702ac66d4 Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Mon, 18 Feb 2019 19:21:08 -0800
+Subject: [PATCH 11/11] CRendererVAAPIGLES: add support for
+ GL_UNSIGNED_INT_2_10_10_10_REV
+
+---
+ .../VideoRenderers/HwDecRender/RendererVAAPIGLES.cpp            | 1 +
+ xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/VaapiEGL.cpp  | 2 ++
+ 2 files changed, 3 insertions(+)
+
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererVAAPIGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererVAAPIGLES.cpp
+index ba0e8f365e8b..f93340596af6 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererVAAPIGLES.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererVAAPIGLES.cpp
+@@ -202,6 +202,7 @@ bool CRendererVAAPI::UploadTexture(int index)
+   }
+ 
+   m_vaapiTextures[index]->Map(pic);
++  m_buffers[index].m_srcTextureBits = m_vaapiTextures[index]->GetBits();
+ 
+   YuvImage &im = buf.image;
+   CYuvPlane (&planes)[3] = buf.fields[0];
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/VaapiEGL.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/VaapiEGL.cpp
+index 35113d6421e7..b5451d1346fc 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/VaapiEGL.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/VaapiEGL.cpp
+@@ -520,6 +520,8 @@ bool CVaapi2Texture::Map(CVaapiRenderPicture* pic)
+     m_bits = 8;
+   else if (type == GL_UNSIGNED_SHORT)
+     m_bits = 16;
++  else if (type == GL_UNSIGNED_INT_2_10_10_10_REV)
++    m_bits = 16;
+   else
+   {
+     CLog::Log(LOGWARNING, "Did not expect texture type: %d", static_cast<int> (type));

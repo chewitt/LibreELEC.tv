@@ -1,0 +1,129 @@
+From a7f31ac43eaf7acc7d9cd47b79244ebe4f145788 Mon Sep 17 00:00:00 2001
+From: Philipp Kerling <pkerling@casix.org>
+Date: Wed, 20 Mar 2019 08:08:42 +0100
+Subject: [PATCH] [curl] Move libcurl symbols out of namespace
+
+Putting includes (that can in turn include all sorts of other stuff)
+into namespaces is not really maintainable and finally broke the build
+in Linux 5.1-rc1. Of course it was a good idea to not clutter the global
+namespaces, but unfortunately it did not turn out to be possible with C
+libraries.
+
+See https://sourceware.org/ml/libc-help/2019-03/msg00014.html
+
+Fixes #15775
+---
+ xbmc/filesystem/CurlFile.cpp | 10 +++++-----
+ xbmc/filesystem/CurlFile.h   | 17 +++++++----------
+ xbmc/filesystem/DllLibCurl.h | 10 +++++-----
+ 3 files changed, 17 insertions(+), 20 deletions(-)
+
+diff --git a/xbmc/filesystem/CurlFile.cpp b/xbmc/filesystem/CurlFile.cpp
+index 3bc6527d21f5..1198f5546207 100644
+--- a/xbmc/filesystem/CurlFile.cpp
++++ b/xbmc/filesystem/CurlFile.cpp
+@@ -1818,7 +1818,7 @@ std::string CCurlFile::GetRedirectURL()
+ std::string CCurlFile::GetInfoString(int infoType)
+ {
+   char* info{};
+-  CURLcode result = g_curlInterface.easy_getinfo(m_state->m_easyHandle, static_cast<XCURL::CURLINFO> (infoType), &info);
++  CURLcode result = g_curlInterface.easy_getinfo(m_state->m_easyHandle, static_cast<CURLINFO> (infoType), &info);
+   if (result != CURLE_OK)
+   {
+     CLog::Log(LOGERROR, "Info string request for type {} failed with result code {}", infoType, result);
+@@ -1894,9 +1894,9 @@ bool CCurlFile::GetContentType(const CURL &url, std::string &content, const std:
+ bool CCurlFile::GetCookies(const CURL &url, std::string &cookies)
+ {
+   std::string cookiesStr;
+-  struct curl_slist*     curlCookies;
+-  XCURL::CURL_HANDLE*    easyHandle;
+-  XCURL::CURLM*          multiHandle;
++  curl_slist* curlCookies;
++  CURL_HANDLE* easyHandle;
++  CURLM* multiHandle;
+ 
+   // get the cookies list
+   g_curlInterface.easy_acquire(url.GetProtocol().c_str(),
+@@ -1905,7 +1905,7 @@ bool CCurlFile::GetCookies(const CURL &url, std::string &cookies)
+   if (CURLE_OK == g_curlInterface.easy_getinfo(easyHandle, CURLINFO_COOKIELIST, &curlCookies))
+   {
+     // iterate over each cookie and format it into an RFC 2109 formatted Set-Cookie string
+-    struct curl_slist* curlCookieIter = curlCookies;
++    curl_slist* curlCookieIter = curlCookies;
+     while(curlCookieIter)
+     {
+       // tokenize the CURL cookie string
+diff --git a/xbmc/filesystem/CurlFile.h b/xbmc/filesystem/CurlFile.h
+index 1f28f05502b8..37520e40213d 100644
+--- a/xbmc/filesystem/CurlFile.h
++++ b/xbmc/filesystem/CurlFile.h
+@@ -14,12 +14,9 @@
+ #include <string>
+ #include "utils/HttpHeader.h"
+ 
+-namespace XCURL
+-{
+-  typedef void CURL_HANDLE;
+-  typedef void CURLM;
+-  struct curl_slist;
+-}
++typedef void CURL_HANDLE;
++typedef void CURLM;
++struct curl_slist;
+ 
+ namespace XFILE
+ {
+@@ -97,8 +94,8 @@ namespace XFILE
+       public:
+           CReadState();
+           ~CReadState();
+-          XCURL::CURL_HANDLE* m_easyHandle;
+-          XCURL::CURLM* m_multiHandle;
++          CURL_HANDLE* m_easyHandle;
++          CURLM* m_multiHandle;
+ 
+           CRingBuffer m_buffer; // our ringhold buffer
+           unsigned int m_bufferSize;
+@@ -121,8 +118,8 @@ namespace XFILE
+           CHttpHeader m_httpheader;
+           bool IsHeaderDone(void) { return m_httpheader.IsHeaderDone(); }
+ 
+-          struct XCURL::curl_slist* m_curlHeaderList;
+-          struct XCURL::curl_slist* m_curlAliasList;
++          curl_slist* m_curlHeaderList;
++          curl_slist* m_curlAliasList;
+ 
+           size_t ReadCallback(char *buffer, size_t size, size_t nitems);
+           size_t WriteCallback(char *buffer, size_t size, size_t nitems);
+diff --git a/xbmc/filesystem/DllLibCurl.h b/xbmc/filesystem/DllLibCurl.h
+index 5b978a1d3ad5..2a2ee9200019 100644
+--- a/xbmc/filesystem/DllLibCurl.h
++++ b/xbmc/filesystem/DllLibCurl.h
+@@ -17,13 +17,13 @@
+ #include <type_traits>
+ #include <vector>
+ 
+-/* put types of curl in namespace to avoid namespace pollution */
+-namespace XCURL
+-{
+ #define CURL CURL_HANDLE
+ #include <curl/curl.h>
+ #undef CURL
+ 
++namespace XCURL
++{
++
+ class DllLibCurl
+ {
+ public:
+@@ -57,8 +57,8 @@ class DllLibCurl
+   CURLMcode multi_timeout(CURLM* multi_handle, long* timeout);
+   CURLMsg* multi_info_read(CURLM* multi_handle, int* msgs_in_queue);
+   CURLMcode multi_cleanup(CURLM* handle);
+-  struct curl_slist* slist_append(struct curl_slist* list, const char* to_append);
+-  void slist_free_all(struct curl_slist* list);
++  curl_slist* slist_append(curl_slist* list, const char* to_append);
++  void slist_free_all(curl_slist* list);
+   const char* easy_strerror(CURLcode code);
+ };
+ 
