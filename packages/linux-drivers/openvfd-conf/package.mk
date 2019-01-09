@@ -7,9 +7,7 @@ PKG_SHA256="96e2b61a9096821d47f180b671c6cfec3f28d3f7bb2ba9edd5501031648f98c4"
 PKG_ARCH="arm aarch64"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/arthur-liberman/vfd-configurations"
-#PKG_URL="https://github.com/arthur-liberman/vfd-configurations/archive/$PKG_VERSION.tar.gz"
-PKG_URL="https://github.com/chewitt/vfd-configurations/archive/$PKG_VERSION.tar.gz" # temp
-PKG_SECTION="driver"
+PKG_URL="https://github.com/chewitt/vfd-configurations/archive/$PKG_VERSION.tar.gz"
 PKG_LONGDESC="Configuration files for the Linux OpenVFD driver"
 PKG_TOOLCHAIN="manual"
 
