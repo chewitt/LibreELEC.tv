@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
+
+if [ -f /run/libreelec/wireguard/wgnet ]; then
+
+  . /run/libreelec/wireguard/wgnet
+
+  INT=$(route | awk '/default/{print $8; exit}')
+
+  case $1 in
+    up)
+      if [ -n "$(ifconfig | grep wg0)" ]; then
+        echo "error: WireGuard is already up!"
+        exit 1
+      else
+        ip link add dev wg0 type wireguard
+        ip addr add $INT_CIDR dev wg0
+        wg setconf wg0 /etc/wireguard/wg0.conf
+        ip link set wg0 up
+        ip route add 0.0.0.0/1 dev wg0
+        ip route add 128.0.0.0/1 dev wg0
+        ip route add $PEER_SERVER via $INT_GATEWAY dev $INT 2&> /dev/null
+      fi
+      ;;
+    down)
+      if [ -z "$(ifconfig | grep wg0)" ]; then
+        echo "error: WireGuard is already down!"
+        exit 1
+      else
+        ip link set wg0 down
+        ip link del wg0
+      fi
+      ;;
+    *)
+      echo "error: unrecognised command!"
+      ;;
+  esac
+
+else
+  echo "error: /run/libreelec/wireguard/wgnet not found"
+fi

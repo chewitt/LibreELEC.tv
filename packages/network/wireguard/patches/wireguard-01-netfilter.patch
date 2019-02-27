@@ -1,0 +1,30 @@
+From df681f4afe2e8a50cc2c1ee3af27b1f42c070472 Mon Sep 17 00:00:00 2001
+From: Bruno Wolff III <bruno@wolff.to>
+Date: Thu, 14 Mar 2019 13:25:34 -0500
+Subject: compat: nf_nat_core.h was removed upstream
+
+In d2c5c103b133 ("netfilter: nat: remove nf_nat_l3proto.h and
+nf_nat_core.h").
+
+Signed-off-by: Bruno Wolff III <bruno@wolff.to>
+---
+ src/compat/compat.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/compat/compat.h b/src/compat/compat.h
+index 7a61e4c1..2dcdbaeb 100644
+--- a/src/compat/compat.h
++++ b/src/compat/compat.h
+@@ -792,7 +792,9 @@ struct __kernel_timespec {
+ #include <net/ipv6.h>
+ #include <net/icmp.h>
+ #include <net/netfilter/nf_conntrack.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 1, 0)
+ #include <net/netfilter/nf_nat_core.h>
++#endif
+ static inline void new_icmp_send(struct sk_buff *skb_in, int type, int code, __be32 info)
+ {
+ 	enum ip_conntrack_info ctinfo;
+-- 
+cgit v1.2.1-20-gc37e
+

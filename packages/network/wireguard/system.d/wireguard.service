@@ -1,0 +1,17 @@
+[Unit]
+Description=WireGuard VPN Service
+After=network-online.target nss-lookup.target wireguard-config.service
+Wants=network-online.target nss-lookup.target
+Requires=wireguard-config.service
+
+ConditionPathExists=/run/libreelec/wireguard/wg0.conf
+ConditionPathExists=/run/libreelec/wireguard/wgnet
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c '/usr/bin/wg-quick up'
+ExecStop=/bin/sh -c '/usr/bin/wg-quick down'
+
+[Install]
+WantedBy=multi-user.target

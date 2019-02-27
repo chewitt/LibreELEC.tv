@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
+
+INT_LISTENPORT=""     # local host WireGuard listen port (required)
+INT_PRIVATEKEY=""     # local /storage/.cache/wireguard/privatekey (required)
+INT_CIDR=""           # local WireGuard IP address in CIDR format, e.g. 10.0.0.2/32 (required)
+INT_GATEWAY=""        # local network gateway address, e.g. 192.168.1.1 (required)
+PEER_PUBLICKEY=""     # remote peer public key (required)
+PEER_ALLOWEDIPS=""    # remote peer allowed IPs, set 0.0.0.0/0 to route all traffic (required)
+PEER_SERVER=""        # remote peer WireGuard IP address, e.g. 10.0.0.1 (required)
+PEER_LISTENPORT=""    # remote peer WireGuard listen port (required)
+PEER_KEEPALIVE=""     # remote peer keepalive value in seconds (optional)
+PEER_PRESHAREDKEY=""  # remote peer presharedkey (optional)

@@ -1,0 +1,12 @@
+[Unit]
+Description=WireGuard Config Service
+After=local-fs.target
+
+ConditionPathExists=/storage/.cache/wireguard/privatekey
+ConditionPathExists=/storage/.cache/wireguard/publickey
+ConditionPathExists=/storage/.cache/wireguard/preshared
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c '/usr/bin/wg-config'
+RemainAfterExit=yes

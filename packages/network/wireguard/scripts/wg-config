@@ -1,0 +1,75 @@
+#!/bin/sh
+
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
+
+if [ -f /storage/.config/wireguard.conf ]; then
+
+  . /storage/.config/wireguard.conf
+
+  mkdir -p /run/libreelec/wireguard
+
+  cp -a /usr/template/wg0.conf /run/libreelec/wireguard/wg0.conf
+
+    if [ -n "$INT_LISTENPORT" ]; then
+      sed -i "s|@@INT_LISTENPORT@@|ListenPort = $INT_LISTENPORT|g" /run/libreelec/wireguard/wg0.conf
+    else
+      echo "error: INT_LISTENPORT not defined"
+    fi
+
+    if [ -n "$INT_PRIVATEKEY" ]; then
+      sed -i "s|@@INT_PRIVATEKEY@@|PrivateKey = $INT_PRIVATEKEY|g" /run/libreelec/wireguard/wg0.conf
+    else
+      echo "error: INT_PRIVATEKEY not defined"
+    fi
+
+    if [ -n "$PEER_PUBLICKEY" ]; then
+      sed -i "s|@@PEER_PUBLICKEY@@|PublicKey = $PEER_PUBLICKEY|g" /run/libreelec/wireguard/wg0.conf
+    else
+      echo "error: PEER_PUBLICKEY not defined"
+    fi
+
+    if [ -n "$PEER_ALLOWEDIPS" ]; then
+      sed -i "s|@@PEER_ALLOWEDIPS@@|AllowedIPs = $PEER_ALLOWEDIPS|g" /run/libreelec/wireguard/wg0.conf
+    else
+      sed -i "s|@@PEER_ALLOWEDIPS@@|AllowedIPs = 0.0.0.0/0|g" /run/libreelec/wireguard/wg0.conf
+    fi
+
+    if [ -n "$PEER_SERVER" -a -n "$PEER_LISTENPORT" ]; then
+      sed -i "s|@@PEER_ENDPOINT@@|Endpoint = $PEER_SERVER:$PEER_LISTENPORT|g" /run/libreelec/wireguard/wg0.conf
+    else
+      sed -i "s|@@PEER_ENDPOINT@@||g" /run/libreelec/wireguard/wg0.conf
+    fi
+
+    if [ -n "$PEER_KEEPALIVE" ]; then
+      sed -i "s|@@PEER_KEEPALIVE@@|PersistentKeepalive = $PEER_KEEPALIVE|g" /run/libreelec/wireguard/wg0.conf
+    else
+      sed -i "s|@@PEER_KEEPALIVE@@||g" /run/libreelec/wireguard/wg0.conf
+    fi
+
+    if [ -n "$PEER_PRESHAREDKEY" ]; then
+      sed -i "s|@@PEER_PRESHAREDKEY@@|PresharedKey = $PEER_PRESHAREDKEY|g" /run/libreelec/wireguard/wg0.conf
+    else
+      sed -i "s|@@PEER_PRESHAREDKEY@@||g" /run/libreelec/wireguard/wg0.conf
+    fi
+
+  cp -a /usr/template/wgnet /run/libreelec/wireguard/wgnet
+
+    if [ -n "$INT_CIDR" ]; then
+      sed -i "s|@@INT_CIDR@@|$INT_CIDR|g" /run/libreelec/wireguard/wgnet
+    else
+      echo "error: INT_CIDR not defined"
+    fi
+
+    if [ -n "$INT_GATEWAY" ]; then
+      sed -i "s|@@INT_GATEWAY@@|$INT_GATEWAY|g" /run/libreelec/wireguard/wgnet
+    else
+      echo "error: INT_GATEWAY not defined"
+    fi
+
+    if [ -n "$PEER_SERVER" ]; then
+      sed -i "s|@@PEER_SERVER@@|$PEER_SERVER|g" /run/libreelec/wireguard/wgnet
+    else
+      echo "error: PEER_SERVER not defined"
+    fi
+fi

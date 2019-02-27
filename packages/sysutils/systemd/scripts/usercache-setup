@@ -25,3 +25,17 @@ if [ -f /storage/.cache/shadow -a -f /usr/cache/shadow ]; then
   # Make sure we have the correct permission
   chmod 000 /storage/.cache/shadow
 fi
+
+# Create WireGuard keys
+if [ -x /usr/bin/wg ]; then
+  umask 077
+  if [ ! -f /storage/.cache/wireguard/privatekey ]; then
+    wg genkey > /storage/.cache/wireguard/privatekey
+  fi
+  if [ ! -f /storage/.cache/wireguard/publickey ]; then
+    wg pubkey > /storage/.cache/wireguard/publickey
+  fi
+  if [ ! -f /storage/.cache/wireguard/preshared ]; then
+    wg genpsk > /storage/.cache/wireguard/preshared
+  fi
+fi
