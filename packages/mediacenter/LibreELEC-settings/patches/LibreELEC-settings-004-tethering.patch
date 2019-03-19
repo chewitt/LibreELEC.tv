@@ -1,0 +1,147 @@
+From 28f959397ec4fa96e49001994bec9c0ce1158258 Mon Sep 17 00:00:00 2001
+From: edit4ever <edit4ever@hotmail.com>
+Date: Fri, 29 Mar 2019 13:48:17 -0700
+Subject: [PATCH] add ethernet tethering option
+
+---
+ language/resource.language.en_gb/strings.po | 22 ++++++-
+ src/resources/lib/modules/connman.py        | 65 +++++++++++++++------
+ 2 files changed, 68 insertions(+), 19 deletions(-)
+
+diff --git a/language/resource.language.en_gb/strings.po b/language/resource.language.en_gb/strings.po
+index 62c75e9..8c7f562 100644
+--- a/language/resource.language.en_gb/strings.po
++++ b/language/resource.language.en_gb/strings.po
+@@ -152,6 +152,10 @@ msgctxt "#730"
+ msgid "Enable or disable support for Wired (Ethernet) networks"
+ msgstr ""
+ 
++msgctxt "#731"
++msgid "Enable a 'tethered' Wired (Ethernet) Access Point. This requires your ethernet card (and driver) to support bridging and access point mode. Not all cards are capable."
++msgstr ""
++
+ msgctxt "#732"
+ msgid "Configure the 1st time (NTP) server"
+ msgstr ""
+@@ -361,7 +365,7 @@ msgid "Passphrase"
+ msgstr ""
+ 
+ msgctxt "#32108"
+-msgid "Enable 'tethered' Wireless Access Point"
++msgid "Enable 'tethered' Access Point"
+ msgstr ""
+ 
+ msgctxt "#32109"
+@@ -492,6 +496,22 @@ msgctxt "#32150"
+ msgid "Edit"
+ msgstr ""
+ 
++msgctxt "#32151"
++msgid "Warning!"
++msgstr ""
++
++msgctxt "#32152"
++msgid "If ethernet tethering is enabled, then a DHCP server is started on all ethernet interfaces. Tethered ethernet should never be connected to corporate or home network as it will disrupt normal operation of these networks. Only activate ethernet tethering if you really know what you are doing.[CR][CR]Do you wish to proceed?"
++msgstr ""
++
++msgctxt "#32153"
++msgid "Only 1 network can be enabled for tethering at a time. Please disable the Wireless Network 'tethered' Access Point before proceeding."
++msgstr ""
++
++msgctxt "#32154"
++msgid "Only 1 network can be enabled for tethering at a time. Please disable the Wired (ethernet) Network 'tethered' Access Point before proceeding."
++msgstr ""
++
+ msgctxt "#32180"
+ msgid "Would you like to update @DISTRONAME@ now?"
+ msgstr ""
+diff --git a/src/resources/lib/modules/connman.py b/src/resources/lib/modules/connman.py
+index eecc806..7524735 100644
+--- a/src/resources/lib/modules/connman.py
++++ b/src/resources/lib/modules/connman.py
+@@ -554,15 +554,30 @@ def __init__(self, oeMain):
+                     'order': 2,
+                     'name': 32103,
+                     'dbus': 'Dictionary',
+-                    'settings': {'Powered': {
+-                        'order': 1,
+-                        'name': 32105,
+-                        'value': '',
+-                        'action': 'set_technologie',
+-                        'type': 'bool',
+-                        'dbus': 'Boolean',
+-                        'InfoText': 730,
+-                        }},
++                    'settings': {
++                        'Powered': {
++                            'order': 1,
++                            'name': 32105,
++                            'value': '',
++                            'action': 'set_technologie',
++                            'type': 'bool',
++                            'dbus': 'Boolean',
++                            'InfoText': 730,
++                            },
++                        'Tethering': {
++                            'order': 2,
++                            'name': 32108,
++                            'value': '',
++                            'action': 'set_technologie',
++                            'type': 'bool',
++                            'dbus': 'Boolean',
++                            'parent': {
++                                'entry': 'Powered',
++                                'value': ['1'],
++                                },
++                            'InfoText': 731,
++                            },
++                            },
+                     'order': 1,
+                     },
+                 'Timeservers': {
+@@ -963,15 +978,18 @@ def set_technologie(self, **kwargs):
+                         if settings['Powered']['value'] == '1':
+                             if technologie['Powered'] != True:
+                                 self.Technology.SetProperty('Powered', dbus.Boolean(True, variant_level=1))
+-                            if settings['Tethering']['value'] == '1' and dbus.String(settings['TetheringIdentifier']['value']) != '' \
+-                                and dbus.String(settings['TetheringPassphrase']['value']) != '':
+-                                time.sleep(5)
+-                                self.Technology.SetProperty('TetheringIdentifier', dbus.String(settings['TetheringIdentifier']['value'],
+-                                                            variant_level=1))
+-                                self.Technology.SetProperty('TetheringPassphrase', dbus.String(settings['TetheringPassphrase']['value'],
+-                                                            variant_level=1))
+-                                if technologie['Tethering'] != True:
+-                                    self.Technology.SetProperty('Tethering', dbus.Boolean(True, variant_level=1))
++                            if settings['Tethering']['value'] == '1':
++                                if technologie['Tethering'] != True and self.struct['/net/connman/technology/ethernet']['settings']['Tethering']['value'] == '1':
++                                    xbmcgui.Dialog().ok(self.oe._(32151), self.oe._(32154))
++                                else:
++                                    if dbus.String(settings['TetheringIdentifier']['value']) != '' and dbus.String(settings['TetheringPassphrase']['value']) != '':
++                                        #time.sleep(5)
++                                        self.Technology.SetProperty('TetheringIdentifier', dbus.String(settings['TetheringIdentifier']['value'],
++                                                                    variant_level=1))
++                                        self.Technology.SetProperty('TetheringPassphrase', dbus.String(settings['TetheringPassphrase']['value'],
++                                                                    variant_level=1))
++                                        if technologie['Tethering'] != True:
++                                            self.Technology.SetProperty('Tethering', dbus.Boolean(True, variant_level=1))
+                             else:
+                                 if technologie['Tethering'] != False:
+                                     self.Technology.SetProperty('Tethering', dbus.Boolean(False, variant_level=1))
+@@ -989,6 +1007,17 @@ def set_technologie(self, **kwargs):
+                         if settings['Powered']['value'] == '1':
+                             if technologie['Powered'] != True:
+                                 self.Technology.SetProperty('Powered', dbus.Boolean(True, variant_level=1))
++                            if settings['Tethering']['value'] == '1':
++                                if technologie['Tethering'] != True:
++                                    if technologie['Tethering'] != True and self.struct['/net/connman/technology/wifi']['settings']['Tethering']['value'] == '1':
++                                        xbmcgui.Dialog().ok(self.oe._(32151), self.oe._(32153))
++                                    else:
++                                        tether = xbmcgui.Dialog().yesno(self.oe._(32151), self.oe._(32152))
++                                        if tether == True:
++                                            self.Technology.SetProperty('Tethering', dbus.Boolean(True, variant_level=1))
++                            else:
++                                if technologie['Tethering'] != False:
++                                    self.Technology.SetProperty('Tethering', dbus.Boolean(False, variant_level=1))
+                         else:
+                             if technologie['Powered'] != False:
+                                 self.Technology.SetProperty('Powered', dbus.Boolean(False, variant_level=1))

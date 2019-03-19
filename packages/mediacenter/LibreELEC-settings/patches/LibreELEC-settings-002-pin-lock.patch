@@ -1,0 +1,528 @@
+From 0fb7d8e3e6dfb152f154b99b89e4393fd8426329 Mon Sep 17 00:00:00 2001
+From: edit4ever <edit4ever@hotmail.com>
+Date: Mon, 11 Mar 2019 07:40:03 -0700
+Subject: [PATCH 1/4] add PIN lock option to LE Settings
+
+---
+ language/resource.language.en_gb/strings.po | 72 +++++++++++++++++++++
+ src/oe.py                                   | 63 ++++++++++++++++--
+ src/resources/lib/modules/system.py         | 68 +++++++++++++++++++
+ 3 files changed, 197 insertions(+), 6 deletions(-)
+
+diff --git a/language/resource.language.en_gb/strings.po b/language/resource.language.en_gb/strings.po
+index 62c75e9..9503061 100644
+--- a/language/resource.language.en_gb/strings.po
++++ b/language/resource.language.en_gb/strings.po
+@@ -208,6 +208,14 @@ msgctxt "#746"
+ msgid "Set the password for SSH"
+ msgstr ""
+ 
++msgctxt "#747"
++msgid "Enable a PIN for LE Settings access"
++msgstr ""
++
++msgctxt "#748"
++msgid "Change the PIN Lock for LE Settings access"
++msgstr ""
++
+ msgctxt "#750"
+ msgid "750"
+ msgstr ""
+@@ -540,6 +548,18 @@ msgctxt "#32191"
+ msgid "Invalid URL"
+ msgstr ""
+ 
++msgctxt "#32192"
++msgid "PIN lock"
++msgstr ""
++
++msgctxt "#32193"
++msgid "Enable LE Settings PIN Lock"
++msgstr ""
++
++msgctxt "#32194"
++msgid "Change LE Settings PIN Lock"
++msgstr ""
++
+ msgctxt "#32196"
+ msgid "About"
+ msgstr ""
+@@ -644,6 +664,58 @@ msgctxt "#32225"
+ msgid "There was an error during the process.[CR]SSH password is unchanged."
+ msgstr ""
+ 
++msgctxt "#32226"
++msgid "Enter new 4 digit PIN"
++msgstr ""
++
++msgctxt "#32227"
++msgid "Re-enter PIN"
++msgstr ""
++
++msgctxt "#32228"
++msgid "Error - PIN codes did not match!"
++msgstr ""
++
++msgctxt "#32229"
++msgid "LE Settings PIN lock not set.[CR][CR]Please try again."
++msgstr ""
++
++msgctxt "#32230"
++msgid "LE Settings PIN lock set."
++msgstr ""
++
++msgctxt "#32231"
++msgid "Your LE Settings PIN lock was set to:"
++msgstr ""
++
++msgctxt "#32232"
++msgid "Error - PIN code not 4 digits!"
++msgstr ""
++
++msgctxt "#32233"
++msgid "LE Settings Locked - Enter PIN"
++msgstr ""
++
++msgctxt "#32234"
++msgid "Incorrect PIN!"
++msgstr ""
++
++msgctxt "#32235"
++msgid " attempts remaining."
++msgstr ""
++
++msgctxt "#32236"
++msgid "You have entered an incorrect PIN too many times.[CR][CR]You will need to wait 5 minutes before trying again."
++msgstr ""
++
++msgctxt "#32237"
++msgid "LE Settings Locked!"
++msgstr ""
++
++msgctxt "#32238"
++msgid " minutes remain before PIN can be entered.[CR][CR]Too many previous failed attempts."
++msgstr ""
++
+ msgctxt "#32300"
+ msgid "Welcome to @DISTRONAME@"
+ msgstr ""
+diff --git a/src/oe.py b/src/oe.py
+index cb39448..38a1c2d 100644
+--- a/src/oe.py
++++ b/src/oe.py
+@@ -20,6 +20,7 @@
+ import dbus.mainloop.glib
+ import defaults
+ import shutil
++import hashlib, binascii
+ 
+ from xml.dom import minidom
+ 
+@@ -29,6 +30,7 @@
+ __cwd__ = __addon__.getAddonInfo('path')
+ __oe__ = sys.modules[globals()['__name__']]
+ __media__ = '%s/resources/skins/Default/media' % __cwd__
++xbmcDialog = xbmcgui.Dialog()
+ 
+ is_service = False
+ conf_lock = False
+@@ -488,12 +490,44 @@ def openWizard():
+ def openConfigurationWindow():
+     global winOeMain, __cwd__, __oe__, dictModules
+     try:
+-        winOeMain = oeWindows.mainWindow('service-LibreELEC-Settings-mainWindow.xml', __cwd__, 'Default', oeMain=__oe__)
+-        winOeMain.doModal()
+-        for strModule in dictModules:
+-            dictModules[strModule].exit()
+-        winOeMain = None
+-        del winOeMain
++        PINmatch = False
++        PINnext = 1000
++        PINenable = read_setting('system', 'pinlock_enable')
++        if PINenable == "0":
++            PINmatch = True
++        PINfail = read_setting('system', 'pinlock_timeFail')
++        if PINfail:
++            nowTime = time.time()
++            PINnext = (nowTime - float(PINfail))
++        if PINnext >= 300:
++            PINtry = 4
++            while PINmatch == False:
++                if PINtry > 0:
++                    PINlock = xbmcDialog.input(_(32233), type=xbmcgui.INPUT_NUMERIC)
++                    storedPIN = read_setting('system', 'pinlock_pin')
++                    PINmatch = verify_password(storedPIN, PINlock)
++                    if PINmatch == False:
++                        PINtry -= 1
++                        if PINtry > 0:
++                            xbmcDialog.ok(_(32234), str(PINtry) + _(32235))
++                else:
++                    timeFail = time.time()
++                    write_setting('system', 'pinlock_timeFail', str(timeFail))
++                    xbmcDialog.ok(_(32234), _(32236))
++                    break
++            if PINmatch == True:
++                winOeMain = oeWindows.mainWindow('service-LibreELEC-Settings-mainWindow.xml', __cwd__, 'Default', oeMain=__oe__)
++                winOeMain.doModal()
++                for strModule in dictModules:
++                    dictModules[strModule].exit()
++                winOeMain = None
++                del winOeMain
++            else:
++                pass
++        else:
++            timeLeft = "{0:.2f}".format((300 - PINnext)/60)
++            xbmcDialog.ok(_(32237), timeLeft + _(32238))
++
+     except Exception, e:
+         dbg_log('oe::openConfigurationWindow', 'ERROR: (' + repr(e) + ')')
+ 
+@@ -793,6 +827,23 @@ def get_os_release():
+             builder_version
+             )
+ 
++def hash_password(password):
++    salt = hashlib.sha256(os.urandom(60)).hexdigest().encode('ascii')
++    pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'),
++                                salt, 100000)
++    pwdhash = binascii.hexlify(pwdhash)
++    return (salt + pwdhash).decode('ascii')
++
++def verify_password(stored_password, provided_password):
++    salt = stored_password[:64]
++    stored_password = stored_password[64:]
++    pwdhash = hashlib.pbkdf2_hmac('sha512',
++                                  provided_password.encode('utf-8'),
++                                  salt.encode('ascii'),
++                                  100000)
++    pwdhash = binascii.hexlify(pwdhash).decode('ascii')
++    return pwdhash == stored_password
++
+ 
+ minidom.Element.writexml = fixed_writexml
+ 
+diff --git a/src/resources/lib/modules/system.py b/src/resources/lib/modules/system.py
+index c7714c5..e3cd3b3 100644
+--- a/src/resources/lib/modules/system.py
++++ b/src/resources/lib/modules/system.py
+@@ -106,6 +106,33 @@ def __init__(self, oeMain):
+                             },
+                         },
+                     },
++                'pinlock': {
++                    'order': 3,
++                    'name': 32192,
++                    'settings': {
++                        'pinlock_enable': {
++                            'order': 1,
++                            'name': 32193,
++                            'value': '0',
++                            'action': 'init_pinlock',
++                            'type': 'bool',
++                            'InfoText': 747,
++                            },
++                        'pinlock_pin': {
++                            'order': 2,
++                            'name': 32194,
++                            'value': '',
++                            'action': 'set_pinlock',
++                            'type': 'button',
++                            'InfoText': 748,
++                            'parent': {
++                                'entry': 'pinlock_enable',
++                                'value': ['1'],
++                                },
++                            },
++                        },
++                    },
++
+                 'backup': {
+                     'order': 7,
+                     'name': 32371,
+@@ -338,6 +365,13 @@ def load_values(self):
+                 self.struct['ident']['settings']['hostname']['value'] = value
+             else:
+                 self.struct['ident']['settings']['hostname']['value'] = self.oe.DISTRIBUTION
++
++            # PIN Lock
++            value = self.oe.read_setting('system', 'pinlock_enable')
++            if not value is None:
++                self.struct['pinlock']['settings']['pinlock_enable']['value'] = value
++
++
+         except Exception, e:
+             self.oe.dbg_log('system::load_values', 'ERROR: (' + repr(e) + ')')
+ 
+@@ -790,6 +824,40 @@ def get_folder_size(self, folder):
+             elif os.path.isdir(itempath):
+                 self.get_folder_size(itempath)
+ 
++    def init_pinlock(self, listItem=None):
++        try:
++            self.oe.dbg_log('system::init_pinlock', 'enter_function', 0)
++            if not listItem == None:
++                self.set_value(listItem)
++            if (self.oe.read_setting('system', 'pinlock_enable') == "1") and (self.oe.read_setting('system', 'pinlock_pin') == None):
++                self.set_pinlock()
++            self.oe.dbg_log('system::init_pinlock', 'exit_function', 0)
++        except Exception, e:
++            self.oe.dbg_log('ssystem::init_pinlock', 'ERROR: (%s)' % repr(e), 4)
++
++    def set_pinlock(self, listItem=None):
++        try:
++            self.oe.dbg_log('system::set_pinlock', 'enter_function', 0)
++            oldpin = self.oe.read_setting('system', 'pinlock_pin')
++            newpin = xbmcDialog.input(self.oe._(32226), type=xbmcgui.INPUT_NUMERIC)
++            if len(newpin) == 4 :
++               newpinConfirm = xbmcDialog.input(self.oe._(32227), type=xbmcgui.INPUT_NUMERIC)
++               if newpin != newpinConfirm:
++                   xbmcDialog.ok(self.oe._(32228), self.oe._(32229))
++               else:
++                   encodePin = self.oe.hash_password(newpin)
++                   self.oe.write_setting('system', 'pinlock_pin', encodePin)
++                   xbmcDialog.ok(self.oe._(32230), self.oe._(32231), newpin)
++                   oldpin = newpin
++            else:
++                xbmcDialog.ok(self.oe._(32232), self.oe._(32229))
++            if oldpin == None:
++                self.struct['pinlock']['settings']['pinlock_enable']['value'] = '0'
++                self.oe.write_setting('system', 'pinlock_enable', '0')
++            self.oe.dbg_log('system::set_pinlock', 'exit_function', 0)
++        except Exception, e:
++            self.oe.dbg_log('ssystem::set_pinlock', 'ERROR: (%s)' % repr(e), 4)
++
+     def do_wizard(self):
+         try:
+             self.oe.dbg_log('system::do_wizard', 'enter_function', 0)
+
+From 075010e6fa10068d358b7d2e675b4634b106de35 Mon Sep 17 00:00:00 2001
+From: edit4ever <edit4ever@hotmail.com>
+Date: Tue, 12 Mar 2019 08:17:52 -0700
+Subject: [PATCH 2/4] fix None error for no setting
+
+---
+ src/oe.py | 63 ++++++++++++++++++++++++++++---------------------------
+ 1 file changed, 32 insertions(+), 31 deletions(-)
+
+diff --git a/src/oe.py b/src/oe.py
+index 38a1c2d..b22b5eb 100644
+--- a/src/oe.py
++++ b/src/oe.py
+@@ -493,40 +493,41 @@ def openConfigurationWindow():
+         PINmatch = False
+         PINnext = 1000
+         PINenable = read_setting('system', 'pinlock_enable')
+-        if PINenable == "0":
++        if PINenable == "0" or PINenable == None:
+             PINmatch = True
+-        PINfail = read_setting('system', 'pinlock_timeFail')
+-        if PINfail:
+-            nowTime = time.time()
+-            PINnext = (nowTime - float(PINfail))
+-        if PINnext >= 300:
+-            PINtry = 4
+-            while PINmatch == False:
+-                if PINtry > 0:
+-                    PINlock = xbmcDialog.input(_(32233), type=xbmcgui.INPUT_NUMERIC)
+-                    storedPIN = read_setting('system', 'pinlock_pin')
+-                    PINmatch = verify_password(storedPIN, PINlock)
+-                    if PINmatch == False:
+-                        PINtry -= 1
+-                        if PINtry > 0:
+-                            xbmcDialog.ok(_(32234), str(PINtry) + _(32235))
+-                else:
+-                    timeFail = time.time()
+-                    write_setting('system', 'pinlock_timeFail', str(timeFail))
+-                    xbmcDialog.ok(_(32234), _(32236))
+-                    break
+-            if PINmatch == True:
+-                winOeMain = oeWindows.mainWindow('service-LibreELEC-Settings-mainWindow.xml', __cwd__, 'Default', oeMain=__oe__)
+-                winOeMain.doModal()
+-                for strModule in dictModules:
+-                    dictModules[strModule].exit()
+-                winOeMain = None
+-                del winOeMain
++        if PINenable == "1":
++            PINfail = read_setting('system', 'pinlock_timeFail')
++            if PINfail:
++                nowTime = time.time()
++                PINnext = (nowTime - float(PINfail))
++            if PINnext >= 300:
++                PINtry = 4
++                while PINmatch == False:
++                    if PINtry > 0:
++                        PINlock = xbmcDialog.input(_(32233), type=xbmcgui.INPUT_NUMERIC)
++                        storedPIN = read_setting('system', 'pinlock_pin')
++                        PINmatch = verify_password(storedPIN, PINlock)
++                        if PINmatch == False:
++                            PINtry -= 1
++                            if PINtry > 0:
++                                xbmcDialog.ok(_(32234), str(PINtry) + _(32235))
++                    else:
++                        timeFail = time.time()
++                        write_setting('system', 'pinlock_timeFail', str(timeFail))
++                        xbmcDialog.ok(_(32234), _(32236))
++                        break
+             else:
+-                pass
++                timeLeft = "{0:.2f}".format((300 - PINnext)/60)
++                xbmcDialog.ok(_(32237), timeLeft + _(32238))
++        if PINmatch == True:
++            winOeMain = oeWindows.mainWindow('service-LibreELEC-Settings-mainWindow.xml', __cwd__, 'Default', oeMain=__oe__)
++            winOeMain.doModal()
++            for strModule in dictModules:
++                dictModules[strModule].exit()
++            winOeMain = None
++            del winOeMain
+         else:
+-            timeLeft = "{0:.2f}".format((300 - PINnext)/60)
+-            xbmcDialog.ok(_(32237), timeLeft + _(32238))
++            pass
+ 
+     except Exception, e:
+         dbg_log('oe::openConfigurationWindow', 'ERROR: (' + repr(e) + ')')
+
+From ddf370c83b06f79893960c57e9645ec68ace5ff6 Mon Sep 17 00:00:00 2001
+From: edit4ever <edit4ever@gmail.com>
+Date: Tue, 12 Mar 2019 15:46:42 -0700
+Subject: [PATCH 3/4] fix missing xbmcDialog
+
+---
+ src/resources/lib/modules/system.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/resources/lib/modules/system.py b/src/resources/lib/modules/system.py
+index e3cd3b3..40cb0a1 100644
+--- a/src/resources/lib/modules/system.py
++++ b/src/resources/lib/modules/system.py
+@@ -16,6 +16,7 @@
+ import shutil
+ from xml.dom import minidom
+ 
++xbmcDialog = xbmcgui.Dialog()
+ 
+ class system:
+ 
+
+From ad335ec346190738d9617cbd758b02cd069d9871 Mon Sep 17 00:00:00 2001
+From: edit4ever <edit4ever@hotmail.com>
+Date: Thu, 14 Mar 2019 07:51:24 -0700
+Subject: [PATCH 4/4] fix cancel and others
+
+fix cancel option
+remove PIN when turning off option
+replace LE with @DISTRONAME@
+---
+ language/resource.language.en_gb/strings.po | 18 +++++++++---------
+ src/oe.py                                   | 15 +++++++++------
+ src/resources/lib/modules/system.py         |  2 ++
+ 3 files changed, 20 insertions(+), 15 deletions(-)
+
+diff --git a/language/resource.language.en_gb/strings.po b/language/resource.language.en_gb/strings.po
+index 9503061..4229abb 100644
+--- a/language/resource.language.en_gb/strings.po
++++ b/language/resource.language.en_gb/strings.po
+@@ -209,11 +209,11 @@ msgid "Set the password for SSH"
+ msgstr ""
+ 
+ msgctxt "#747"
+-msgid "Enable a PIN for LE Settings access"
++msgid "Enable a PIN for @DISTRONAME@ Settings access"
+ msgstr ""
+ 
+ msgctxt "#748"
+-msgid "Change the PIN Lock for LE Settings access"
++msgid "Change the PIN Lock for @DISTRONAME@ Settings access"
+ msgstr ""
+ 
+ msgctxt "#750"
+@@ -553,11 +553,11 @@ msgid "PIN lock"
+ msgstr ""
+ 
+ msgctxt "#32193"
+-msgid "Enable LE Settings PIN Lock"
++msgid "Enable @DISTRONAME@ Settings PIN Lock"
+ msgstr ""
+ 
+ msgctxt "#32194"
+-msgid "Change LE Settings PIN Lock"
++msgid "Change @DISTRONAME@ Settings PIN Lock"
+ msgstr ""
+ 
+ msgctxt "#32196"
+@@ -677,15 +677,15 @@ msgid "Error - PIN codes did not match!"
+ msgstr ""
+ 
+ msgctxt "#32229"
+-msgid "LE Settings PIN lock not set.[CR][CR]Please try again."
++msgid "@DISTRONAME@ Settings PIN lock not set.[CR][CR]Please try again."
+ msgstr ""
+ 
+ msgctxt "#32230"
+-msgid "LE Settings PIN lock set."
++msgid "@DISTRONAME@ Settings PIN lock set."
+ msgstr ""
+ 
+ msgctxt "#32231"
+-msgid "Your LE Settings PIN lock was set to:"
++msgid "Your @DISTRONAME@ Settings PIN lock was set to:"
+ msgstr ""
+ 
+ msgctxt "#32232"
+@@ -693,7 +693,7 @@ msgid "Error - PIN code not 4 digits!"
+ msgstr ""
+ 
+ msgctxt "#32233"
+-msgid "LE Settings Locked - Enter PIN"
++msgid "@DISTRONAME@ Settings Locked - Enter PIN"
+ msgstr ""
+ 
+ msgctxt "#32234"
+@@ -709,7 +709,7 @@ msgid "You have entered an incorrect PIN too many times.[CR][CR]You will need to
+ msgstr ""
+ 
+ msgctxt "#32237"
+-msgid "LE Settings Locked!"
++msgid "@DISTRONAME@ Settings Locked!"
+ msgstr ""
+ 
+ msgctxt "#32238"
+diff --git a/src/oe.py b/src/oe.py
+index b22b5eb..db285ac 100644
+--- a/src/oe.py
++++ b/src/oe.py
+@@ -505,12 +505,15 @@ def openConfigurationWindow():
+                 while PINmatch == False:
+                     if PINtry > 0:
+                         PINlock = xbmcDialog.input(_(32233), type=xbmcgui.INPUT_NUMERIC)
+-                        storedPIN = read_setting('system', 'pinlock_pin')
+-                        PINmatch = verify_password(storedPIN, PINlock)
+-                        if PINmatch == False:
+-                            PINtry -= 1
+-                            if PINtry > 0:
+-                                xbmcDialog.ok(_(32234), str(PINtry) + _(32235))
++                        if PINlock == '':
++                            break
++                        else:
++                            storedPIN = read_setting('system', 'pinlock_pin')
++                            PINmatch = verify_password(storedPIN, PINlock)
++                            if PINmatch == False:
++                                PINtry -= 1
++                                if PINtry > 0:
++                                    xbmcDialog.ok(_(32234), str(PINtry) + _(32235))
+                     else:
+                         timeFail = time.time()
+                         write_setting('system', 'pinlock_timeFail', str(timeFail))
+diff --git a/src/resources/lib/modules/system.py b/src/resources/lib/modules/system.py
+index 40cb0a1..e21b9d0 100644
+--- a/src/resources/lib/modules/system.py
++++ b/src/resources/lib/modules/system.py
+@@ -832,6 +832,8 @@ def init_pinlock(self, listItem=None):
+                 self.set_value(listItem)
+             if (self.oe.read_setting('system', 'pinlock_enable') == "1") and (self.oe.read_setting('system', 'pinlock_pin') == None):
+                 self.set_pinlock()
++            if (self.oe.read_setting('system', 'pinlock_enable') == "0"):
++                self.oe.write_setting('system', 'pinlock_pin', '')
+             self.oe.dbg_log('system::init_pinlock', 'exit_function', 0)
+         except Exception, e:
+             self.oe.dbg_log('ssystem::init_pinlock', 'ERROR: (%s)' % repr(e), 4)

@@ -1,0 +1,21 @@
+From ad10135c90cb0f66161660b008f27d923caca025 Mon Sep 17 00:00:00 2001
+From: Corey Moyer <cronmod.dev@gmail.com>
+Date: Fri, 22 Mar 2019 20:51:41 -0400
+Subject: [PATCH] Fix duplicate bluetooth devices
+
+---
+ src/resources/lib/modules/bluetooth.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/resources/lib/modules/bluetooth.py b/src/resources/lib/modules/bluetooth.py
+index 3db274d..5c7c96d 100644
+--- a/src/resources/lib/modules/bluetooth.py
++++ b/src/resources/lib/modules/bluetooth.py
+@@ -1115,6 +1115,7 @@ def run(self):
+             while not self.stopped and not xbmc.abortRequested:
+                 current_time = time.time()
+                 if current_time > self.last_run + 5:
++                    self.clear_list()
+                     self.oe.dictModules['bluetooth'].menu_connections(None)
+                     self.last_run = current_time
+                 if not self.main_menu.getSelectedItem().getProperty('modul') == 'bluetooth':
