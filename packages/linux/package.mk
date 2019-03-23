@@ -192,9 +192,6 @@ make_target() {
         x86_64)
           PERF_BUILD_ARGS="ARCH=x86"
           ;;
-        aarch64)
-          PERF_BUILD_ARGS="ARCH=arm64"
-          ;;
         *)
           PERF_BUILD_ARGS="ARCH=$TARGET_ARCH"
           ;;
