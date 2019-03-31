@@ -34,6 +34,12 @@ case "$PROJECT" in
     ;;
 esac
 
+make_host() {
+  make mrproper
+  make libretech-cc_defconfig
+  make tools-only
+}
+
 make_target() {
   if [ -z "$UBOOT_SYSTEM" ]; then
     echo "UBOOT_SYSTEM must be set to build an image"
@@ -44,6 +50,11 @@ make_target() {
     DEBUG=${PKG_DEBUG} CROSS_COMPILE="$TARGET_KERNEL_PREFIX" LDFLAGS="" ARCH=arm make $($ROOT/$SCRIPTS/uboot_helper $PROJECT $DEVICE $UBOOT_SYSTEM config)
     DEBUG=${PKG_DEBUG} CROSS_COMPILE="$TARGET_KERNEL_PREFIX" LDFLAGS="" ARCH=arm make HOSTCC="$HOST_CC" HOSTSTRIP="true"
   fi
+}
+
+makeinstall_host() {
+  mkdir -p $TOOLCHAIN/bin
+    cp tools/mkimage $TOOLCHAIN/bin
 }
 
 makeinstall_target() {
