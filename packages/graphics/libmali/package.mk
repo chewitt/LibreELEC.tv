@@ -25,3 +25,8 @@ fi
 if [ "$TARGET_ARCH" = "aarch64" ]; then
   PKG_CMAKE_OPTS_TARGET+=" -DMALI_ARCH=aarch64-linux-gnu"
 fi
+
+post_makeinstall_target(){
+  cd $INSTALL/usr/lib
+  ln -sf libmali-bifrost-g52-r16p0-wayland-gbm.so libmali.so.0
+}
