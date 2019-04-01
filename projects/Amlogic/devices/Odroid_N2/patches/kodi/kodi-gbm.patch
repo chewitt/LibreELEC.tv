@@ -1,0 +1,11 @@
+--- a/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp	2019-03-22 09:48:02.000000000 +0000
++++ b/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp	2019-04-01 09:32:54.107547567 +0000
+@@ -29,7 +29,7 @@
+ using namespace KODI::WINDOWING::GBM;
+ 
+ CWinSystemGbmGLESContext::CWinSystemGbmGLESContext()
+-: CWinSystemGbmEGLContext(EGL_PLATFORM_GBM_MESA, "EGL_MESA_platform_gbm")
++: CWinSystemGbmEGLContext(EGL_PLATFORM_GBM_MESA, "EGL_KHR_platform_gbm")
+ {}
+ 
+ std::unique_ptr<CWinSystemBase> CWinSystemBase::CreateWinSystem()
