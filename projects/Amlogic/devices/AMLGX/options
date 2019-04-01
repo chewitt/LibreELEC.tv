@@ -1,0 +1,45 @@
+  # Configuration for u-boot
+    UBOOT_VERSION="vendor"
+
+  # Additional kernel make parameters (for example to specify the u-boot loadaddress)
+    KERNEL_MAKE_EXTRACMD=""
+
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-nanopi-k2.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-nexbox-a95x.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-odroidc2.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-p200.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-p201.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-vega-s95-meta.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-vega-s95-pro.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-vega-s95-telos.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-wetek-hub.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxbb-wetek-play2.dtb"
+
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s805x-libretech-ac.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s805x-p241.dtb"
+
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905d-p230.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905d-p231.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905d-phicomm-n1.dtb"
+
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905w-p281.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905w-tx3-mini.dtb"
+
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905x-hwacom-amazetv.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905x-khadas-vim.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905x-libretech-cc.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905x-nexbox-a95x.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxl-s905x-p212.dtb"
+
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxm-khadas-vim2.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxm-nexbox-a1.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxm-q200.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxm-q201.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxm-rbox-pro.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-gxm-vega-s96.dtb"
+
+  # Mali GPU family
+    MALI_FAMILY="450"
+
+  # additional packages to install:
+    ADDITIONAL_PACKAGES+=" aml_autoscript amlogic-boot-fip cpumac"
