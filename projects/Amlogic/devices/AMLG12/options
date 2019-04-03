@@ -1,0 +1,16 @@
+  # Configuration for u-boot
+    UBOOT_VERSION="vendor"
+
+  # Additional kernel make parameters (for example to specify the u-boot loadaddress)
+    KERNEL_MAKE_EXTRACMD=""
+
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-g12a-u200.dtb"
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-g12a-x96-max.dtb"
+
+    KERNEL_MAKE_EXTRACMD+=" amlogic/meson-g12b-odroid-n2.dtb"
+
+  # Mali GPU family
+    MALI_FAMILY="g12"
+
+  # additional packages to install:
+    ADDITIONAL_PACKAGES+=" aml_autoscript amlogic-boot-fip cpumac"
