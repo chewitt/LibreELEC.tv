@@ -1,6 +1,9 @@
   # Configuration for u-boot
     UBOOT_VERSION="vendor"
 
+  # Configuration for u-boot
+    UBOOT_SYSTEM="AMLGX"
+
   # Additional kernel make parameters (for example to specify the u-boot loadaddress)
     KERNEL_MAKE_EXTRACMD=""
 

@@ -12,6 +12,7 @@ make_target() {
     AMLGX)
       for src in $PKG_DIR/extlinux-scripts/*autoscript.src ; do
         $TOOLCHAIN/bin/mkimage -A $TARGET_KERNEL_ARCH -O linux -T script -C none -d "$src" "$(basename $src .src)" > /dev/null
+        cp -a $PKG_DIR/config/* $PKG_BUILD/
       done
       ;;
     *)
