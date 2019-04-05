@@ -1,0 +1,40 @@
+--- a/language/resource.language.en_gb/strings.po
++++ b/language/resource.language.en_gb/strings.po
+@@ -919,3 +919,37 @@
+ msgctxt "#32399"
+ msgid "Public"
+ msgstr ""
++
++########## eMMC #########
++
++msgctxt "#32820"
++msgid "eMMC"
++msgstr ""
++
++msgctxt "#32821"
++msgid "Install to eMMC"
++msgstr ""
++
++msgctxt "#2821"
++msgid "Install Libreelec to eMMC."
++msgstr ""
++
++msgctxt "#32822"
++msgid "Full backup eMMC."
++msgstr ""
++
++msgctxt "#2822"
++msgid "Create full backup eMMC to /storage/backup/ddbr ."
++msgstr ""
++
++msgctxt "#32823"
++msgid "Restore  eMMC"
++msgstr ""
++
++msgctxt "#2823"
++msgid "Restore full backup to eMMC."
++msgstr ""
++
++msgctxt "#32824"
++msgid "Install Backup Restore eMMC"
++msgstr ""

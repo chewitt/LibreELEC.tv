@@ -1,0 +1,20 @@
+--- a/arch/arm64/boot/dts/amlogic/meson-gxbb-vega-s95.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-gxbb-vega-s95.dtsi
+@@ -193,6 +193,7 @@
+ &ir {
+ 	status = "okay";
+ 	pinctrl-0 = <&remote_input_ao_pins>;
++	linux,rc-map-name = "rc-geekbox";
+ 	pinctrl-names = "default";
+ };
+ 
+@@ -282,7 +283,7 @@
+ 
+ 	bluetooth {
+ 		compatible = "brcm,bcm43438-bt";
+-		shutdown-gpios = <&gpio GPIOX_20 GPIO_ACTIVE_HIGH>;
++//		shutdown-gpios = <&gpio GPIOX_20 GPIO_ACTIVE_HIGH>;
+ 	};
+ };
+ 
+

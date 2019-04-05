@@ -19,25 +19,17 @@
   # e.g. ADDITIONAL_DRIVERS="DRIVER1 DRIVER2"
     ADDITIONAL_DRIVERS="mali-bifrost"
 
-  # Mali GPU family
-    MALI_FAMILY="g31"
-
   # Configuration for u-boot
     UBOOT_VERSION="vendor"
 
-  # Kernel extra targets to build
-    KERNEL_UBOOT_EXTRA_TARGET="amlogic/meson-g12a-x96-max.dtb"
+  # Configuration for u-boot
+    UBOOT_SYSTEM="X96"
 
-  # Build Android kernel image using mkbootimg
-    BUILD_ANDROID_BOOTIMG="yes"
+  # Additional kernel make parameters (for example to specify the u-boot loadaddress)
+    KERNEL_MAKE_EXTRACMD=" dtbs"
 
-  # Additional options to be passed to Android mkbootimg
-    ANDROID_BOOTIMG_OPTIONS="--base 0x0 --kernel_offset 0x1080000"
-
-  # kernel image name
-    KERNEL_NAME="kernel.img"
+  # Mali GPU family
+    MALI_FAMILY="g31"
 
   # additional packages to install:
-  # Space separated list is supported,
-  # e.g. ADDITIONAL_PACKAGES="PACKAGE1 PACKAGE2"
-    ADDITIONAL_PACKAGES+=" aml_autoscript"
+    ADDITIONAL_PACKAGES+=" aml_autoscript amlogic-boot-fip cpumac"

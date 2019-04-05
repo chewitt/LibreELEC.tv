@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
+
+INSTBOOT_DIR=$RELEASE_DIR/3rdparty/instboot
+mkdir -p $INSTBOOT_DIR
+cp -a $INSTALL/instboot/* $INSTBOOT_DIR
+
+mkdir -p $INSTBOOT_DIR/dtb
+mv $INSTALL/usr/share/bootloader/*.dtb $INSTBOOT_DIR/dtb

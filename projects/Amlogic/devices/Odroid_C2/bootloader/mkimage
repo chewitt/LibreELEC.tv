@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-2.0
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 . config/options $1
@@ -31,10 +31,7 @@ echo "Writing u-boot to $(basename $DISK)"
 dd if="$FUSEDIR/bl1.bin.hardkernel" of="$DISK" conv=fsync,notrunc bs=1 count=442 >"$SAVE_ERROR" 2>&1 || show_error
 dd if="$FUSEDIR/bl1.bin.hardkernel" of="$DISK" conv=fsync,notrunc bs=512 skip=1 seek=1 >"$SAVE_ERROR" 2>&1 || show_error
 dd if="$DESTDIR/u-boot.gxbb" of="$DISK" conv=fsync,notrunc bs=512 seek=97 >"$SAVE_ERROR" 2>&1 || show_error
-echo "Installing dtb"
-LINUX="$(get_build_dir linux)"
-DTB="$($ROOT/$SCRIPTS/uboot_helper $PROJECT $DEVICE $UBOOT_SYSTEM dtb)"
 
-cp -a $LINUX/arch/$TARGET_KERNEL_ARCH/boot/dts/amlogic/$DTB "$LE_TMP/"
-
-mcopy -s "$LE_TMP/$DTB" ::
+for file_ini in $RELEASE_DIR/3rdparty/instboot/* ; do
+  [ -e "$file_ini" ] && mcopy -s "$file_ini" ::
+done

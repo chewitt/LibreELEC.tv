@@ -1,0 +1,18 @@
+--- a/src/defaults.py
++++ b/src/defaults.py
+@@ -109,6 +109,15 @@
+ 
+ xdbus = {'ENABLED': True}
+ 
++################################################################################
++# eMMC Module
++################################################################################
++
++emmc = {
++    'EMMC_SCRIPT': '/flash/install2emmc.sh',
++    'ENABLED': lambda : (True if os.path.exists(emmc['EMMC_SCRIPT']) else False),
++    }
++
+ _services = {
+     'sshd': ['sshd.service'],
+     'avahi': ['avahi-daemon.service'],

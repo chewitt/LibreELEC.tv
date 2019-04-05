@@ -23,7 +23,19 @@ case "$UBOOT_SYSTEM" in
     PKG_URL="https://github.com/BayLibre/u-boot/releases/download/v2017.11-libretech-cc/libretech-cc_fip_${PKG_VERSION}.tar.gz"
     PKG_SOURCE_DIR="fip"
     ;;
-  Khadas_VIM*)
+  AMLGX*)
+    PKG_VERSION="20180207"
+    PKG_SHA256="8dfdf0a267bbedde2229f22d41f0573f67a182a2bb4852db3baae884315f5acc"
+    PKG_URL="https://github.com/BayLibre/u-boot/releases/download/v2017.11-libretech-cc/khadas-vim_fip_${PKG_VERSION}.tar.gz"
+    PKG_SOURCE_DIR="fip"
+    ;;
+  AMLG12*)
+    PKG_VERSION="20180207"
+    PKG_SHA256="8dfdf0a267bbedde2229f22d41f0573f67a182a2bb4852db3baae884315f5acc"
+    PKG_URL="https://github.com/BayLibre/u-boot/releases/download/v2017.11-libretech-cc/khadas-vim_fip_${PKG_VERSION}.tar.gz"
+    PKG_SOURCE_DIR="fip"
+    ;;
+  X96*)
     PKG_VERSION="20180207"
     PKG_SHA256="8dfdf0a267bbedde2229f22d41f0573f67a182a2bb4852db3baae884315f5acc"
     PKG_URL="https://github.com/BayLibre/u-boot/releases/download/v2017.11-libretech-cc/khadas-vim_fip_${PKG_VERSION}.tar.gz"

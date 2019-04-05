@@ -1,12 +1,22 @@
   # Configuration for u-boot
+    UBOOT_VERSION="vendor"
+
+  # Configuration for u-boot
     UBOOT_SYSTEM="Odroid_C2"
 
   # Kernel extra targets to build
-    KERNEL_UBOOT_EXTRA_TARGET="amlogic/meson-gxbb-odroidc2.dtb"
+#    KERNEL_UBOOT_EXTRA_TARGET="amlogic/meson-gxbb-odroidc2.dtb"
+    DEFAULT_DTB_NAME=meson-gxbb-odroidc2.dtb
+
+  # Additional kernel make parameters (for example to specify the u-boot loadaddress)
+    KERNEL_MAKE_EXTRACMD=" dtbs"
+
+  # Mali GPU family
+    MALI_FAMILY="450"
 
   # additional packages to install:
   # e.g. ADDITIONAL_PACKAGES="PACKAGE1 PACKAGE2"
-    ADDITIONAL_PACKAGES+=" amlogic-boot-fip"
+    ADDITIONAL_PACKAGES+=" aml_autoscript amlogic-boot-fip"
 
   # OOTB support for IR remote
     IR_REMOTE_KEYMAPS+=" odroid"
