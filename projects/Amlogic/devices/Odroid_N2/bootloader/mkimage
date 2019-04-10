@@ -1,10 +1,56 @@
 #!/bin/bash
 
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-2.0
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
-mcopy "$RELEASE_DIR/3rdparty/bootloader/dtb.img" :: 2>&1 > /dev/null || true
-mcopy "$RELEASE_DIR/3rdparty/bootloader/aml_autoscript" :: 2>&1 > /dev/null || true
-mcopy "$RELEASE_DIR/3rdparty/bootloader/s905_autoscript" :: 2>&1 > /dev/null || true
-mcopy "$RELEASE_DIR/3rdparty/bootloader/aml_autoscript.zip" :: 2>&1 > /dev/null || true
-mcopy "$RELEASE_DIR/3rdparty/bootloader/uEnv.ini" :: 2>&1 > /dev/null || true
+. config/options $1
+
+#echo "Generating u-boot.bin"
+#DESTDIR="$LE_TMP/fip"
+#FIPDIR="$(get_build_dir amlogic-boot-fip)/fip"
+#FUSEDIR="$(get_build_dir amlogic-boot-fip)/sd_fuse"
+
+#mkdir -p $DESTDIR
+
+#$FIPDIR/fip_create --bl30  $FIPDIR/g12b/bl30.bin \
+#		   --bl301 $FIPDIR/g12b/bl301.bin \
+#		   --bl31 $FIPDIR/g12b/bl31.bin \
+#		   --bl33 $(get_build_dir $BOOTLOADER)/u-boot.bin \
+#		   $DESTDIR/fip.bin
+
+#$FIPDIR/fip_create --dump $DESTDIR/fip.bin
+
+#cat $FIPDIR/g12b/bl2.bin $DESTDIR/fip.bin > $DESTDIR/boot_new.bin
+
+#$FIPDIR/g12b/aml_encrypt_g12b --bootsig --input $DESTDIR/boot_new.bin \
+#			    --output $DESTDIR/u-boot.img
+
+#dd if=$DESTDIR/u-boot.img of=$DESTDIR/u-boot.gxbb bs=512 skip=96
+
+#echo "Writing u-boot to $(basename $DISK)"
+#dd if="$FUSEDIR/bl1.bin.hardkernel" of="$DISK" conv=fsync,notrunc bs=1 count=442 >"$SAVE_ERROR" 2>&1 || show_error
+#dd if="$FUSEDIR/bl1.bin.hardkernel" of="$DISK" conv=fsync,notrunc bs=512 skip=1 seek=1 >"$SAVE_ERROR" 2>&1 || show_error
+#dd if="$DESTDIR/u-boot.gxbb" of="$DISK" conv=fsync,notrunc bs=512 seek=97 >"$SAVE_ERROR" 2>&1 || show_error
+
+mcopy "$RELEASE_DIR/3rdparty/bootloader/dtb" :: 2>&1 > /dev/null || true
+mcopy "$RELEASE_DIR/3rdparty/bootloader/boot.ini" :: 2>&1 > /dev/null || true
+
+if [ -f "$RELEASE_DIR/3rdparty/bootloader/u-boot-n2/u-boot.bin.sd.bin" ]; then
+  echo "Writing u-boot to $(basename $DISK)"
+  dd if="$RELEASE_DIR/3rdparty/bootloader/u-boot-n2/u-boot.bin.sd.bin" of="$DISK" conv=fsync,notrunc bs=1 count=112 >"$SAVE_ERROR" 2>&1 || show_error
+  dd if="$RELEASE_DIR/3rdparty/bootloader/u-boot-n2/u-boot.bin.sd.bin" of="$DISK" conv=fsync,notrunc bs=512 skip=1 seek=1 >"$SAVE_ERROR" 2>&1 || show_error
+fi
+
+DTB="$(${SCRIPTS}/uboot_helper ${PROJECT} ${DEVICE} ${UBOOT_SYSTEM} dtb)"
+
+mkdir -p "${LE_TMP}/extlinux"
+
+cat << EOF > "${LE_TMP}/extlinux/extlinux.conf"
+LABEL ${DISTRO}
+  LINUX /${KERNEL_NAME}
+  FDT /dtb/${DTB}
+  APPEND boot=LABEL=LIBREELEC disk=LABEL=STORAGE quiet ${EXTRA_CMDLINE}
+EOF
+
+mcopy -s "${LE_TMP}/extlinux" ::
+

@@ -42,7 +42,7 @@ case "$UBOOT_SYSTEM" in
     PKG_SOURCE_DIR="u-boot-${PKG_VERSION}"
     ;;
   Odroid_N2)
-    PKG_VERSION="travis/odroidn2-16"
+    PKG_VERSION="odroidn2-v2015.01"
     PKG_SHA256=""
     PKG_URL="https://github.com/hardkernel/u-boot/archive/${PKG_VERSION}.tar.gz"
     PKG_SOURCE_DIR="u-boot-${PKG_VERSION}"
