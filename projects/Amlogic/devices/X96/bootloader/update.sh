@@ -1,6 +1,7 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-2.0
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
+[ -z "$UPDATE_DIR" ] && UPDATE_DIR="/storage/.update"
 [ -z "$SYSTEM_ROOT" ] && SYSTEM_ROOT=""
 [ -z "$BOOT_ROOT" ] && BOOT_ROOT="/flash"
 [ -z "$BOOT_PART" ] && BOOT_PART=$(df "$BOOT_ROOT" | tail -1 | awk {' print $1 '})
@@ -17,51 +18,14 @@
     esac
   fi
 
-# mount $BOOT_ROOT r/w
+# mount $BOOT_ROOT rw
   mount -o remount,rw $BOOT_ROOT
 
 # update device tree
-  if [ -f $SYSTEM_ROOT/usr/share/bootloader/dtb.img ]; then
-    echo "Updating dtb.img"
-    cp -p $SYSTEM_ROOT/usr/share/bootloader/dtb.img $BOOT_ROOT
-  fi
+[ -d "$BOOT_ROOT/dtb_old" ] && rm -r $BOOT_ROOT/dtb_old
+mv $BOOT_ROOT/dtb $BOOT_ROOT/dtb_old
+cp -R $UPDATE_DIR/.tmp/*/3rdparty/bootloader/dtb $BOOT_ROOT
 
-# update aml_autoscript
-  if [ -f $SYSTEM_ROOT/usr/share/bootloader/aml_autoscript ]; then
-    echo "Updating aml_autoscript"
-    cp -p $SYSTEM_ROOT/usr/share/bootloader/aml_autoscript $BOOT_ROOT
-  fi
-
-# update emmc_autoscript
-  if [ -f $SYSTEM_ROOT/usr/share/bootloader/emmc_autoscript ]; then
-    echo "Updating emmc_autoscript"
-    cp -p $SYSTEM_ROOT/usr/share/bootloader/emmc_autoscript $BOOT_ROOT
-  fi
-
-# update s905_autoscript
-  if [ -f $SYSTEM_ROOT/usr/share/bootloader/s905_autoscript ]; then
-    echo "Updating s905_autoscript"
-    cp -p $SYSTEM_ROOT/usr/share/bootloader/s905_autoscript $BOOT_ROOT
-  fi
-
-# update aml_autoscript.zip
-  if [ -f $SYSTEM_ROOT/usr/share/bootloader/aml_autoscript.zip ]; then
-    echo "Updating aml_autoscript.zip"
-    cp -p $SYSTEM_ROOT/usr/share/bootloader/aml_autoscript.zip $BOOT_ROOT
-  fi
-
-# update uEnv.ini
-  if [ -f $SYSTEM_ROOT/usr/share/bootloader/uEnv.ini ]; then
-    echo "Updating uEnv.ini"
-    cp -p $SYSTEM_ROOT/usr/share/bootloader/uEnv.ini $BOOT_ROOT
-  fi
-
-# update emmc-uEnv.ini
-  if [ -f $SYSTEM_ROOT/usr/share/bootloader/emmc-uEnv.ini ]; then
-    echo "Updating emmc-uEnv.ini"
-    cp -p $SYSTEM_ROOT/usr/share/bootloader/emmc-uEnv.ini $BOOT_ROOT
-  fi
-
-# mount $BOOT_ROOT r/o
+# mount $BOOT_ROOT ro
   sync
   mount -o remount,ro $BOOT_ROOT
