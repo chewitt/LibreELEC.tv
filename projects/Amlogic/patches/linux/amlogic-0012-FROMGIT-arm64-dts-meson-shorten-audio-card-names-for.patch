@@ -1,7 +1,7 @@
 From bd15aa7673def445d35620db5b0516d4693c1519 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 31 Dec 2020 15:54:34 +0000
-Subject: [PATCH 12/78] FROMGIT: arm64: dts: meson: shorten audio card names
+Subject: [PATCH 12/84] FROMGIT: arm64: dts: meson: shorten audio card names
  for alsa compatibility
 
 This patch shortens all audio card model names by dropping the SoC prefix

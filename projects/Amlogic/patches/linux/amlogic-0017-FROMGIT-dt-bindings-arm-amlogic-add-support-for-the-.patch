@@ -1,31 +1,29 @@
-From c5217e5933cc3042bcd3d55c5c36bdc1d792278c Mon Sep 17 00:00:00 2001
+From cdbc288adae7806da5a698905a9f5ed025c22231 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
-Date: Fri, 12 Jun 2020 08:04:00 +0000
-Subject: [PATCH 17/78] FROMGIT: dt-bindings: arm: amlogic: add support for the
- Beelink GS-King-X
+Date: Fri, 29 Jan 2021 04:46:21 +0000
+Subject: [PATCH 17/84] FROMGIT: dt-bindings: arm: amlogic: add support for the
+ Minix NEO U9-H
 
-The Shenzen AZW (Beelink) GS-King-X is based on the Amlogic W400 reference
-board with an S922X-H chip.
+The Minix NEO U9-H is a small form-factor Android STB based on the
+Amlogic Q200 reference board with an S912-H chip.
 
 Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
-Acked-by: Rob Herring <robh@kernel.org>
-Reviewed-by: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 ---
  Documentation/devicetree/bindings/arm/amlogic.yaml | 1 +
  1 file changed, 1 insertion(+)
 
 diff --git a/Documentation/devicetree/bindings/arm/amlogic.yaml b/Documentation/devicetree/bindings/arm/amlogic.yaml
-index 3341788d1096..6bef60ddda64 100644
+index 3341788d1096..860a456f7858 100644
 --- a/Documentation/devicetree/bindings/arm/amlogic.yaml
 +++ b/Documentation/devicetree/bindings/arm/amlogic.yaml
-@@ -151,6 +151,7 @@ properties:
-       - description: Boards with the Amlogic Meson G12B S922X SoC
-         items:
-           - enum:
-+              - azw,gsking-x
-               - azw,gtking
-               - azw,gtking-pro
-               - hardkernel,odroid-n2
+@@ -120,6 +120,7 @@ properties:
+               - khadas,vim2
+               - kingnovel,r-box-pro
+               - libretech,aml-s912-pc
++              - minix,neo-u9h
+               - nexbox,a1
+               - tronsmart,vega-s96
+               - wetek,core2
 -- 
 2.17.1
 

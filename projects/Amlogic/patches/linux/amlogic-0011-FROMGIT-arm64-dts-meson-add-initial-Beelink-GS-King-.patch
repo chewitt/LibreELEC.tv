@@ -1,7 +1,7 @@
 From 8b54edde0a895a619f8295f1dc5dd7ce01b5aa79 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 12 Jun 2020 08:05:20 +0000
-Subject: [PATCH 11/78] FROMGIT: arm64: dts: meson: add initial Beelink
+Subject: [PATCH 11/84] FROMGIT: arm64: dts: meson: add initial Beelink
  GS-King-X device-tree
 
 The Shenzen AZW (Beelink) GS-King-X is based on the Amlogic W400 reference

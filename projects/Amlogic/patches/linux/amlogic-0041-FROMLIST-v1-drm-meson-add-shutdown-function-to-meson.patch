@@ -1,7 +1,7 @@
-From 19bbd3afcc008b3b428bf12f4e74f9166ffe7ea3 Mon Sep 17 00:00:00 2001
+From f587b0a7ee6992841d83661f361a4d240b13ca8f Mon Sep 17 00:00:00 2001
 From: Artem Lapkin <art@khadas.com>
 Date: Wed, 24 Feb 2021 12:12:53 +0000
-Subject: [PATCH 41/78] FROMLIST(v1): drm/meson: add shutdown function to
+Subject: [PATCH 41/84] FROMLIST(v1): drm/meson: add shutdown function to
  meson_drv
 
 Problem: random stucks on reboot stage about 1/20 stuck/reboots

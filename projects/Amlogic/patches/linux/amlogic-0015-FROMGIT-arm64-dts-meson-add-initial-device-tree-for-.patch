@@ -1,7 +1,7 @@
 From 4840ef5d5e91f556c3a0894b09f5799195cb4c14 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 29 Jan 2021 02:12:43 +0000
-Subject: [PATCH 15/78] FROMGIT: arm64: dts: meson: add initial device-tree for
+Subject: [PATCH 15/84] FROMGIT: arm64: dts: meson: add initial device-tree for
  ODROID-HC4
 
 ODROID-HC4 is a derivative of the C4 with minor differences:

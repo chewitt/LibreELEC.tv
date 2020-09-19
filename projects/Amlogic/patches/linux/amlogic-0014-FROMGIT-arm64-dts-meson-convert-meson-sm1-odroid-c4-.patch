@@ -1,7 +1,7 @@
 From 5169e50955183bef65a3d2ad8331a7fae342a72b Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 29 Jan 2021 02:10:14 +0000
-Subject: [PATCH 14/78] FROMGIT: arm64: dts: meson: convert meson-sm1-odroid-c4
+Subject: [PATCH 14/84] FROMGIT: arm64: dts: meson: convert meson-sm1-odroid-c4
  to dtsi
 
 Convert the ODRIOD-C4 dts to meson-sm1-odroid.dtsi and C4 board dts in

@@ -1,7 +1,7 @@
 From 3a17391487bab3d68738bf9077537a3f8d2c7f47 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 21 Dec 2020 12:06:25 +0000
-Subject: [PATCH 10/78] FROMGIT: arm64: dts: meson: add i2c3/rtc nodes and rtc
+Subject: [PATCH 10/84] FROMGIT: arm64: dts: meson: add i2c3/rtc nodes and rtc
  aliases to ODROID-N2 dtsi
 
 Enable the onboard pcf8563 rtc hardware on ODROID N2/N2+ boards via the

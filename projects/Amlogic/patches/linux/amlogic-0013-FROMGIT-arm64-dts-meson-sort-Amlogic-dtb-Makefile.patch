@@ -1,7 +1,7 @@
 From 7b6782b8bccfed066c2b55871f0276dd4e2ebc2a Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 19 Jan 2021 15:34:53 +0000
-Subject: [PATCH 13/78] FROMGIT: arm64: dts: meson: sort Amlogic dtb Makefile
+Subject: [PATCH 13/84] FROMGIT: arm64: dts: meson: sort Amlogic dtb Makefile
 
 Sort the Makefile before adding new SM1 devices.
 

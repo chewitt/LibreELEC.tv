@@ -1,7 +1,7 @@
 From fdf605998fa39038f483af016c08d2fcca0f27b8 Mon Sep 17 00:00:00 2001
 From: Jerome Brunet <jbrunet@baylibre.com>
 Date: Fri, 4 Dec 2020 16:23:55 +0100
-Subject: [PATCH 09/78] FROMGIT: arm64: dts: meson: vim3: enable hdmi audio
+Subject: [PATCH 09/84] FROMGIT: arm64: dts: meson: vim3: enable hdmi audio
  loopback
 
 Enable audio capture frontends and a tdm decoder.

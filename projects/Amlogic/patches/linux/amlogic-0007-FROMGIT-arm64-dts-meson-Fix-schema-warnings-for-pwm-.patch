@@ -1,7 +1,7 @@
 From 59b3820d37354b31cb4a6812b1c176e25dfaa0e6 Mon Sep 17 00:00:00 2001
 From: Alexander Dahl <post@lespocky.de>
 Date: Mon, 11 Jan 2021 14:47:38 +0000
-Subject: [PATCH 07/78] FROMGIT: arm64: dts: meson: Fix schema warnings for
+Subject: [PATCH 07/84] FROMGIT: arm64: dts: meson: Fix schema warnings for
  pwm-leds
 
 The node names for devices using the pwm-leds driver follow a certain

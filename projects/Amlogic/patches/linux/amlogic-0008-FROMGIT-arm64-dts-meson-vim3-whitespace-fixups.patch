@@ -1,7 +1,7 @@
 From f2ff04f09dd15b2243128c17f1192384cb5d6a83 Mon Sep 17 00:00:00 2001
 From: Jerome Brunet <jbrunet@baylibre.com>
 Date: Fri, 4 Dec 2020 14:48:41 +0100
-Subject: [PATCH 08/78] FROMGIT: arm64: dts: meson: vim3: whitespace fixups
+Subject: [PATCH 08/84] FROMGIT: arm64: dts: meson: vim3: whitespace fixups
 
 Spaces have been used to indent 2 nodes.
 Replace those with tabs and remove one extra newline
