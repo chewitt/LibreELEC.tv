@@ -1,0 +1,77 @@
+From 154594df40f163f35fc14d516bbc8f94c434e6f1 Mon Sep 17 00:00:00 2001
+From: Alex Bee <knaerzche@gmail.com>
+Date: Sun, 11 Apr 2021 12:25:28 +0000
+Subject: [PATCH 57/83] WIP: drm/bridge: dw-hdmi: add CSC coefficents for RGB
+ to YCBCR 10-bit
+
+There are different CSC coeffcients required for the conversion
+from RGB to YCBCR 10 bit. This add them for both BT601 and BT709
+colorspaces (limited range).
+
+Signed-off-by: Alex Bee <knaerzche@gmail.com>
+---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.c | 24 +++++++++++++++++++----
+ 1 file changed, 20 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+index 2514fdf0fa39..bcc9fe9bde2b 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+@@ -86,12 +86,24 @@ static const u16 csc_coeff_rgb_in_eitu601[3][4] = {
+ 	{ 0xed80, 0xf680, 0x1c00, 0x0200 }
+ };
+ 
++static const u16 csc_coeff_rgb_in_eitu601_10bit[3][4] = {
++	{ 0x2040, 0x1080, 0x0640, 0x0100 },
++	{ 0xe880, 0x1c00, 0xfb80, 0x0800 },
++	{ 0xed80, 0xf680, 0x1c00, 0x0800 }
++};
++
+ static const u16 csc_coeff_rgb_in_eitu709[3][4] = {
+ 	{ 0x2740, 0x0bc0, 0x0400, 0x0040 },
+ 	{ 0xe680, 0x1c00, 0xfd80, 0x0200 },
+ 	{ 0xea40, 0xf980, 0x1c00, 0x0200 }
+ };
+ 
++static const u16 csc_coeff_rgb_in_eitu709_10bit[3][4] = {
++	{ 0x2740, 0x0bc0, 0x0400, 0x0100 },
++	{ 0xe680, 0x1c00, 0xfd80, 0x0800 },
++	{ 0xea40, 0xf980, 0x1c00, 0x0800 }
++};
++
+ static const u16 csc_coeff_rgb_full_to_rgb_limited[3][4] = {
+ 	{ 0x1b7c, 0x0000, 0x0000, 0x0020 },
+ 	{ 0x0000, 0x1b7c, 0x0000, 0x0020 },
+@@ -1009,11 +1021,12 @@ static void dw_hdmi_update_csc_coeffs(struct dw_hdmi *hdmi)
+ {
+ 	const u16 (*csc_coeff)[3][4] = &csc_coeff_default;
+ 	bool is_input_rgb, is_output_rgb;
+-	unsigned i;
++	unsigned i, output_color_depth;
+ 	u32 csc_scale = 1;
+ 
+ 	is_input_rgb = hdmi_bus_fmt_is_rgb(hdmi->hdmi_data.enc_in_bus_format);
+ 	is_output_rgb = hdmi_bus_fmt_is_rgb(hdmi->hdmi_data.enc_out_bus_format);
++	output_color_depth = hdmi_bus_fmt_color_depth(hdmi->hdmi_data.enc_out_bus_format);
+ 
+ 	if (!is_input_rgb && is_output_rgb) {
+ 		if (hdmi->hdmi_data.enc_out_encoding == V4L2_YCBCR_ENC_601)
+@@ -1022,9 +1035,12 @@ static void dw_hdmi_update_csc_coeffs(struct dw_hdmi *hdmi)
+ 			csc_coeff = &csc_coeff_rgb_out_eitu709;
+ 	} else if (is_input_rgb && !is_output_rgb) {
+ 		if (hdmi->hdmi_data.enc_out_encoding == V4L2_YCBCR_ENC_601)
+-			csc_coeff = &csc_coeff_rgb_in_eitu601;
+-		else
+-			csc_coeff = &csc_coeff_rgb_in_eitu709;
++			csc_coeff = (output_color_depth == 10
++					? &csc_coeff_rgb_in_eitu601_10bit : &csc_coeff_rgb_in_eitu601);
++		else {
++			csc_coeff = (output_color_depth == 10
++					? &csc_coeff_rgb_in_eitu709_10bit : &csc_coeff_rgb_in_eitu709);
++		}
+ 		csc_scale = 0;
+ 	} else if (is_input_rgb && is_output_rgb &&
+ 		   hdmi->hdmi_data.rgb_limited_range) {
+-- 
+2.17.1
+

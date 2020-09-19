@@ -1,0 +1,40 @@
+From 00a027994ccc399c60efae7d3aec82f449c51d02 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <narmstrong@baylibre.com>
+Date: Tue, 27 Apr 2021 06:34:49 +0000
+Subject: [PATCH 39/83] FROMLIST(v1): mmc: meson-gx: make replace WARN_ONCE
+ with dev_warn_once about scatterlist offset alignment
+
+Some drivers like ath10k can sometimes give an sg buffer with an offset whose alignment
+is not compatible with the Amlogic DMA descriptor engine requirements.
+
+Simply replace with dev_warn_once() to inform user this should be fixed to avoid
+degraded performance.
+
+This should be ultimately fixed in ath10k, but since it's only a performance issue
+the warning should be removed.
+
+Fixes: 79ed05e329c3 ("mmc: meson-gx: add support for descriptor chain mode")
+Reported-by: Christian Hewitt <christianshewitt@gmail.com>
+Signed-off-by: Neil Armstrong <narmstrong@baylibre.com>
+---
+ drivers/mmc/host/meson-gx-mmc.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/mmc/host/meson-gx-mmc.c b/drivers/mmc/host/meson-gx-mmc.c
+index b8b771b643cc..1c61f0f24c09 100644
+--- a/drivers/mmc/host/meson-gx-mmc.c
++++ b/drivers/mmc/host/meson-gx-mmc.c
+@@ -258,7 +258,9 @@ static void meson_mmc_get_transfer_mode(struct mmc_host *mmc,
+ 	for_each_sg(data->sg, sg, data->sg_len, i) {
+ 		/* check for 8 byte alignment */
+ 		if (sg->offset % 8) {
+-			WARN_ONCE(1, "unaligned scatterlist buffer\n");
++			dev_warn_once(mmc_dev(mmc),
++				      "unaligned sg offset %u, disabling descriptor DMA for transfer\n",
++				      sg->offset);
+ 			return;
+ 		}
+ 	}
+-- 
+2.17.1
+

@@ -1,0 +1,36 @@
+From 5792d2e44cbad8de2f3184d5625dfd694e287dee Mon Sep 17 00:00:00 2001
+From: Jerome Brunet <jbrunet@baylibre.com>
+Date: Mon, 12 Apr 2021 13:13:03 +0000
+Subject: [PATCH 26/83] FROMLIST(v1): ASoC: meson: axg-frddr: fix fifo depth on
+ g12 and sm1
+
+Previous fifo depth patch was only tested on axg, not g12 or sm1.
+Of course, while adding hw_params dai callback for the axg, I forgot to do
+the same for g12 and sm1, leaving the depth unset and breaking playback on
+these SoCs.
+
+Add hw_params callback to the g12 dai_ops to fix the problem.
+
+Fixes: 6f68accaa864 ("ASoC: meson: axg-frddr: set fifo depth according to the period")
+Reported-by: Christian Hewitt <christianshewitt@gmail.com>
+Tested-by: Christian Hewitt <christianshewitt@gmail.com>
+Signed-off-by: Jerome Brunet <jbrunet@baylibre.com>
+---
+ sound/soc/meson/axg-frddr.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/sound/soc/meson/axg-frddr.c b/sound/soc/meson/axg-frddr.c
+index 8ed114de0bdf..37f4bb3469b5 100644
+--- a/sound/soc/meson/axg-frddr.c
++++ b/sound/soc/meson/axg-frddr.c
+@@ -171,6 +171,7 @@ static const struct axg_fifo_match_data axg_frddr_match_data = {
+ 
+ static const struct snd_soc_dai_ops g12a_frddr_ops = {
+ 	.prepare	= g12a_frddr_dai_prepare,
++	.hw_params	= axg_frddr_dai_hw_params,
+ 	.startup	= axg_frddr_dai_startup,
+ 	.shutdown	= axg_frddr_dai_shutdown,
+ };
+-- 
+2.17.1
+

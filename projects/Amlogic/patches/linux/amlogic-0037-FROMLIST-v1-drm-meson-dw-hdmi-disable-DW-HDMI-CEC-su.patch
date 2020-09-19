@@ -1,0 +1,32 @@
+From aed068dc359b7449d8e7bb645c4c23b543564cb3 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <narmstrong@baylibre.com>
+Date: Fri, 16 Apr 2021 12:07:52 +0000
+Subject: [PATCH 37/83] FROMLIST(v1): drm/meson: dw-hdmi: disable DW-HDMI CEC
+ sub-driver
+
+On the Amlogic SoCs, the DW-HDMI HW support is here but the DW-HDMI CEC signal
+is not connected to a physical pin, leading to confusion when the dw-hdmi cec
+controller can't communicate on the bus.
+
+Disable it to avoid exposing a non-functinal bus.
+
+Signed-off-by: Neil Armstrong <narmstrong@baylibre.com>
+---
+ drivers/gpu/drm/meson/meson_dw_hdmi.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/meson/meson_dw_hdmi.c b/drivers/gpu/drm/meson/meson_dw_hdmi.c
+index 97d670081824..c05c80b918e9 100644
+--- a/drivers/gpu/drm/meson/meson_dw_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_dw_hdmi.c
+@@ -1109,6 +1109,7 @@ static int meson_dw_hdmi_bind(struct device *dev, struct device *master,
+ 	dw_plat_data->phy_data = meson_dw_hdmi;
+ 	dw_plat_data->input_bus_encoding = V4L2_YCBCR_ENC_709;
+ 	dw_plat_data->ycbcr_420_allowed = true;
++	dw_plat_data->disable_cec = true;
+ 
+ 	if (dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
+ 	    dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-gxm-dw-hdmi") ||
+-- 
+2.17.1
+

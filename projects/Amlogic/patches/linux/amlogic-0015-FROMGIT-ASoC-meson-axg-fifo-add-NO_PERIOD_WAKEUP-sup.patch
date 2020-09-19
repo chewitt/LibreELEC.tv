@@ -1,0 +1,58 @@
+From 945db5ff8709242831046c03e00220a52e5d4200 Mon Sep 17 00:00:00 2001
+From: Jerome Brunet <jbrunet@baylibre.com>
+Date: Thu, 8 Apr 2021 05:38:23 +0000
+Subject: [PATCH 15/83] FROMGIT: ASoC: meson: axg-fifo: add NO_PERIOD_WAKEUP
+ support
+
+On the AXG family, the fifo irq is not necessary for the HW to operate.
+It is just used to notify that a period has elapsed. If userpace does not
+care for these wakeups (such as pipewire), we are just wasting CPU cycles.
+
+Add support for NO_PERIOD_WAKEUP and disable irq when they are no needed.
+
+Signed-off-by: Jerome Brunet <jbrunet@baylibre.com>
+---
+ sound/soc/meson/axg-fifo.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/sound/soc/meson/axg-fifo.c b/sound/soc/meson/axg-fifo.c
+index b2e867113226..b9af2d513e09 100644
+--- a/sound/soc/meson/axg-fifo.c
++++ b/sound/soc/meson/axg-fifo.c
+@@ -27,8 +27,8 @@ static struct snd_pcm_hardware axg_fifo_hw = {
+ 		 SNDRV_PCM_INFO_MMAP |
+ 		 SNDRV_PCM_INFO_MMAP_VALID |
+ 		 SNDRV_PCM_INFO_BLOCK_TRANSFER |
+-		 SNDRV_PCM_INFO_PAUSE),
+-
++		 SNDRV_PCM_INFO_PAUSE |
++		 SNDRV_PCM_INFO_NO_PERIOD_WAKEUP),
+ 	.formats = AXG_FIFO_FORMATS,
+ 	.rate_min = 5512,
+ 	.rate_max = 192000,
+@@ -113,7 +113,7 @@ int axg_fifo_pcm_hw_params(struct snd_soc_component *component,
+ {
+ 	struct snd_pcm_runtime *runtime = ss->runtime;
+ 	struct axg_fifo *fifo = axg_fifo_data(ss);
+-	unsigned int burst_num, period, threshold;
++	unsigned int burst_num, period, threshold, irq_en;
+ 	dma_addr_t end_ptr;
+ 
+ 	period = params_period_bytes(params);
+@@ -142,10 +142,11 @@ int axg_fifo_pcm_hw_params(struct snd_soc_component *component,
+ 	regmap_field_write(fifo->field_threshold,
+ 			   threshold ? threshold - 1 : 0);
+ 
+-	/* Enable block count irq */
++	/* Enable irq if necessary  */
++	irq_en = runtime->no_period_wakeup ? 0 : FIFO_INT_COUNT_REPEAT;
+ 	regmap_update_bits(fifo->map, FIFO_CTRL0,
+ 			   CTRL0_INT_EN(FIFO_INT_COUNT_REPEAT),
+-			   CTRL0_INT_EN(FIFO_INT_COUNT_REPEAT));
++			   CTRL0_INT_EN(irq_en));
+ 
+ 	return 0;
+ }
+-- 
+2.17.1
+
