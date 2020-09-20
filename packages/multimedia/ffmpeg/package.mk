@@ -3,11 +3,13 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="ffmpeg"
-PKG_VERSION="4.3.2-Matrix-19.1"
-PKG_SHA256="c2558449f1eddb6b13ed168288388c7804049c2af8d6db4952ccd6b4af6e9fdd"
+PKG_VERSION="bf20c328b9ac8aa40b385c2b11ed49cf3d1d41f4" # dev/4.3.1/drm_prime_1 working-ish
+#PKG_VERSION="c5c4fe1af959c83ec8026a9551bf0de7678a156b" # dev/4.3.1/drm_prime_1 HEAD
+PKG_SHA256=""
 PKG_LICENSE="LGPLv2.1+"
 PKG_SITE="https://ffmpeg.org"
-PKG_URL="https://github.com/xbmc/FFmpeg/archive/${PKG_VERSION}.tar.gz"
+#PKG_URL="https://github.com/chewitt/FFmpeg/archive/${PKG_VERSION}.tar.gz"
+PKG_URL="https://github.com/jc-kynesim/rpi-ffmpeg/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain zlib bzip2 gnutls speex"
 PKG_LONGDESC="FFmpeg is a complete, cross-platform solution to record, convert and stream audio and video."
 PKG_BUILD_FLAGS="-gold"
@@ -22,8 +24,6 @@ PKG_FFMPEG_RPI="--disable-mmal"
 if [ "${PROJECT}" = "RPi" ]; then
   PKG_PATCH_DIRS="rpi"
   PKG_FFMPEG_RPI+=" --disable-rpi --enable-sand"
-else
-  PKG_PATCH_DIRS="v4l2-request v4l2-drmprime"
 fi
 
 PKG_PATCH_DIRS+=" libreelec"
@@ -32,11 +32,14 @@ if [ "${V4L2_SUPPORT}" = "yes" ]; then
   PKG_DEPENDS_TARGET+=" libdrm"
   PKG_NEED_UNPACK+=" $(get_pkg_directory libdrm)"
   PKG_FFMPEG_V4L2="--enable-v4l2_m2m --enable-libdrm"
+  PKG_PATCH_DIRS+=" v4l2-drmprime"
 
   if [ "${PROJECT}" = "Allwinner" -o "${PROJECT}" = "Rockchip" -o "${DEVICE}" = "iMX8" ]; then
     PKG_V4L2_REQUEST="yes"
+    PKG_PATCH_DIRS+="v4l2-request"
   elif [ "${PROJECT}" = "RPi" -a "${DEVICE}" = "RPi4" ]; then
     PKG_V4L2_REQUEST="yes"
+    PKG_PATCH_DIRS+="v4l2-request"
     PKG_FFMPEG_HWACCEL="--disable-hwaccel=h264_v4l2request \
                         --disable-hwaccel=mpeg2_v4l2request \
                         --disable-hwaccel=vp8_v4l2request \
@@ -49,11 +52,9 @@ if [ "${V4L2_SUPPORT}" = "yes" ]; then
     PKG_DEPENDS_TARGET+=" systemd"
     PKG_NEED_UNPACK+=" $(get_pkg_directory systemd)"
     PKG_FFMPEG_V4L2+=" --enable-libudev --enable-v4l2-request"
-  else
-    PKG_FFMPEG_V4L2+=" --disable-libudev --disable-v4l2-request"
   fi
 else
-  PKG_FFMPEG_V4L2="--disable-v4l2_m2m --disable-libudev --disable-v4l2-request"
+  PKG_FFMPEG_V4L2="--disable-v4l2_m2m"
 fi
 
 if [ "${VAAPI_SUPPORT}" = "yes" ]; then
