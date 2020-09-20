@@ -1,0 +1,42 @@
+From 4ac1923f844d4cf7ff1be4b425dc2261734909fa Mon Sep 17 00:00:00 2001
+From: Lukas Rusak <lorusak@gmail.com>
+Date: Thu, 16 Aug 2018 21:11:38 -0700
+Subject: [PATCH 5/9] libavcodec: v4l2m2m: allow using software pixel formats
+
+---
+ libavcodec/v4l2_m2m_dec.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/libavcodec/v4l2_m2m_dec.c b/libavcodec/v4l2_m2m_dec.c
+index 6bc7442702..4b9baf833c 100644
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -213,8 +213,16 @@ static av_cold int v4l2_decode_init(AVCodecContext *avctx)
+      *   - the DRM frame format is passed in the DRM frame descriptor layer.
+      *       check the v4l2_get_drm_frame function.
+      */
+-    if (ff_get_format(avctx, avctx->codec->pix_fmts) == AV_PIX_FMT_DRM_PRIME)
++    switch (ff_get_format(avctx, avctx->codec->pix_fmts)) {
++    case AV_PIX_FMT_DRM_PRIME:
+         s->output_drm = 1;
++        break;
++    case AV_PIX_FMT_NONE:
++        return 0;
++        break;
++    default:
++        break;
++    }
+ 
+     s->avctx = avctx;
+     ret = ff_v4l2_m2m_codec_init(priv);
+@@ -270,6 +278,7 @@ static const AVCodecHWConfigInternal *v4l2_m2m_hw_configs[] = {
+         .capabilities   = AV_CODEC_CAP_HARDWARE | AV_CODEC_CAP_DELAY | AV_CODEC_CAP_AVOID_PROBING, \
+         .caps_internal  = FF_CODEC_CAP_SETS_PKT_DTS | FF_CODEC_CAP_INIT_CLEANUP, \
+         .pix_fmts       = (const enum AVPixelFormat[]) { AV_PIX_FMT_DRM_PRIME, \
++                                                         AV_PIX_FMT_NV12, \
+                                                          AV_PIX_FMT_NONE}, \
+         .hw_configs     = v4l2_m2m_hw_configs, \
+         .wrapper_name   = "v4l2m2m", \
+-- 
+2.17.1
+
