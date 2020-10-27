@@ -1,0 +1,55 @@
+From 94e06f9b17661ce86c95647fa9ae0f08d957f2aa Mon Sep 17 00:00:00 2001
+From: Marek Szyprowski <m.szyprowski@samsung.com>
+Date: Sat, 21 Nov 2020 03:40:08 +0000
+Subject: [PATCH 02/23] FROMLIST(v1): phy: samsung: Add support for the
+ Exynos5420 variant of the USB2 PHY
+
+Exynos5420 differs a bit from Exynos5250 in USB2 PHY related registers in
+the PMU region. Add a variant for the Exynos5420 case. Till now, USB2 PHY
+worked only because the bootloader enabled the PHY, but then driver messed
+USB 3.0 DRD related registers during the suspend/resume cycle.
+
+Signed-off-by: Marek Szyprowski <m.szyprowski@samsung.com>
+---
+ drivers/phy/samsung/Kconfig            | 7 ++++++-
+ drivers/phy/samsung/phy-samsung-usb2.c | 6 ++++++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/phy/samsung/Kconfig b/drivers/phy/samsung/Kconfig
+index e20d2fcc9fe7..0f51d3bf38cc 100644
+--- a/drivers/phy/samsung/Kconfig
++++ b/drivers/phy/samsung/Kconfig
+@@ -64,7 +64,12 @@ config PHY_EXYNOS4X12_USB2
+ config PHY_EXYNOS5250_USB2
+ 	bool
+ 	depends on PHY_SAMSUNG_USB2
+-	default SOC_EXYNOS5250 || SOC_EXYNOS5420
++	default SOC_EXYNOS5250
++
++config PHY_EXYNOS5420_USB2
++	bool
++	depends on PHY_SAMSUNG_USB2
++	default SOC_EXYNOS5420
+ 
+ config PHY_S5PV210_USB2
+ 	bool "Support for S5PV210"
+diff --git a/drivers/phy/samsung/phy-samsung-usb2.c b/drivers/phy/samsung/phy-samsung-usb2.c
+index ec2befabeea6..df4bcdd2914a 100644
+--- a/drivers/phy/samsung/phy-samsung-usb2.c
++++ b/drivers/phy/samsung/phy-samsung-usb2.c
+@@ -132,6 +132,12 @@ static const struct of_device_id samsung_usb2_phy_of_match[] = {
+ 		.data = &exynos5420_usb2_phy_config,
+ 	},
+ #endif
++#ifdef CONFIG_PHY_EXYNOS5420_USB2
++	{
++		.compatible = "samsung,exynos5420-usb2-phy",
++		.data = &exynos5420_usb2_phy_config,
++	},
++#endif
+ #ifdef CONFIG_PHY_S5PV210_USB2
+ 	{
+ 		.compatible = "samsung,s5pv210-usb2-phy",
+-- 
+2.17.1
+

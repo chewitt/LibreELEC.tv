@@ -1,0 +1,32 @@
+From c388317d54d0308e4933c4a42bae2ea0e6f3c8c0 Mon Sep 17 00:00:00 2001
+From: Krzysztof Kozlowski <krzk@kernel.org>
+Date: Fri, 11 Dec 2020 01:47:10 +0000
+Subject: [PATCH 04/23] FROMLIST(v1): ARM: dts: exynos: correct PMIC interrupt
+ trigger level on Odroid XU3 family
+
+The Samsung PMIC datasheets describe the interrupt line as active low
+with a requirement of acknowledge from the CPU.  The falling edge
+interrupt will mostly work but it's not correct.
+
+Fixes: aac4e0615341 ("ARM: dts: odroidxu3: Enable wake alarm of S2MPS11 RTC")
+Signed-off-by: Krzysztof Kozlowski <krzk@kernel.org>
+---
+ arch/arm/boot/dts/exynos5422-odroid-core.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/boot/dts/exynos5422-odroid-core.dtsi b/arch/arm/boot/dts/exynos5422-odroid-core.dtsi
+index d0df560eb0db..6d690b1db099 100644
+--- a/arch/arm/boot/dts/exynos5422-odroid-core.dtsi
++++ b/arch/arm/boot/dts/exynos5422-odroid-core.dtsi
+@@ -509,7 +509,7 @@
+ 		samsung,s2mps11-acokb-ground;
+ 
+ 		interrupt-parent = <&gpx0>;
+-		interrupts = <4 IRQ_TYPE_EDGE_FALLING>;
++		interrupts = <4 IRQ_TYPE_LEVEL_LOW>;
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&s2mps11_irq>;
+ 
+-- 
+2.17.1
+
