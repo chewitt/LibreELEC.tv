@@ -1,0 +1,24 @@
+From cb1bc32390767941f2c2f3ba536a929f00984397 Mon Sep 17 00:00:00 2001
+From: chewitt <christianshewitt@gmail.com>
+Date: Tue, 27 Oct 2020 14:33:15 +0000
+Subject: [PATCH] pan/mid: enable support for Mali T628 in XU4
+
+---
+ src/gallium/drivers/panfrost/pan_screen.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/gallium/drivers/panfrost/pan_screen.c b/src/gallium/drivers/panfrost/pan_screen.c
+index bd71b23d775..1d7b72da03c 100644
+--- a/src/gallium/drivers/panfrost/pan_screen.c
++++ b/src/gallium/drivers/panfrost/pan_screen.c
+@@ -709,6 +709,7 @@ panfrost_create_screen(int fd, struct renderonly *ro)
+         /* Check if we're loading against a supported GPU model. */
+ 
+         switch (dev->gpu_id) {
++	case 0x620: /* T620 */
+         case 0x720: /* T720 */
+         case 0x750: /* T760 */
+         case 0x820: /* T820 */
+-- 
+2.17.1
+
