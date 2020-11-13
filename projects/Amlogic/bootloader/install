@@ -13,12 +13,15 @@ case "${UBOOT_SYSTEM}" in
     # no-op, use vendor booloader
     ;;
 
-  khadas-vim3*|odroid-c4|odroid-hc4)
-    if [ "$UBOOT_SYSTEM" = "khadas-vim3" ]; then
-      AML_ENCRYPT_BIN="aml_encrypt_g12b"
-    else
-      AML_ENCRYPT_BIN="aml_encrypt_g12a"
-    fi
+  beelink-s922x|khadas-vim3*|odroid-c4|odroid-hc4)
+    case "${UBOOT_SYSTEM}" in
+      beelink-s922x|khadas-vim3)
+        AML_ENCRYPT_BIN="aml_encrypt_g12b"
+        ;;
+      *)
+        AML_ENCRYPT_BIN="aml_encrypt_g12a"
+        ;;
+    esac
 
     cp $FIPDIR/bl301.bin $DESTDIR/
     cp $FIPDIR/acs.bin $DESTDIR/

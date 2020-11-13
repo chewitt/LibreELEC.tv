@@ -50,6 +50,9 @@ mkimage_dtb(){
     mcopy -s -o "${RELEASE_DIR}/3rdparty/bootloader/dtb/$DTB" ::
     if [ "$DTB" = "meson-g12b-odroid-n2.dtb" ]; then
       mcopy -s -o "${RELEASE_DIR}/3rdparty/bootloader/dtb/meson-g12b-odroid-n2-plus.dtb" ::
+    elif [ "$DTB" = "meson-g12b-gtking.dtb" ]; then
+      mcopy -s -o "${RELEASE_DIR}/3rdparty/bootloader/dtb/meson-g12b-gtking-pro.dtb" ::
+      mcopy -s -o "${RELEASE_DIR}/3rdparty/bootloader/dtb/meson-g12b-gsking-x.dtb" ::
     elif [ "$DTB" = "meson-gxl-s905x-libretech-cc.dtb" ]; then
       mcopy -s -o "${RELEASE_DIR}/3rdparty/bootloader/dtb/meson-gxl-s905x-libretech-cc-v2.dtb" ::
     fi
@@ -67,7 +70,7 @@ case "${UBOOT_SYSTEM}" in
     mkimage_bootini
     mkimage_dtb
     ;;
-  khadas*|lafrite|lepotato|nanopi-k2|odroid*|wetek*)
+  beelink*|khadas*|lafrite|lepotato|nanopi-k2|odroid*|wetek*)
     mkimage_uboot
     mkimage_extlinux
     mkimage_dtb
