@@ -158,6 +158,10 @@ devices = \
         'dtb': '',
         'config': 'p212_defconfig'
       },
+      'beelink-s922x': {
+        'dtb': 'meson-g12b-gtking.dtb',
+        'config': 'beelink-w400_defconfig'
+      },
       'khadas-vim': {
         'dtb': 'meson-gxl-s905x-khadas-vim.dtb',
         'config': 'khadas-vim_defconfig'
