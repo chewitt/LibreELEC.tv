@@ -244,6 +244,7 @@ mkdir -p $INSTALL/usr/share/bootloader
 if [ $UBOOT_SYSTEM != "box" ]; then
   if [ -f $DESTDIR/u-boot.bin.sd.bin ]; then
     cp -av $DESTDIR/u-boot.bin.sd.bin $INSTALL/usr/share/bootloader
+    [ -d $ROOT/target/u-boot ] && cp -av $DESTDIR/u-boot.bin.sd.bin $ROOT/target/u-boot/u-boot.bin.sd.bin-$UBOOT_SYSTEM
   fi
   if [ -f $DESTDIR/u-boot.bin ]; then
     cp -av $DESTDIR/u-boot.bin $INSTALL/usr/share/bootloader
