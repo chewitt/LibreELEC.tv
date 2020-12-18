@@ -165,7 +165,7 @@ case "${UBOOT_SYSTEM}" in
                              --level v3
     ;;
 
-  nanopi-k2)
+  nanopi-k2|wetek-hub|wetek-play2)
     cp $FIPDIR/bl2.bin $DESTDIR/
     cp $FIPDIR/acs.bin $DESTDIR/
     cp $FIPDIR/bl21.bin $DESTDIR/
