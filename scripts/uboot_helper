@@ -160,7 +160,7 @@ devices = \
       },
       'beelink-s922x': {
         'dtb': 'meson-g12b-gtking.dtb',
-        'config': 'beelink-w400_defconfig'
+        'config': 'beelink-gtking_defconfig'
       },
       'khadas-vim': {
         'dtb': 'meson-gxl-s905x-khadas-vim.dtb',
@@ -205,6 +205,14 @@ devices = \
       'odroid-n2': {
         'dtb': 'meson-g12b-odroid-n2.dtb',
         'config': 'odroid-n2_defconfig'
+      },
+      'wetek-hub': {
+        'dtb': 'meson-gxbb-wetek-hub.dtb',
+        'config': 'wetek-hub_defconfig'
+      },
+      'wetek-play2': {
+        'dtb': 'meson-gxbb-wetek-play2.dtb',
+        'config': 'wetek-play2_defconfig'
       },
     },
   },
