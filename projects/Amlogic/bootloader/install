@@ -13,7 +13,7 @@ case "${UBOOT_SYSTEM}" in
     # no-op, use vendor booloader
     ;;
 
-  beelink-s922x|khadas-vim3*|odroid-c4|odroid-hc4)
+  bananapi-m5|beelink-s922x|khadas-vim3*|odroid-c4|odroid-hc4)
     case "${UBOOT_SYSTEM}" in
       beelink-s922x|khadas-vim3)
         AML_ENCRYPT_BIN="aml_encrypt_g12b"
