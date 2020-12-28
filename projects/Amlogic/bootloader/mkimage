@@ -70,7 +70,7 @@ case "${UBOOT_SYSTEM}" in
     mkimage_bootini
     mkimage_dtb
     ;;
-  beelink*|khadas*|lafrite|lepotato|nanopi-k2|odroid*|wetek*)
+  bananapi-m5|beelink*|khadas*|lafrite|lepotato|nanopi-k2|odroid*|wetek*)
     mkimage_uboot
     mkimage_extlinux
     mkimage_dtb
