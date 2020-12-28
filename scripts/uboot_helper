@@ -158,6 +158,10 @@ devices = \
         'dtb': '',
         'config': 'p212_defconfig'
       },
+      'bananapi-m5': {
+        'dtb': 'meson-sm1-bananapi-m5.dtb',
+        'config': 'odroid-c4_defconfig'
+      },
       'beelink-s922x': {
         'dtb': 'meson-g12b-gtking.dtb',
         'config': 'beelink-gtking_defconfig'
