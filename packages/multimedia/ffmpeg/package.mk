@@ -3,8 +3,8 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="ffmpeg"
-#PKG_VERSION="bf20c328b9ac8aa40b385c2b11ed49cf3d1d41f4" # dev/4.3.1/drm_prime_1 working-ish
-PKG_VERSION="2134df70cf032c3064514a51e36cbdef1371076a" # dev/4.3.1/drm_prime_1 HEAD
+PKG_VERSION="bf20c328b9ac8aa40b385c2b11ed49cf3d1d41f4" # dev/4.3.1/drm_prime_1 working-ish
+#PKG_VERSION="c5c4fe1af959c83ec8026a9551bf0de7678a156b" # dev/4.3.1/drm_prime_1 HEAD
 PKG_SHA256=""
 PKG_LICENSE="LGPLv2.1+"
 PKG_SITE="https://ffmpeg.org"
