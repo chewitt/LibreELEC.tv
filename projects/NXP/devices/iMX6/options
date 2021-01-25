@@ -17,7 +17,7 @@
     KERNEL_TARGET="zImage"
 
   # kernel serial console
-    EXTRA_CMDLINE="console=ttymxc0,115200 console=tty0"
+    EXTRA_CMDLINE="systemd.debug_shell=ttymxc0 console=ttymxc0,115200 console=tty0"
 
   # debug tty path
     DEBUG_TTY="/dev/ttymxc0"
