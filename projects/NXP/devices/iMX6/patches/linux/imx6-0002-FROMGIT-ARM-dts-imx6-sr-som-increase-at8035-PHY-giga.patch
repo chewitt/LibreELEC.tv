@@ -1,0 +1,38 @@
+From db7b9d026c7788d4619db89ebc813ad7d0a88445 Mon Sep 17 00:00:00 2001
+From: Russell King <rmk+kernel@armlinux.org.uk>
+Date: Sun, 31 Jan 2021 01:36:09 +0000
+Subject: [PATCH 2/4] FROMGIT: ARM: dts: imx6-sr-som: increase at8035 PHY
+ gigabit Tw parameter
+
+Increase the SmartEEE Tw parameter for Atheros PHYs to stop gigabit
+links from sporadically dropping. Jon Nettleton found that a value
+of 23 was the minimum to give a stable link, but testing with the
+Com Express 7 module shows 24 is the minimum - so 23 may still be on
+the margins. Use 24 instead for consistency across SolidRun platforms.
+
+Signed-off-by: Russell King <rmk+kernel@armlinux.org.uk>
+---
+ arch/arm/boot/dts/imx6qdl-sr-som.dtsi | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm/boot/dts/imx6qdl-sr-som.dtsi b/arch/arm/boot/dts/imx6qdl-sr-som.dtsi
+index 7e4e5fd0143a..0ad8ccde0cf8 100644
+--- a/arch/arm/boot/dts/imx6qdl-sr-som.dtsi
++++ b/arch/arm/boot/dts/imx6qdl-sr-som.dtsi
+@@ -69,11 +69,13 @@
+ 		ethernet-phy@0 {
+ 			reg = <0>;
+ 			qca,clk-out-frequency = <125000000>;
++			qca,smarteee-tw-us-1g = <24>;
+ 		};
+ 
+ 		ethernet-phy@4 {
+ 			reg = <4>;
+ 			qca,clk-out-frequency = <125000000>;
++			qca,smarteee-tw-us-1g = <24>;
+ 		};
+ 	};
+ };
+-- 
+2.17.1
+

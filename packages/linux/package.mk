@@ -15,9 +15,9 @@ PKG_STAMP="${KERNEL_TARGET} ${KERNEL_MAKE_EXTRACMD}"
 PKG_PATCH_DIRS="${LINUX}"
 
 case "${LINUX}" in
-  amlogic)
-    PKG_VERSION="6ee1d745b7c9fd573fba142a2efdad76a9f1cb04" # 5.11-rc5
-    PKG_SHA256="56d3dddbd4d8dcca641683262bfe2dba5049b296abca9f1fc882e156cd206d4e"
+  amlogic|nxp)
+    PKG_VERSION="f40ddce88593482919761f74910f42f4b84c004b" # 5.11.0
+    PKG_SHA256="6e96995653ba8433970a72282de69a78262f5d8c3fff99083c59a6c877427cba"
     PKG_URL="https://github.com/torvalds/linux/archive/${PKG_VERSION}.tar.gz"
     PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
     ;;

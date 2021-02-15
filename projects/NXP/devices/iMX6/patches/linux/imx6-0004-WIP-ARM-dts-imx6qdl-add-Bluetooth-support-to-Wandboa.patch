@@ -1,0 +1,69 @@
+From 0546572b0a3aae501299a4f8104de074ae633886 Mon Sep 17 00:00:00 2001
+From: Dima Azarkin <azdmg@yandex.ru>
+Date: Mon, 15 Feb 2021 14:30:46 +0000
+Subject: [PATCH 4/4] WIP: ARM: dts: imx6qdl: add Bluetooth support to
+ Wandboard C1 and Cubox-i 1.3
+
+Add Bluetooth nodes so the BCM4329/4330 chip(s) used with the Wandboard C1
+and Cubox-i v1.3 can be supported.
+
+Signed-off-by: Dima Azarkin <azdmg@yandex.ru>
+---
+ arch/arm/boot/dts/imx6qdl-sr-som-brcm.dtsi     |  4 ++++
+ arch/arm/boot/dts/imx6qdl-wandboard-revc1.dtsi | 16 ++++++++++++++++
+ 2 files changed, 20 insertions(+)
+
+diff --git a/arch/arm/boot/dts/imx6qdl-sr-som-brcm.dtsi b/arch/arm/boot/dts/imx6qdl-sr-som-brcm.dtsi
+index b55af61dfeca..fd78d7dd8eff 100644
+--- a/arch/arm/boot/dts/imx6qdl-sr-som-brcm.dtsi
++++ b/arch/arm/boot/dts/imx6qdl-sr-som-brcm.dtsi
+@@ -128,6 +128,10 @@
+ 	pinctrl-0 = <&pinctrl_microsom_brcm_bt &pinctrl_microsom_uart4>;
+ 	uart-has-rtscts;
+ 	status = "okay";
++
++	bluetooth {
++		compatible = "brcm,bcm4330-bt";
++	};
+ };
+ 
+ /* USDHC1 - Connected to optional BRCM Wifi/BT/FM */
+diff --git a/arch/arm/boot/dts/imx6qdl-wandboard-revc1.dtsi b/arch/arm/boot/dts/imx6qdl-wandboard-revc1.dtsi
+index 3874e74703f0..f5809ca2b32f 100644
+--- a/arch/arm/boot/dts/imx6qdl-wandboard-revc1.dtsi
++++ b/arch/arm/boot/dts/imx6qdl-wandboard-revc1.dtsi
+@@ -6,6 +6,15 @@
+ 
+ #include "imx6qdl-wandboard.dtsi"
+ 
++/ {
++	pwrseq_usdhc2: usdhc2pwrseq {
++		compatible = "mmc-pwrseq-simple";
++		reset-gpios = <&gpio1 26 GPIO_ACTIVE_LOW>,	/* WL_REG_ON */
++			      <&gpio5 30 GPIO_ACTIVE_LOW>,	/* BT_REG_ON */
++			      <&gpio5 21 GPIO_ACTIVE_LOW>;	/* BT_RST_N */
++	};
++};
++
+ &iomuxc {
+ 	pinctrl-0 = <&pinctrl_hog>;
+ 
+@@ -28,8 +37,15 @@
+ 	};
+ };
+ 
++&uart3 {
++	bluetooth {
++		compatible = "brcm,bcm4330-bt";
++	};
++};
++
+ &usdhc2 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_usdhc2>;
++	mmc-pwrseq = <&pwrseq_usdhc2>;
+ 	status = "okay";
+ };
+-- 
+2.17.1
+

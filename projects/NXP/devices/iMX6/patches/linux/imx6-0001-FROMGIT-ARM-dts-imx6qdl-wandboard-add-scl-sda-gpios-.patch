@@ -1,5 +1,25 @@
-Add scl/sda gpios defitions for i2c bus recovery.
+From 6aa0a8a992a0915985ef2625771035f858bd7b21 Mon Sep 17 00:00:00 2001
+From: Dima Azarkin <azdmg@yandex.ru>
+Date: Fri, 22 Jan 2021 15:27:43 +0000
+Subject: [PATCH 1/4] FROMGIT: ARM: dts: imx6qdl-wandboard: add scl/sda gpios
+ definitions for i2c bus recovery
 
+The i2c bus on imx6qdl-wandboard has intermittent issues where SDA can freeze
+on low level at the end of transaction so the bus can no longer work [0]. This
+impacts reading of EDID data leading to incorrect TV resolution and no audio.
+
+This scenario is improved by adding scl/sda gpios definitions to implement the
+i2c bus recovery mechanism.
+
+[0] http://forums.wandboard.org/viewtopic.php?f=8&t=571&p=3770&hilit=edid#p3770
+
+Signed-off-by: Dima Azarkin <azdmg@yandex.ru>
+---
+ arch/arm/boot/dts/imx6qdl-wandboard.dtsi | 24 ++++++++++++++++++++++--
+ 1 file changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/boot/dts/imx6qdl-wandboard.dtsi b/arch/arm/boot/dts/imx6qdl-wandboard.dtsi
+index c070893c509e..b62a0dbb033f 100644
 --- a/arch/arm/boot/dts/imx6qdl-wandboard.dtsi
 +++ b/arch/arm/boot/dts/imx6qdl-wandboard.dtsi
 @@ -97,15 +97,21 @@
@@ -21,7 +41,7 @@ Add scl/sda gpios defitions for i2c bus recovery.
 +	pinctrl-names = "default", "gpio";
  	pinctrl-0 = <&pinctrl_i2c2>;
 +	pinctrl-1 = <&pinctrl_i2c2_gpio>;
-+	scl-gpios = <&gpio4 12 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;	
++	scl-gpios = <&gpio4 12 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
 +	sda-gpios = <&gpio4 13 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
  	status = "okay";
  
@@ -54,3 +74,6 @@ Add scl/sda gpios defitions for i2c bus recovery.
  		pinctrl_mclk: mclkgrp {
  			fsl,pins = <
  				MX6QDL_PAD_GPIO_0__CCM_CLKO1		0x130b0
+-- 
+2.17.1
+
