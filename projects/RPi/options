@@ -123,3 +123,6 @@
 
   # debug tty path
     DEBUG_TTY="/dev/console"
+
+  # additional packages to install:
+    ADDITIONAL_PACKAGES="rsync sshpass"
