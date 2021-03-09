@@ -1,0 +1,393 @@
+From 30f551ea99cb01f04316157c469095de5d7ae981 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 27 Feb 2021 05:58:00 +0000
+Subject: [PATCH 05/10] boards: amlogic: update documentation for WeTek
+ Hub/Play2
+
+Update the device matrix and add build instructions.
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ board/amlogic/p200/MAINTAINERS    |   5 +-
+ doc/board/amlogic/index.rst       | 124 +++++++++++++++---------------
+ doc/board/amlogic/wetek-hub.rst   | 101 ++++++++++++++++++++++++
+ doc/board/amlogic/wetek-play2.rst | 103 +++++++++++++++++++++++++
+ 4 files changed, 272 insertions(+), 61 deletions(-)
+ create mode 100644 doc/board/amlogic/wetek-hub.rst
+ create mode 100644 doc/board/amlogic/wetek-play2.rst
+
+diff --git a/board/amlogic/p200/MAINTAINERS b/board/amlogic/p200/MAINTAINERS
+index 1df9b8b24b..f74d3cc4a4 100644
+--- a/board/amlogic/p200/MAINTAINERS
++++ b/board/amlogic/p200/MAINTAINERS
+@@ -6,7 +6,10 @@ L:	u-boot-amlogic@groups.io
+ F:	board/amlogic/p200/
+ F:	configs/nanopi-k2_defconfig
+ F:	configs/odroid-c2_defconfig
+-F:	configs/p200_defconfig
++F:	configs/wetek-hub_defconfig
++F:	configs/wetek-play2_defconfig
+ F:	doc/board/amlogic/p200.rst
+ F:	doc/board/amlogic/nanopi-k2.rst
+ F:	doc/board/amlogic/odroid-c2.rst
++F:	doc/board/amlogic/wetek-hub.rst
++F:	doc/board/amlogic/wetek-play2.rst
+diff --git a/doc/board/amlogic/index.rst b/doc/board/amlogic/index.rst
+index 275c3664b7..fb55936a6f 100644
+--- a/doc/board/amlogic/index.rst
++++ b/doc/board/amlogic/index.rst
+@@ -10,66 +10,68 @@ An up-do-date matrix is also available on: http://linux-meson.com
+ 
+ This matrix concerns the actual source code version.
+ 
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-|                            	| S905      | S905X           | S912         | A113X      | S905X2     | S922X       | S905X3       |
+-|        			|	    | S805X   	      | S905D        |	          | S905D2     | A311D       | S905D3       |
+-|        			|	    |		      |	             |            | S905Y2     |	     |              |
+-+===============================+===========+=================+==============+============+============+=============+==============+
+-| Boards                       	| Odroid-C2 | P212            | Khadas VIM2  | S400       | U200       | Odroid-N2   | SEI610       |
+-|        			| Nanopi-K2 | Khadas-VIM      | Libretech-PC |	          | SEI510     | Khadas-VIM3 | Khadas-VIM3L |
+-|        			| P200	    | LibreTech-CC v1 |	WeTek Core2  |	          |            | GT-King/Pro | Odroid-C4    |
+-|        			| P201	    | LibreTech-AC v2 |	             |	          |            |             |              |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| UART                       	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| Pinctrl/GPIO               	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| Clock Control              	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| PWM                        	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| Reset Control              	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| Infrared Decoder           	| No        | No              | No           | No         | No         | No          | No           |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| Ethernet                   	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| Multi-core                 	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| Fuse access                	| **Yes**   | **Yes**         |**Yes**       |**Yes**     |**Yes**     |**Yes**      | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| SPI (FC)                  	| **Yes**   | **Yes**         | **Yes**      | **Yes**    |**Yes**     | **Yes**     | No           |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| SPI (CC)                   	| No        | No              | No           | No         | No         | No          | No           |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| I2C                       	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| USB                       	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| USB OTG                  	| No        | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| eMMC                      	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| SDCard                    	| **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| NAND                      	| No        | No              | No           | No         | No         | No          | No           |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| ADC                       	| **Yes**   | **Yes**         | **Yes**      | No         | No         | No          | No           |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| CVBS Output                	| **Yes**   | **Yes**         | **Yes**      | *N/A*      | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| HDMI Output                	| **Yes**   | **Yes**         | **Yes**      | *N/A*      | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| CEC                        	| No        | No              | No           | *N/A*      | No         | No          | No           |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| Thermal Sensor             	| No        | No              | No           | No         | No         | No          | No           |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| LCD/LVDS Output            	| No        | *N/A*           | No           | No         | No         | No          | No           |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| MIPI DSI Output            	| *N/A*     | *N/A*           | *N/A*        | No         | No         | No          | No           |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+-| SoC (version) information     | **Yes**   | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+-+-------------------------------+-----------+-----------------+--------------+------------+------------+-------------+--------------+
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++|                            	| S905        | S905X           | S912         | A113X      | S905X2     | S922X       | S905X3       |
++|        			|	      | S805X  	        | S905D        |            | S905D2     | A311D       | S905D3       |
++|        			|	      |		        |              |            | S905Y2     |             |              |
+++===============================+=============+=================+==============+============+============+=============+==============+
++| Boards                       	| Odroid-C2   | P212            | Khadas VIM2  | S400       | U200       | Odroid-N2   | SEI610       |
++|        			| Nanopi-K2   | Khadas-VIM      | Libretech-PC |            | SEI510     | Khadas-VIM3 | Khadas-VIM3L |
++|        			| P200	      | LibreTech-CC v1 | WeTek Core2  |            |            | GT-King/Pro | Odroid-C4    |
++|        			| P201	      | LibreTech-AC v2 |              |            |            |             |              |
++|                               | WeTek Hub   |                 |              |            |            |             |              |
++|                               | WeTek Play2 |                 |              |            |            |             |              |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| UART                       	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| Pinctrl/GPIO               	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| Clock Control              	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| PWM                        	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| Reset Control              	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| Infrared Decoder           	| No          | No              | No           | No         | No         | No          | No           |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| Ethernet                   	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| Multi-core                 	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| Fuse access                	| **Yes**     | **Yes**         |**Yes**       |**Yes**     |**Yes**     |**Yes**      | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| SPI (FC)                  	| **Yes**     | **Yes**         | **Yes**      | **Yes**    |**Yes**     | **Yes**     | No           |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| SPI (CC)                   	| No          | No              | No           | No         | No         | No          | No           |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| I2C                       	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| USB                       	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| USB OTG                  	| No          | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| eMMC                      	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| SDCard                    	| **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| NAND                      	| No          | No              | No           | No         | No         | No          | No           |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| ADC                       	| **Yes**     | **Yes**         | **Yes**      | No         | No         | No          | No           |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| CVBS Output                	| **Yes**     | **Yes**         | **Yes**      | *N/A*      | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| HDMI Output                	| **Yes**     | **Yes**         | **Yes**      | *N/A*      | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| CEC                        	| No          | No              | No           | *N/A*      | No         | No          | No           |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| Thermal Sensor             	| No          | No              | No           | No         | No         | No          | No           |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| LCD/LVDS Output            	| No          | *N/A*           | No           | No         | No         | No          | No           |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| MIPI DSI Output            	| *N/A*       | *N/A*           | *N/A*        | No         | No         | No          | No           |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
++| SoC (version) information     | **Yes**     | **Yes**         | **Yes**      | **Yes**    | **Yes**    | **Yes**     | **Yes**      |
+++-------------------------------+-------------+-----------------+--------------+------------+------------+-------------+--------------+
+ 
+ Board Documentation
+ -------------------
+@@ -98,4 +100,6 @@ Board Documentation
+    sei610
+    u200
+    wetek-core2
++   wetek-hub
++   wetek-play2
+    w400
+diff --git a/doc/board/amlogic/wetek-hub.rst b/doc/board/amlogic/wetek-hub.rst
+new file mode 100644
+index 0000000000..982dfc0650
+--- /dev/null
++++ b/doc/board/amlogic/wetek-hub.rst
+@@ -0,0 +1,101 @@
++U-Boot for WeTek Hub
++====================
++
++WeTek Hub is an Android/Linux STB with the following specifications:
++
++ - Amlogic S905 ARM Cortex-A53 quad-core SoC @ 1.5GHz
++ - ARM Mali 450 GPU
++ - 1GB DDR3 SDRAM
++ - Gigabit Ethernet
++ - HDMI 2.0 4K/60Hz display
++ - 1x USB 2.0
++ - eMMC
++ - microSD
++ - IR receiver
++
++u-boot compilation
++==================
++
++.. code-block:: bash
++
++    $ export ARCH=arm
++    $ export CROSS_COMPILE=aarch64-none-elf-
++    $ make wetek-hub_defconfig
++    $ make
++
++Image creation
++==============
++
++Amlogic does not provide sources for the firmware and for tools needed
++to create the bootloader image, and WeTek have never publicly released
++the u-boot sources. These FIPs were generated from private sources:
++
++https://github.com/LibreELEC/amlogic-boot-fip/tree/master/wetek-hub
++
++.. code-block:: bash
++
++    $ wget https://github.com/LibreELEC/amlogic-boot-fip/archive/master.zip
++    $ unzip master.zip
++    $ export FIPDIR=$PWD/amlogic-boot-fip/wetek-hub
++
++Go back to the mainline U-Boot source tree then:
++
++.. code-block:: bash
++
++    $ mkdir fip
++    $ cp $FIPDIR/* fip/
++    $ cp u-boot.bin fip/bl33.bin
++
++    $ sh fip/blx_fix.sh \
++	fip/bl30.bin \
++	fip/zero_tmp \
++	fip/bl30_zero.bin \
++	fip/bl301.bin \
++	fip/bl301_zero.bin \
++	fip/bl30_new.bin \
++	bl30
++
++    $ fip/fip_create \
++	 --bl30 fip/bl30_new.bin \
++	 --bl31 fip/bl31.img \
++	 --bl33 fip/bl33.bin \
++	 fip/fip.bin
++
++    $ python fip/acs_tool.py fip/bl2.bin fip/bl2_acs.bin fip/acs.bin 0
++
++    $ fip/blx_fix.sh \
++	fip/bl2_acs.bin \
++	fip/zero_tmp \
++	fip/bl2_zero.bin \
++	fip/bl21.bin \
++	fip/bl21_zero.bin \
++	fip/bl2_new.bin \
++	bl2
++
++    $ cat fip/bl2_new.bin fip/fip.bin > fip/boot_new.bin
++
++    $ fip/aml_encrypt_gxb --bootsig \
++		--input fip/boot_new.bin
++		--output fip/u-boot.bin
++
++and then write the image to SD with:
++
++.. code-block:: bash
++
++    $ DEV=/dev/your_sd_device
++    $ dd if=fip/u-boot.bin of=$DEV conv=fsync,notrunc bs=512 skip=1 seek=1
++    $ dd if=fip/u-boot.bin of=$DEV conv=fsync,notrunc bs=1 count=444
++
++Bootnote
++========
++
++On GXBB devices BL1 checks for BL2 in sector 1 of emmc and sector 512 of
++SD and USB media. You can install mainline u-boot to the emmc device, but
++you cannot partition the emmc storage with MBR/GUID schemes as these will
++overwrite sector 1 breaking BL2. You can still partition and run an OS
++from emmc, but the device MUST boot from u-boot on SD card. The Amlogic
++u-boot works around this by using a custom partition scheme; MBR with all
++data structures offset to avoid sector 1. This limitation was removed in
++Amlogic GXL and newer SoCs which additionally check for BL2 in sector 512
++on emmc allowing MBR/GUI structures to reside in sector 1 as normal with
++BL2 starting from sector 512.
+diff --git a/doc/board/amlogic/wetek-play2.rst b/doc/board/amlogic/wetek-play2.rst
+new file mode 100644
+index 0000000000..b1a58d4419
+--- /dev/null
++++ b/doc/board/amlogic/wetek-play2.rst
+@@ -0,0 +1,103 @@
++U-Boot for WeTek Play2
++======================
++
++WeTek Play2 is an Android/Linux STB with the following specifications:
++
++ - Amlogic S905 ARM Cortex-A53 quad-core SoC @ 1.5GHz
++ - ARM Mali 450 GPU
++ - 2GB DDR3 SDRAM
++ - Gigabit Ethernet
++ - HDMI 2.0 4K/60Hz display
++ - 2x USB 2.0 Host, 1x USB OTG
++ - eMMC, microSD
++ - IR receiver
++ - S/PDIF optical output
++ - DVB-S, DVB-T, or ATSC tuner module
++
++u-boot compilation
++==================
++
++.. code-block:: bash
++
++    $ export ARCH=arm
++    $ export CROSS_COMPILE=aarch64-none-elf-
++    $ make wetek-play2_defconfig
++    $ make
++
++Image creation
++==============
++
++Amlogic does not provide sources for the firmware and for tools needed
++to create the bootloader image, and WeTek have never publicly released
++the u-boot sources. These FIPs were generated from private sources:
++
++https://github.com/LibreELEC/amlogic-boot-fip/tree/master/wetek-play2
++
++.. code-block:: bash
++
++    $ wget https://github.com/LibreELEC/amlogic-boot-fip/archive/master.zip
++    $ unzip master.zip
++    $ export FIPDIR=$PWD/amlogic-boot-fip/wetek-play2
++
++Go back to the mainline U-Boot source tree then:
++
++.. code-block:: bash
++
++    $ mkdir fip
++    $ cp $FIPDIR/* fip/
++    $ cp u-boot.bin fip/bl33.bin
++
++    $ sh fip/blx_fix.sh \
++	fip/bl30.bin \
++	fip/zero_tmp \
++	fip/bl30_zero.bin \
++	fip/bl301.bin \
++	fip/bl301_zero.bin \
++	fip/bl30_new.bin \
++	bl30
++
++    $ fip/fip_create \
++	 --bl30 fip/bl30_new.bin \
++	 --bl31 fip/bl31.img \
++	 --bl32 fip/bl32.bin \
++	 --bl33 fip/bl33.bin \
++	 fip/fip.bin
++
++    $ python fip/acs_tool.py fip/bl2.bin fip/bl2_acs.bin fip/acs.bin 0
++
++    $ fip/blx_fix.sh \
++	fip/bl2_acs.bin \
++	fip/zero_tmp \
++	fip/bl2_zero.bin \
++	fip/bl21.bin \
++	fip/bl21_zero.bin \
++	fip/bl2_new.bin \
++	bl2
++
++    $ cat fip/bl2_new.bin fip/fip.bin > fip/boot_new.bin
++
++    $ fip/aml_encrypt_gxb --bootsig \
++		--input fip/boot_new.bin
++		--output fip/u-boot.bin
++
++and then write the image to SD with:
++
++.. code-block:: bash
++
++    $ DEV=/dev/your_sd_device
++    $ dd if=fip/u-boot.bin of=$DEV conv=fsync,notrunc bs=512 skip=1 seek=1
++    $ dd if=fip/u-boot.bin of=$DEV conv=fsync,notrunc bs=1 count=444
++
++Bootnote
++========
++
++On GXBB devices BL1 checks for BL2 in sector 1 of emmc and sector 512 of
++SD and USB media. You can install mainline u-boot to the emmc device, but
++you cannot partition the emmc storage with MBR/GUID schemes as these will
++overwrite sector 1 breaking BL2. You can still partition and run an OS
++from emmc, but the device MUST boot from u-boot on SD card. The Amlogic
++u-boot works around this by using a custom partition scheme; MBR with all
++data structures offset to avoid sector 1. This limitation was removed in
++Amlogic GXL and newer SoCs which additionally check for BL2 in sector 512
++on emmc allowing MBR/GUI structures to reside in sector 1 as normal with
++BL2 starting from sector 512.
+-- 
+2.17.1
+

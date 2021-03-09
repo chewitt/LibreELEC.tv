@@ -1,0 +1,40 @@
+From f5374bfc9b3d3e5aca9e19422ffee50889398a94 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 27 Feb 2021 12:39:00 +0000
+Subject: [PATCH 04/10] ARM: dts: use snps,reset on WeTek devices to fix
+ Ethernet
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/dts/meson-gxbb-wetek.dtsi | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm/dts/meson-gxbb-wetek.dtsi b/arch/arm/dts/meson-gxbb-wetek.dtsi
+index 10a4320885..73e741f6d1 100644
+--- a/arch/arm/dts/meson-gxbb-wetek.dtsi
++++ b/arch/arm/dts/meson-gxbb-wetek.dtsi
+@@ -133,6 +133,10 @@
+ 	pinctrl-0 = <&eth_rgmii_pins>;
+ 	pinctrl-names = "default";
+ 
++	snps,reset-gpio = <&gpio GPIOZ_14 0>;
++	snps,reset-delays-us = <0 10000 1000000>;
++	snps,reset-active-low;
++
+ 	phy-handle = <&eth_phy0>;
+ 	phy-mode = "rgmii";
+ 
+@@ -147,10 +151,6 @@
+ 			/* Realtek RTL8211F (0x001cc916) */
+ 			reg = <0>;
+ 
+-			reset-assert-us = <10000>;
+-			reset-deassert-us = <80000>;
+-			reset-gpios = <&gpio GPIOZ_14 GPIO_ACTIVE_LOW>;
+-
+ 			interrupt-parent = <&gpio_intc>;
+ 			/* MAC_INTR on GPIOZ_15 */
+ 			interrupts = <29 IRQ_TYPE_LEVEL_LOW>;
+-- 
+2.17.1
+

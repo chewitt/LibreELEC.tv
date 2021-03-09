@@ -1,0 +1,39 @@
+From b208a6a930f5fe0c0de88897a5bf13079d4e1225 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Thu, 21 Jan 2021 14:31:10 +0000
+Subject: [PATCH 08/10] fixup_hub
+
+---
+ configs/wetek-hub_defconfig | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/configs/wetek-hub_defconfig b/configs/wetek-hub_defconfig
+index 27daa0d85e..af58d7775b 100644
+--- a/configs/wetek-hub_defconfig
++++ b/configs/wetek-hub_defconfig
+@@ -52,15 +52,15 @@ CONFIG_USB=y
+ CONFIG_DM_USB=y
+ CONFIG_USB_DWC2=y
+ CONFIG_USB_KEYBOARD=y
+-CONFIG_DM_VIDEO=y
++# CONFIG_DM_VIDEO is not set
+ # CONFIG_VIDEO_BPP8 is not set
+ # CONFIG_VIDEO_BPP16 is not set
+-CONFIG_SYS_WHITE_ON_BLACK=y
+-CONFIG_VIDEO_MESON=y
+-CONFIG_VIDEO_DT_SIMPLEFB=y
+-CONFIG_SPLASH_SCREEN=y
+-CONFIG_SPLASH_SCREEN_ALIGN=y
+-CONFIG_VIDEO_BMP_RLE8=y
++# CONFIG_SYS_WHITE_ON_BLACK is not set
++# CONFIG_VIDEO_MESON is not set
++# CONFIG_VIDEO_DT_SIMPLEFB is not set
++# CONFIG_SPLASH_SCREEN is not set
++# CONFIG_SPLASH_SCREEN_ALIGN is not set
++# CONFIG_VIDEO_BMP_RLE8 is not set
+ CONFIG_BMP_16BPP=y
+ CONFIG_BMP_24BPP=y
+ CONFIG_BMP_32BPP=y
+-- 
+2.17.1
+

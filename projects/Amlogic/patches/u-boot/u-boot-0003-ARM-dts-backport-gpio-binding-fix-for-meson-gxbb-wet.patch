@@ -1,0 +1,28 @@
+From 3ba9e5a47e05091a6b2c1b965bde8e08fa8dc1bf Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 27 Feb 2021 05:43:26 +0000
+Subject: [PATCH 03/10] ARM: dts: backport gpio binding fix for
+ meson-gxbb-wetek.dtsi
+
+This change has not been sent upstream yet.
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/dts/meson-gxbb-wetek.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm/dts/meson-gxbb-wetek.dtsi b/arch/arm/dts/meson-gxbb-wetek.dtsi
+index a350fee126..10a4320885 100644
+--- a/arch/arm/dts/meson-gxbb-wetek.dtsi
++++ b/arch/arm/dts/meson-gxbb-wetek.dtsi
+@@ -6,6 +6,7 @@
+  */
+ 
+ #include "meson-gxbb.dtsi"
++#include <dt-bindings/gpio/gpio.h>
+ 
+ / {
+ 	aliases {
+-- 
+2.17.1
+

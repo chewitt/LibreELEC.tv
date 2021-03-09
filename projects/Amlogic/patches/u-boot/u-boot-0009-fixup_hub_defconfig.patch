@@ -1,0 +1,25 @@
+From df890c39eb39e2e9ce7435b26eaa5291fb8c98c6 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 27 Feb 2021 06:25:23 +0000
+Subject: [PATCH 09/10] fixup_hub_defconfig
+
+---
+ configs/wetek-hub_defconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configs/wetek-hub_defconfig b/configs/wetek-hub_defconfig
+index af58d7775b..e5d4a9b171 100644
+--- a/configs/wetek-hub_defconfig
++++ b/configs/wetek-hub_defconfig
+@@ -32,7 +32,7 @@ CONFIG_DM_MMC=y
+ CONFIG_MMC_MESON_GX=y
+ CONFIG_PHY_REALTEK=y
+ CONFIG_DM_ETH=y
+-CONFIG_ETH_DESIGNWARE=y
++CONFIG_ETH_DESIGNWARE_MESON8B=y
+ CONFIG_PHY=y
+ CONFIG_MESON_GXBB_USB_PHY=y
+ CONFIG_PINCTRL=y
+-- 
+2.17.1
+
