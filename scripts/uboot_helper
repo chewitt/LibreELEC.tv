@@ -204,7 +204,7 @@ devices = \
       },
       'odroid-hc4': {
         'dtb': 'meson-sm1-odroid-hc4.dtb',
-        'config': 'odroid-c4_defconfig'
+        'config': 'odroid-hc4_defconfig'
       },
       'odroid-n2': {
         'dtb': 'meson-g12b-odroid-n2.dtb',
