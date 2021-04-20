@@ -49,6 +49,13 @@
     done
   fi
 
+# update u-boot version
+  if [ -f $SYSTEM_ROOT/usr/share/bootloader/u-boot.bin.sd.bin ]; then
+    echo "Updating u-boot on $BOOT_DISK"
+    dd if=$SYSTEM_ROOT/usr/share/bootloader/u-boot.bin.sd.bin of="$BOOT_DISK" bs=1 count=444 conv=fsync,notrunc &>/dev/null
+    dd if=$SYSTEM_ROOT/usr/share/bootloader/u-boot.bin.sd.bin of="$BOOT_DISK" bs=512 skip=1 seek=1 conv=fsync,notrunc &>/dev/null
+  fi
+
 # mount $BOOT_ROOT ro
   sync
   mount -o remount,ro $BOOT_ROOT
