@@ -1,0 +1,46 @@
+commit a8d9acc0949f1ddef8604110ca8b1c22f9be3098
+Author: chewitt <christianshewitt@gmail.com>
+Date:   Sat Sep 19 16:25:19 2020 +0000
+
+    skin.estuary: make event log conditional and move LE settings
+    
+    Move LE settings from the bottom grid to the top panel and hide Event Log
+    when service.libreelec.settings exists to retain the layout.
+    
+    Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+
+diff --git a/addons/skin.estuary/xml/Settings.xml b/addons/skin.estuary/xml/Settings.xml
+index fa63b174b8..e25d96dec2 100644
+--- a/addons/skin.estuary/xml/Settings.xml
++++ b/addons/skin.estuary/xml/Settings.xml
+@@ -54,10 +54,17 @@
+ 						<onclick>ActivateWindow(systeminfo)</onclick>
+ 						<icon>icons/settings/sysinfo.png</icon>
+ 					</item>
++					<item>
++						<label>LibreELEC</label>
++						<onclick>RunAddon(service.libreelec.settings)</onclick>
++						<icon>icons/settings/libreelec.png</icon>
++						<visible>System.AddonIsEnabled(service.libreelec.settings)</visible>
++					</item>
+ 					<item>
+ 						<label>$LOCALIZE[31067]</label>
+ 						<onclick>ActivateWindow(eventlog)</onclick>
+ 						<icon>icons/settings/eventlog.png</icon>
++						<visible>!System.HasAddon(service.libreelec.settings)</visible>
+ 					</item>
+ 				</content>
+ 			</control>
+@@ -111,12 +118,6 @@
+ 						<onclick>ActivateWindow(SystemSettings)</onclick>
+ 						<icon>icons/settings/system.png</icon>
+ 					</item>
+-					<item>
+-						<label>LibreELEC</label>
+-						<onclick>RunAddon(service.libreelec.settings)</onclick>
+-						<icon>icons/settings/libreelec.png</icon>
+-						<visible>System.AddonIsEnabled(service.libreelec.settings)</visible>
+-					</item>
+ 				</content>
+ 			</control>
+ 		</control>

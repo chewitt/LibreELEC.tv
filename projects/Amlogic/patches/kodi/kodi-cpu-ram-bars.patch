@@ -1,0 +1,28 @@
+commit 9d34535e5466cc1358c92d69973f6d6c642362f8
+Author: chewitt <christianshewitt@gmail.com>
+Date:   Wed Oct 28 08:41:01 2020 +0000
+
+    skin.estuary: make cpu/ram bars full width
+
+diff --git a/addons/skin.estuary/xml/SettingsSystemInfo.xml b/addons/skin.estuary/xml/SettingsSystemInfo.xml
+index a0bec86593..34919c8d44 100644
+--- a/addons/skin.estuary/xml/SettingsSystemInfo.xml
++++ b/addons/skin.estuary/xml/SettingsSystemInfo.xml
+@@ -217,7 +217,7 @@
+ 				</control>
+ 				<control type="progress">
+ 					<description>Memory BAR</description>
+-					<width>730</width>
++					<right>30</right>
+ 					<height>16</height>
+ 					<info>system.memory(used)</info>
+ 				</control>
+@@ -233,7 +233,7 @@
+ 				</control>
+ 				<control type="progress">
+ 					<description>CPU BAR</description>
+-					<width>730</width>
++					<right>30</right>
+ 					<height>16</height>
+ 					<info>System.CPUUsage</info>
+ 					<visible>System.SupportsCPUUsage</visible>
