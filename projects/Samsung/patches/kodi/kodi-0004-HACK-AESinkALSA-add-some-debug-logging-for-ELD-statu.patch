@@ -1,0 +1,29 @@
+From cc2a3a61ab1f6b375f037681a275907ec91e1694 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Wed, 1 Dec 2021 03:19:59 +0000
+Subject: [PATCH 4/5] HACK: AESinkALSA: add some debug logging for ELD status
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ xbmc/cores/AudioEngine/Sinks/AESinkALSA.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/xbmc/cores/AudioEngine/Sinks/AESinkALSA.cpp b/xbmc/cores/AudioEngine/Sinks/AESinkALSA.cpp
+index 89b497a832..8ff69fe507 100644
+--- a/xbmc/cores/AudioEngine/Sinks/AESinkALSA.cpp
++++ b/xbmc/cores/AudioEngine/Sinks/AESinkALSA.cpp
+@@ -1538,9 +1538,11 @@ void CAESinkALSA::EnumerateDevice(AEDeviceInfoList &list, const std::string &dev
+         info.m_channels.AddMissingChannels(AEmap);
+     }
+     snd_pcm_free_chmaps(alsaMaps);
++    CLog::Log(LOGINFO, "CAESinkALSA::EnumerateDevice \"%s\" - snd_pcm_query_chmaps succeeded", device.c_str());
+   }
+   else
+   {
++    CLog::Log(LOGERROR, "CAESinkALSA::EnumerateDevice \"%s\" - snd_pcm_query_chmaps failed, falling back to legacy channel map", device.c_str());
+     for (int i = 0; i < channels; ++i)
+     {
+       if (!info.m_channels.HasChannel(LegacyALSAChannelMap[i]))
+-- 
+2.17.1
+
