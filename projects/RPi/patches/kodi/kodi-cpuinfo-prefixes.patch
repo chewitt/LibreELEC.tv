@@ -1,0 +1,30 @@
+From 134ea94814eb42e2b215df896589e69440aa541c Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sun, 20 Dec 2020 03:48:32 +0000
+Subject: [PATCH 2/4] CPUInfo: Remove the "#X:" prefixes on CPU readings to
+ make the output visually easier to read on-screen (fewer numbers to look at).
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ xbmc/utils/CPUInfo.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/xbmc/utils/CPUInfo.cpp b/xbmc/utils/CPUInfo.cpp
+index d816d1e7e5..6de4cfca02 100644
+--- a/xbmc/utils/CPUInfo.cpp
++++ b/xbmc/utils/CPUInfo.cpp
+@@ -47,9 +47,9 @@ std::string CCPUInfo::GetCoresUsageString() const
+         if (!strCores.empty())
+           strCores += ' ';
+         if (core.m_usagePercent < 10.0)
+-          strCores += StringUtils::Format("#%d: %1.1f%%", core.m_id, core.m_usagePercent);
++          strCores += StringUtils::Format("%1.1f%% ", core.m_usagePercent);
+         else
+-          strCores += StringUtils::Format("#%d: %3.0f%%", core.m_id, core.m_usagePercent);
++          strCores += StringUtils::Format("%3.0f%% ", core.m_usagePercent);
+       }
+     }
+     else
+-- 
+2.17.1
+
