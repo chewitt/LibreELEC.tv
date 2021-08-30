@@ -1,0 +1,30 @@
+From da62e44c7aa188e25826e56a6b2435484a74578d Mon Sep 17 00:00:00 2001
+From: Dom Cobley <popcornmix@gmail.com>
+Date: Mon, 7 Nov 2022 09:22:37 +0000
+Subject: [PATCH 5/5] TESTING: GBMUtils: LockFrontBuffer should return the
+ front of queue
+
+We are using emplace to add to back of queue, and pop to remove from front.
+We should be returning the buffer from front of queue, not the one just added.
+
+I believe we are currently only using 2 buffers, when mesa makes 4 available
+---
+ xbmc/windowing/gbm/GBMUtils.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xbmc/windowing/gbm/GBMUtils.cpp b/xbmc/windowing/gbm/GBMUtils.cpp
+index 5267c93c8f..15c4cc9d1c 100644
+--- a/xbmc/windowing/gbm/GBMUtils.cpp
++++ b/xbmc/windowing/gbm/GBMUtils.cpp
+@@ -92,7 +92,7 @@ CGBMUtils::CGBMDevice::CGBMSurface::CGBMSurfaceBuffer* CGBMUtils::CGBMDevice::CG
+     m_buffers.pop();
+   }
+ 
+-  return m_buffers.back().get();
++  return m_buffers.front().get();
+ }
+ 
+ CGBMUtils::CGBMDevice::CGBMSurface::CGBMSurfaceBuffer::CGBMSurfaceBuffer(gbm_surface* surface)
+-- 
+2.34.1
+
