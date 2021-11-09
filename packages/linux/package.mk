@@ -21,6 +21,12 @@ case "${LINUX}" in
     PKG_URL="https://github.com/torvalds/linux/archive/${PKG_VERSION}.tar.gz"
     PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
     ;;
+  amlogic-mx)
+    PKG_VERSION="3b891aee286af55536492f1190e441da5fea002f" # meson-mx-integration-6.2-20221226
+    PKG_SHA256=""
+    PKG_URL="https://github.com/xdarklight/linux/archive/${PKG_VERSION}.tar.gz"
+    PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
+    ;;
   raspberrypi)
     PKG_VERSION="2373697d13279675f46a4200ad96796dead8797e" # 6.1.3
     PKG_SHA256="d382cad75c82dfe4c013a17c127b5183b710f5c68282a119454fdfc1b70b13d9"
