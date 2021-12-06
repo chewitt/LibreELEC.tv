@@ -172,6 +172,11 @@ else
       mixer "$card" 'AIU ACODEC SRC' 'I2S'
       mixer "$card" 'AIU ACODEC OUT EN' on
       ;;
+    amlogic,meson8*)
+      # AIU HDMI and S/PDIF
+      mixer "$card" 'AIU HDMI CTRL SRC' 'I2S'
+      mixer "$card" 'AIU SPDIF SRC SEL' 'SPDIF'
+      ;;
   esac
 
 # ES8316 headphone jack
