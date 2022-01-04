@@ -115,7 +115,7 @@ pre_configure_target() {
   rm -rf .${TARGET_NAME}
 }
 
-if [ "${FFMPEG_TESTING}" = "yes" ]; then
+if [ "${FFMPEG_TESTING}" != "yes" ]; then
   PKG_FFMPEG_TESTING="--enable-encoder=wrapped_avframe --enable-muxer=null"
   PKG_FFMPEG_TESTING+=" --enable-encoder=rawvideo --enable-muxer=rawvideo"
   PKG_FFMPEG_TESTING+=" --enable-muxer=image2 --enable-muxer=md5 --enable-muxer=framemd5"
@@ -123,7 +123,7 @@ if [ "${FFMPEG_TESTING}" = "yes" ]; then
     PKG_FFMPEG_TESTING+=" --enable-vout-drm --enable-outdev=vout_drm"
   fi
 else
-  PKG_FFMPEG_TESTING="--disable-programs"
+  PKG_FFMPEG_TESTING="--enable-encoder=wrapped_avframe --enable-muxer=null --enable-outdev=vout_drm"
 fi
 
 configure_target() {
