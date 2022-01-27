@@ -1,0 +1,28 @@
+From f693df631090d8802bd88e9a18803644cce83915 Mon Sep 17 00:00:00 2001
+From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
+Date: Wed, 11 Jan 2023 01:33:51 +0000
+Subject: [PATCH 8/8] ARM: dts: meson8: fix Tronsmart S82 Bluetooth
+
+Signed-off-by: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
+---
+ arch/arm/boot/dts/meson8m2-mxiii-plus.dts | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/arm/boot/dts/meson8m2-mxiii-plus.dts b/arch/arm/boot/dts/meson8m2-mxiii-plus.dts
+index 0a332ed2933c..ac2a6ccaf4b7 100644
+--- a/arch/arm/boot/dts/meson8m2-mxiii-plus.dts
++++ b/arch/arm/boot/dts/meson8m2-mxiii-plus.dts
+@@ -71,4 +71,10 @@ &uart_A {
+ 	pinctrl-0 = <&uart_a1_pins>, <&uart_a1_cts_rts_pins>;
+ 	pinctrl-names = "default";
+ 	uart-has-rtscts;
++
++	bluetooth {
++		compatible = "brcm,bcm20702a1";
++		shutdown-gpios = <&gpio GPIOX_20 GPIO_ACTIVE_HIGH>;
++		max-speed = <2000000>;
++	};
+ };
+-- 
+2.34.1
+

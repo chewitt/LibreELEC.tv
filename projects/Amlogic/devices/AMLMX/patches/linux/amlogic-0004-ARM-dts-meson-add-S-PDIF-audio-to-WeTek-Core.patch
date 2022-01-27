@@ -1,0 +1,83 @@
+From 1bdc29189550b680f05fd6433b14c136d279cf79 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 29 Jan 2022 08:20:36 +0000
+Subject: [PATCH 4/8] ARM: dts: meson: add S/PDIF audio to WeTek Core
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/boot/dts/meson8m2-wetek-core.dts | 31 ++++++++++++++++++++++-
+ 1 file changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm/boot/dts/meson8m2-wetek-core.dts b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+index c99ab6d580d2..2e6168ac3354 100644
+--- a/arch/arm/boot/dts/meson8m2-wetek-core.dts
++++ b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+@@ -8,7 +8,9 @@
+ #include "meson8m2.dtsi"
+ 
+ #include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/gpio/meson8-gpio.h>
+ #include <dt-bindings/input/input.h>
++#include <dt-bindings/sound/meson-aiu.h>
+ 
+ / {
+ 	model = "WeTek Core";
+@@ -147,6 +149,10 @@ dai-link-0 {
+ 		};
+ 
+ 		dai-link-1 {
++			sound-dai = <&aiu AIU_CPU CPU_SPDIF_FIFO>;
++		};
++
++		dai-link-2 {
+ 			sound-dai = <&aiu AIU_CPU CPU_I2S_ENCODER>;
+ 			dai-format = "i2s";
+ 			mclk-fs = <256>;
+@@ -156,13 +162,31 @@ codec-0 {
+ 			};
+ 		};
+ 
+-		dai-link-2 {
++		dai-link-3 {
+ 			sound-dai = <&aiu AIU_HDMI CTRL_OUT>;
+ 
+ 			codec-0 {
+ 				sound-dai = <&hdmi_tx 0>;
+ 			};
+ 		};
++
++		dai-link-4 {
++			sound-dai = <&aiu AIU_CPU CPU_SPDIF_ENCODER>;
++
++			codec-0 {
++				sound-dai = <&hdmi_tx 1>;
++			};
++
++			codec-1 {
++				sound-dai = <&spdif_dit>;
++			};
++                };
++	};
++
++	spdif_dit: spdif-audio-codec {
++		#sound-dai-cells = <0>;
++		compatible = "linux,spdif-dit";
++		sound-name-prefix = "DIT";
+ 	};
+ 
+ 	vcc_1v8: regulator-vcc-1v8 {
+@@ -272,6 +296,11 @@ vddio_ao_1v8: regulator-vddio-ao-1v8 {
+ 
+ &aiu {
+ 	status = "okay";
++
++	pinctrl-0 = <&i2s_am_clk_pins>, <&i2s_out_ao_clk_pins>,
++		    <&i2s_out_lr_clk_pins>, <&i2s_out_ch01_ao_pins>,
++		    <&spdif_out_pins>;
++	pinctrl-names = "default";
+ };
+ 
+ &cpu0 {
+-- 
+2.34.1
+

@@ -1,0 +1,36 @@
+From c53ccb53ea42d91cba437ad3e91a093c32325a31 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 7 Jan 2023 16:07:06 +0000
+Subject: [PATCH 7/8] ARM: dts: meson8: fix Tronsmart S82 leds
+
+Based on feedback from demetris
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/boot/dts/meson8-tronsmart-s82.dts | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm/boot/dts/meson8-tronsmart-s82.dts b/arch/arm/boot/dts/meson8-tronsmart-s82.dts
+index b24f3ab6e5aa..f2dcad475174 100644
+--- a/arch/arm/boot/dts/meson8-tronsmart-s82.dts
++++ b/arch/arm/boot/dts/meson8-tronsmart-s82.dts
+@@ -38,10 +38,13 @@ cvbs_connector_in: endpoint {
+ 	gpio-leds {
+ 		compatible = "gpio-leds";
+ 
+-		blue {
+-			function = LED_FUNCTION_STATUS;
+-			default-state = "on";
++		led-power {
++			/* red in suspend or power-off */
++			color = <LED_COLOR_ID_BLUE>;
++			function = LED_FUNCTION_POWER;
+ 			gpios = <&gpio_ao GPIO_TEST_N GPIO_ACTIVE_HIGH>;
++			default-state = "off";
++			panic-indicator;
+ 		};
+ 	};
+ 
+-- 
+2.34.1
+

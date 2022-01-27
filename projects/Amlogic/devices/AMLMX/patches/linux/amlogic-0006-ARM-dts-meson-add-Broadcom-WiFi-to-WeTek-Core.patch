@@ -1,0 +1,41 @@
+From 4b83ae077500ac05df1eaa16be43287f27866daa Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 29 Jan 2022 09:41:35 +0000
+Subject: [PATCH 6/8] ARM: dts: meson: add Broadcom WiFi to WeTek Core
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/boot/dts/meson8m2-wetek-core.dts | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/boot/dts/meson8m2-wetek-core.dts b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+index be3229c829b5..a16ef617aee6 100644
+--- a/arch/arm/boot/dts/meson8m2-wetek-core.dts
++++ b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+@@ -535,9 +535,9 @@ &saradc {
+ };
+ 
+ &sdhc {
+-	status = "disabled"; // TODO: until pinctrl is updated...
++	status = "okay";
+ 
+-	// TODO: pinctrl-0 = <&sdxc_a_pins>;
++	pinctrl-0 = <&sdxc_a_pins>;
+ 	pinctrl-names = "default";
+ 
+ 	bus-width = <4>;
+@@ -549,6 +549,11 @@ &sdhc {
+ 
+ 	vmmc-supply = <&vcc_3v3>;
+ 	vqmmc-supply = <&vddio_ao_3v3>;
++
++	brcmf: wifi@1 {
++		reg = <1>;
++		compatible = "brcm,bcm4329-fmac";
++	};
+ };
+ 
+ &sdio {
+-- 
+2.34.1
+

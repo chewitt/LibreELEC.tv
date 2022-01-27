@@ -1,0 +1,47 @@
+From fd99893f899580ad956b48c9269fde0e3b1eb14d Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 29 Jan 2022 06:05:57 +0000
+Subject: [PATCH 2/8] ARM: dts: meson: add CVBS output to WeTek Core
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/boot/dts/meson8m2-wetek-core.dts | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/arch/arm/boot/dts/meson8m2-wetek-core.dts b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+index 771072205e71..dc928ca75e9e 100644
+--- a/arch/arm/boot/dts/meson8m2-wetek-core.dts
++++ b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+@@ -52,6 +52,16 @@ ao_5v: regulator-ao-5v {
+ 		vin-supply = <&dc_12v>;
+ 	};
+ 
++	cvbs-connector {
++		compatible = "composite-video-connector";
++
++		port {
++			cvbs_connector_in: endpoint {
++				remote-endpoint = <&cvbs_vdac_out>;
++			};
++		};
++	};
++
+ 	dc_12v: regulator-dc-12v {
+ 		compatible = "regulator-fixed";
+ 		regulator-name = "DC_12V";
+@@ -333,6 +343,12 @@ opp-1992000000 {
+ 	};
+ };
+ 
++&cvbs_vdac_port {
++	cvbs_vdac_out: endpoint {
++		remote-endpoint = <&cvbs_connector_in>;
++	};
++};
++
+ /*
+  * The VDDEE regulator is limited in range and u-boot configures it
+  * to ~1.135V (instead of 1.15V as used on boards with a Ricoh PMU).
+-- 
+2.34.1
+

@@ -1,0 +1,30 @@
+From c19325060c42dd0da46b221ac9c8e86903f0b0be Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 29 Jan 2022 07:16:15 +0000
+Subject: [PATCH 3/8] ARM: dts: meson: get MAC address from eFuse on WeTek Core
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/boot/dts/meson8m2-wetek-core.dts | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/arm/boot/dts/meson8m2-wetek-core.dts b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+index dc928ca75e9e..c99ab6d580d2 100644
+--- a/arch/arm/boot/dts/meson8m2-wetek-core.dts
++++ b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+@@ -371,6 +371,12 @@ opp-637500000 {
+ 	};
+ };
+ 
++&efuse {
++	ethernet_mac_address: mac@1b4 {
++		reg = <0x1b4 0x6>;
++	};
++};
++
+ &ethmac {
+ 	status = "okay";
+ 
+-- 
+2.34.1
+

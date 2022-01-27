@@ -1,0 +1,104 @@
+From 7e04cc5a1bcc924570f3a39d9d612cd56e303e8a Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 29 Jan 2022 05:52:37 +0000
+Subject: [PATCH 1/8] ARM: dts: meson: add HDMI and AIU audio to WeTek Core
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/boot/dts/meson8m2-wetek-core.dts | 59 +++++++++++++++++++++++
+ 1 file changed, 59 insertions(+)
+
+diff --git a/arch/arm/boot/dts/meson8m2-wetek-core.dts b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+index c02e82e9271e..771072205e71 100644
+--- a/arch/arm/boot/dts/meson8m2-wetek-core.dts
++++ b/arch/arm/boot/dts/meson8m2-wetek-core.dts
+@@ -79,6 +79,17 @@ button-power {
+ 		};
+ 	};
+ 
++	hdmi-connector {
++		compatible = "hdmi-connector";
++		type = "a";
++
++		port {
++			hdmi_connector_in: endpoint {
++				remote-endpoint = <&hdmi_tx_tmds_out>;
++			};
++		};
++	};
++
+ 	reserved-memory {
+ 		trustzone-firmware@6100000 {
+ 			reg = <0x6100000 0x3000000>;
+@@ -112,6 +123,38 @@ sdio_pwrseq: sdio-pwrseq {
+ 		clock-names = "ext_clock";
+ 	};
+ 
++	sound {
++		compatible = "amlogic,gx-sound-card";
++		model = "WETEK-CORE";
++
++		assigned-clocks = <&clkc CLKID_MPLL0>,
++				  <&clkc CLKID_MPLL1>;
++		assigned-clock-rates = <294912000>,
++				       <270950400>;
++
++		dai-link-0 {
++			sound-dai = <&aiu AIU_CPU CPU_I2S_FIFO>;
++		};
++
++		dai-link-1 {
++			sound-dai = <&aiu AIU_CPU CPU_I2S_ENCODER>;
++			dai-format = "i2s";
++			mclk-fs = <256>;
++
++			codec-0 {
++				sound-dai = <&aiu AIU_HDMI CTRL_I2S>;
++			};
++		};
++
++		dai-link-2 {
++			sound-dai = <&aiu AIU_HDMI CTRL_OUT>;
++
++			codec-0 {
++				sound-dai = <&hdmi_tx 0>;
++			};
++		};
++	};
++
+ 	vcc_1v8: regulator-vcc-1v8 {
+ 		/* Will Semiconductor WL2803E18-5 */
+ 		compatible = "regulator-fixed";
+@@ -217,6 +260,10 @@ vddio_ao_1v8: regulator-vddio-ao-1v8 {
+ 	};
+ };
+ 
++&aiu {
++	status = "okay";
++};
++
+ &cpu0 {
+ 	cpu-supply = <&vcck>;
+ 	enable-method = "amlogic,meson8-trustzone-firmware-smp";
+@@ -401,6 +448,18 @@ &gpio_ao {
+ 			  "IR_BLASTER", "MUTE", "";
+ };
+ 
++&hdmi_tx {
++	status = "okay";
++	pinctrl-0 = <&hdmi_hpd_pins>, <&hdmi_i2c_pins>;
++	pinctrl-names = "default";
++};
++
++&hdmi_tx_tmds_port {
++	hdmi_tx_tmds_out: endpoint {
++		remote-endpoint = <&hdmi_connector_in>;
++	};
++};
++
+ &ir_receiver {
+ 	status = "okay";
+ 	pinctrl-0 = <&ir_recv_pins>;
+-- 
+2.34.1
+
