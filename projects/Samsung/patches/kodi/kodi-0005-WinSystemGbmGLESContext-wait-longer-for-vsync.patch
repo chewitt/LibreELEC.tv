@@ -1,7 +1,7 @@
-From 0a6b7bf7ae0c23085ba5d28cefa1e3269bc54121 Mon Sep 17 00:00:00 2001
+From 2234c31674a3776dfeb865ad6dc84f9820739ad9 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 23 Jan 2022 07:38:32 +0000
-Subject: [PATCH 5/5] WinSystemGbmGLESContext: wait longer for vsync
+Subject: [PATCH 5/6] WinSystemGbmGLESContext: wait longer for vsync
 
 Waiting longer for vsync improves idle CPU consumption on ARM devices
 
@@ -11,10 +11,10 @@ Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp b/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp
-index 414dc36963..771747ccbe 100644
+index 0d071c31f1..52ae4c1ef2 100644
 --- a/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp
 +++ b/xbmc/windowing/gbm/WinSystemGbmGLESContext.cpp
-@@ -147,7 +147,7 @@ void CWinSystemGbmGLESContext::PresentRender(bool rendered, bool videoLayer)
+@@ -149,7 +149,7 @@ void CWinSystemGbmGLESContext::PresentRender(bool rendered, bool videoLayer)
    }
    else
    {

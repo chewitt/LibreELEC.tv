@@ -1,7 +1,7 @@
-From 8fd79203fde0a69c61b554e53bf95db84cc87ced Mon Sep 17 00:00:00 2001
+From ba7571e105b75f4f303e02d5d0f76564e6c24bd3 Mon Sep 17 00:00:00 2001
 From: chewitt <christianshewitt@gmail.com>
 Date: Sat, 19 Sep 2020 16:25:19 +0000
-Subject: [PATCH 1/5] HACK: skin.estuary: make event log conditional and move
+Subject: [PATCH 1/6] HACK: skin.estuary: make event log conditional and move
  LE settings
 
 Move LE settings from the bottom grid to the top panel and hide Event Log

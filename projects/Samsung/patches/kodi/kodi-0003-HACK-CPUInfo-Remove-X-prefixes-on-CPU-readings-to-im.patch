@@ -1,7 +1,7 @@
-From 154ab44c40f71785de705aa9b5ea1bb963e30948 Mon Sep 17 00:00:00 2001
+From 5b87c9b8d033dcd71b9a36f6e7e4b4736048f249 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 20 Dec 2020 03:48:32 +0000
-Subject: [PATCH 3/5] HACK: CPUInfo: Remove "#X:" prefixes on CPU readings to
+Subject: [PATCH 3/6] HACK: CPUInfo: Remove "#X:" prefixes on CPU readings to
  improve on-screen readability
 
 Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>

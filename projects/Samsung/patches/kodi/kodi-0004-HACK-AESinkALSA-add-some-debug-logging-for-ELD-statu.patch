@@ -1,7 +1,7 @@
-From cc2a3a61ab1f6b375f037681a275907ec91e1694 Mon Sep 17 00:00:00 2001
+From 4eebc07f64daab7c269a20b07d0da13b6bdcf90b Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 1 Dec 2021 03:19:59 +0000
-Subject: [PATCH 4/5] HACK: AESinkALSA: add some debug logging for ELD status
+Subject: [PATCH 4/6] HACK: AESinkALSA: add some debug logging for ELD status
 
 Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
 ---
@@ -9,10 +9,10 @@ Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/xbmc/cores/AudioEngine/Sinks/AESinkALSA.cpp b/xbmc/cores/AudioEngine/Sinks/AESinkALSA.cpp
-index 89b497a832..8ff69fe507 100644
+index 3e50be7207..dca5b9b7b3 100644
 --- a/xbmc/cores/AudioEngine/Sinks/AESinkALSA.cpp
 +++ b/xbmc/cores/AudioEngine/Sinks/AESinkALSA.cpp
-@@ -1538,9 +1538,11 @@ void CAESinkALSA::EnumerateDevice(AEDeviceInfoList &list, const std::string &dev
+@@ -1551,9 +1551,11 @@ void CAESinkALSA::EnumerateDevice(AEDeviceInfoList &list, const std::string &dev
          info.m_channels.AddMissingChannels(AEmap);
      }
      snd_pcm_free_chmaps(alsaMaps);

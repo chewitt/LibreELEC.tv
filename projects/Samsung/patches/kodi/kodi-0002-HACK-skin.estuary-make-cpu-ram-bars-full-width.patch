@@ -1,7 +1,7 @@
-From 3a479ed9ba6310ee7787430a15cb519b736224e3 Mon Sep 17 00:00:00 2001
+From 2f79a7de9b0a51455ab9b82e47f18ae1d91ef990 Mon Sep 17 00:00:00 2001
 From: chewitt <christianshewitt@gmail.com>
 Date: Wed, 28 Oct 2020 08:41:01 +0000
-Subject: [PATCH 2/5] HACK: skin.estuary: make cpu/ram bars full width
+Subject: [PATCH 2/6] HACK: skin.estuary: make cpu/ram bars full width
 
 ---
  addons/skin.estuary/xml/SettingsSystemInfo.xml | 4 ++--
