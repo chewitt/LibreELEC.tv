@@ -64,7 +64,7 @@
   # for a list of additional drivers see packages/linux-drivers
   # Space separated list is supported,
   # e.g. ADDITIONAL_DRIVERS+=" DRIVER1 DRIVER2"
-    ADDITIONAL_DRIVERS+=""
+    ADDITIONAL_DRIVERS+=" RTL8189ES RTL8189FS"
 
   # additional packages to install:
     ADDITIONAL_PACKAGES+=" dtc ethmactool emmctool flashrom pciutils"
