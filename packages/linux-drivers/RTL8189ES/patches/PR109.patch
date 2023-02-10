@@ -1,0 +1,108 @@
+From 32946aad88cb801b87e428ddf3ee981d918c4d5f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Carlos=20Garc=C3=A9s?= <CGarces@users.noreply.github.com>
+Date: Fri, 26 Jan 2024 16:07:01 +0000
+Subject: [PATCH] Fix rtw_cfg80211_ch_switch_notify error Port of Realtek's
+ changes on version 5.11
+ https://github.com/LuckfoxTECH/luckfox-pico/blob/1e160dee559c6cb638e3d078b543fbcd2fab9699/sysdrv/drv_ko/wifi/rtl8189fs/os_dep/linux/ioctl_cfg80211.c#L442
+
+---
+ core/rtw_ap.c                 |  2 +-
+ core/rtw_mlme_ext.c           |  4 ++--
+ os_dep/linux/ioctl_cfg80211.c | 25 ++++++++++++++++++++-----
+ os_dep/linux/ioctl_cfg80211.h |  2 +-
+ 4 files changed, 24 insertions(+), 9 deletions(-)
+
+diff --git a/core/rtw_ap.c b/core/rtw_ap.c
+index 090288fd..b9da9946 100644
+--- a/core/rtw_ap.c
++++ b/core/rtw_ap.c
+@@ -1797,7 +1797,7 @@ void start_bss_network(_adapter *padapter, struct createbss_parm *parm)
+ 				, pdvobj->padapters[i]->mlmeextpriv.cur_channel
+ 				, pdvobj->padapters[i]->mlmeextpriv.cur_bwmode
+ 				, pdvobj->padapters[i]->mlmeextpriv.cur_ch_offset
+-				, ht_option);
++				, ht_option, 0);
+ 		}
+ 	}
+ #endif /* defined(CONFIG_IOCTL_CFG80211) && (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)) */
+diff --git a/core/rtw_mlme_ext.c b/core/rtw_mlme_ext.c
+index ff4934d9..5d6e4de2 100644
+--- a/core/rtw_mlme_ext.c
++++ b/core/rtw_mlme_ext.c
+@@ -16128,7 +16128,7 @@ void rtw_join_done_chk_ch(_adapter *adapter, int join_res)
+ 
+ 						rtw_cfg80211_ch_switch_notify(iface
+ 							, mlmeext->cur_channel, mlmeext->cur_bwmode, mlmeext->cur_ch_offset
+-							, ht_option);
++							, ht_option, 0);
+ 						#endif
+ 					}
+ 				}
+@@ -16346,7 +16346,7 @@ int rtw_chk_start_clnt_join(_adapter *adapter, u8 *ch, u8 *bw, u8 *offset)
+ 				the bss freq is updated by channel switch event.
+ 			*/
+ 			rtw_cfg80211_ch_switch_notify(adapter,
+-				cur_ch, cur_bw, cur_ch_offset, ht_option);
++				cur_ch, cur_bw, cur_ch_offset, ht_option, 1);
+ 		}
+ #endif
+ 	}
+diff --git a/os_dep/linux/ioctl_cfg80211.c b/os_dep/linux/ioctl_cfg80211.c
+index b30bc8c5..1cba6e20 100644
+--- a/os_dep/linux/ioctl_cfg80211.c
++++ b/os_dep/linux/ioctl_cfg80211.c
+@@ -424,7 +424,7 @@ bool rtw_cfg80211_allow_ch_switch_notify(_adapter *adapter)
+ 	return 1;
+ }
+ 
+-u8 rtw_cfg80211_ch_switch_notify(_adapter *adapter, u8 ch, u8 bw, u8 offset, u8 ht)
++u8 rtw_cfg80211_ch_switch_notify(_adapter *adapter, u8 ch, u8 bw, u8 offset, u8 ht, bool started)
+ {
+ 	struct wiphy *wiphy = adapter_to_wiphy(adapter);
+ 	u8 ret = _SUCCESS;
+@@ -432,13 +432,28 @@ u8 rtw_cfg80211_ch_switch_notify(_adapter *adapter, u8 ch, u8 bw, u8 offset, u8
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
+ 	struct cfg80211_chan_def chdef = {};
+ 
+-	if (!rtw_cfg80211_allow_ch_switch_notify(adapter))
+-		goto exit;
+-
+ 	ret = rtw_chbw_to_cfg80211_chan_def(wiphy, &chdef, ch, bw, offset, ht);
+ 	if (ret != _SUCCESS)
+ 		goto exit;
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6,3, 0))
++
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0))
++	if (started) {
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0))
++		cfg80211_ch_switch_started_notify(adapter->pnetdev, &chdef, 0, 0, false, 0);
++#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
++		cfg80211_ch_switch_started_notify(adapter->pnetdev, &chdef, 0, 0, false);
++#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0))
++		cfg80211_ch_switch_started_notify(adapter->pnetdev, &chdef, 0, false);
++#else
++		cfg80211_ch_switch_started_notify(adapter->pnetdev, &chdef, 0);
++#endif
++		goto exit;
++	}
++#endif
++
++	if (!rtw_cfg80211_allow_ch_switch_notify(adapter))
++		goto exit;
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0))
+ 	cfg80211_ch_switch_notify(adapter->pnetdev, &chdef, 0, 0);
+ #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(5,19, 2))
+ 	cfg80211_ch_switch_notify(adapter->pnetdev, &chdef, 0);
+diff --git a/os_dep/linux/ioctl_cfg80211.h b/os_dep/linux/ioctl_cfg80211.h
+index e6289749..5e0f8c07 100644
+--- a/os_dep/linux/ioctl_cfg80211.h
++++ b/os_dep/linux/ioctl_cfg80211.h
+@@ -414,7 +414,7 @@ void rtw_cfg80211_deinit_rfkill(struct wiphy *wiphy);
+ #endif
+ 
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0))
+-u8 rtw_cfg80211_ch_switch_notify(_adapter *adapter, u8 ch, u8 bw, u8 offset, u8 ht);
++u8 rtw_cfg80211_ch_switch_notify(_adapter *adapter, u8 ch, u8 bw, u8 offset, u8 ht, bool started);
+ #endif
+ 
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 26)) && (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
