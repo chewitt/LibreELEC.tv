@@ -1,0 +1,382 @@
+From 3857140eac91f3880955538e053234e31b2148f8 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Wed, 15 Jul 2026 11:53:23 +0000
+Subject: [PATCH 1/2] treewide: replace removed strncpy() for Linux 7.2
+
+Linux 7.2 removes strncpy() from the kernel (commit 079a028d6327
+"string: Remove strncpy() from the kernel"), causing implicit-declaration
+build errors. Replace every call site with the dedicated replacement:
+
+  - strscpy_pad() for copies into NUL-terminated, zero-padded string
+    fields (crypt.alg, net_device->name, old_ifname).
+  - memcpy_and_pad() for the fixed-count / byte-append copies that must
+    not truncate to a terminator (debug string builders, power-track
+    token parsing, ParseQualifiedString, netlink ring names, WoWLAN
+    pattern bytes, FW debug trace).
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ core/rtw_debug.c              | 48 +++++++++++++++++++++++++++++++++++
+ core/rtw_wlan_util.c          |  4 +++
+ hal/hal_com.c                 |  6 ++++-
+ hal/hal_com_phycfg.c          |  6 +++++
+ hal/hal_hci/hal_sdio.c        |  8 ++++++
+ hal/phydm/phydm_debug.c       |  5 ++++
+ os_dep/linux/ioctl_cfg80211.c |  8 ++++++
+ os_dep/linux/ioctl_linux.c    | 12 +++++++++
+ os_dep/linux/os_intfs.c       |  4 +++
+ os_dep/linux/rtw_cfgvendor.c  | 16 +++++++++---
+ 10 files changed, 112 insertions(+), 5 deletions(-)
+
+diff --git a/core/rtw_debug.c b/core/rtw_debug.c
+index 1a272db..bda71c9 100644
+--- a/core/rtw_debug.c
++++ b/core/rtw_debug.c
+@@ -578,7 +578,11 @@ void dump_adapters_status(void *sel, struct dvobj_priv *dvobj)
+ 				char tmp_str[10] = {'\0'};
+ 
+ 				len = snprintf(tmp_str, sizeof(tmp_str), "%s", "ap_id:");
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(p, len, tmp_str, len, '\0');
++#else
+ 				strncpy(p, tmp_str, len);
++#endif
+ 				p += len;
+ 				_rtw_memset(&tmp_str, '\0', sizeof(tmp_str));
+ 				#ifdef DBG_HW_PORT
+@@ -586,7 +590,11 @@ void dump_adapters_status(void *sel, struct dvobj_priv *dvobj)
+ 				#else
+ 				len = snprintf(tmp_str, sizeof(tmp_str), "%d", iface->vap_id);
+ 				#endif
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(p, len, tmp_str, len, '\0');
++#else
+ 				strncpy(p, tmp_str, len);
++#endif
+ 			}
+ 			#endif
+ 			#ifdef CONFIG_CLIENT_PORT_CFG
+@@ -596,7 +604,11 @@ void dump_adapters_status(void *sel, struct dvobj_priv *dvobj)
+ 				char tmp_str[10] = {'\0'};
+ 
+ 				len = snprintf(tmp_str, sizeof(tmp_str), "%s", "c_pid:");
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(p, len, tmp_str, len, '\0');
++#else
+ 				strncpy(p, tmp_str, len);
++#endif
+ 				p += len;
+ 				_rtw_memset(&tmp_str, '\0', sizeof(tmp_str));
+ 				#ifdef DBG_HW_PORT
+@@ -604,7 +616,11 @@ void dump_adapters_status(void *sel, struct dvobj_priv *dvobj)
+ 				#else
+ 				len = snprintf(tmp_str, sizeof(tmp_str), "%d", iface->client_port);
+ 				#endif
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(p, len, tmp_str, len, '\0');
++#else
+ 				strncpy(p, tmp_str, len);
++#endif
+ 			}
+ 			#endif
+ 
+@@ -7142,11 +7158,19 @@ inline void RTW_BUF_DUMP_SEL(uint _loglevel, void *sel, u8 *_titlestring,
+ 		if (_titlestring) {
+ 			if (sel == RTW_DBGDUMP) {
+ 				len = snprintf(str_val, sizeof(str_val), "%s", DRIVER_PREFIX);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(p, len, str_val, len, '\0');
++#else
+ 				strncpy(p, str_val, len);
++#endif
+ 				p += len;
+ 			}
+ 			len = snprintf(str_val, sizeof(str_val), "%s", _titlestring);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++			memcpy_and_pad(p, len, str_val, len, '\0');
++#else
+ 			strncpy(p, str_val, len);
++#endif
+ 			p += len;
+ 		}
+ 		if (p != &str_out[0]) {
+@@ -7161,18 +7185,30 @@ inline void RTW_BUF_DUMP_SEL(uint _loglevel, void *sel, u8 *_titlestring,
+ 			p = &str_out[0];
+ 			if (sel == RTW_DBGDUMP) {
+ 				len = snprintf(str_val, sizeof(str_val), "%s", DRIVER_PREFIX);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(p, len, str_val, len, '\0');
++#else
+ 				strncpy(p, str_val, len);
++#endif
+ 				p += len;
+ 			}
+ 			if (_idx_show) {
+ 				len = snprintf(str_val, sizeof(str_val), "0x%03X: ", __i * RTW_BUFDUMP_BSIZE);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(p, len, str_val, len, '\0');
++#else
+ 				strncpy(p, str_val, len);
++#endif
+ 				p += len;
+ 			}
+ 			for (__j =0; __j < RTW_BUFDUMP_BSIZE; __j++) {
+ 				idx = __i * RTW_BUFDUMP_BSIZE + __j;
+ 				len = snprintf(str_val, sizeof(str_val), "%02X%s", ptr[idx], (((__j + 1) % 4) == 0) ? "  " : " ");
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(p, len, str_val, len, '\0');
++#else
+ 				strncpy(p, str_val, len);
++#endif
+ 				p += len;
+ 			}
+ 			_RTW_STR_DUMP_SEL(sel, str_out);
+@@ -7182,18 +7218,30 @@ inline void RTW_BUF_DUMP_SEL(uint _loglevel, void *sel, u8 *_titlestring,
+ 		p = &str_out[0];
+ 		if ((sel == RTW_DBGDUMP) && remain_byte) {
+ 			len = snprintf(str_val, sizeof(str_val), "%s", DRIVER_PREFIX);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++			memcpy_and_pad(p, len, str_val, len, '\0');
++#else
+ 			strncpy(p, str_val, len);
++#endif
+ 			p += len;
+ 		}
+ 		if (_idx_show && remain_byte) {
+ 			len = snprintf(str_val, sizeof(str_val), "0x%03X: ", block_num * RTW_BUFDUMP_BSIZE);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++			memcpy_and_pad(p, len, str_val, len, '\0');
++#else
+ 			strncpy(p, str_val, len);
++#endif
+ 			p += len;
+ 		}
+ 		for (__i = 0; __i < remain_byte; __i++) {
+ 			idx = block_num * RTW_BUFDUMP_BSIZE + __i;
+ 			len = snprintf(str_val, sizeof(str_val), "%02X%s", ptr[idx], (((__i + 1) % 4) == 0) ? "  " : " ");
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++			memcpy_and_pad(p, len, str_val, len, '\0');
++#else
+ 			strncpy(p, str_val, len);
++#endif
+ 			p += len;
+ 		}
+ 		_RTW_STR_DUMP_SEL(sel, str_out);
+diff --git a/core/rtw_wlan_util.c b/core/rtw_wlan_util.c
+index 12d7d24..92fbb94 100644
+--- a/core/rtw_wlan_util.c
++++ b/core/rtw_wlan_util.c
+@@ -4429,7 +4429,11 @@ bool rtw_wowlan_parser_pattern_cmd(u8 *input, char *pattern,
+ 		} else {
+ 			u8 hex;
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++			memcpy_and_pad(member, sizeof(member), input, len, '\0');
++#else
+ 			strncpy(member, input, len);
++#endif
+ 			if (!rtw_check_pattern_valid(member, sizeof(member))) {
+ 				RTW_INFO("%s:[ERROR] pattern is invalid!!\n",
+ 					 __func__);
+diff --git a/hal/hal_com.c b/hal/hal_com.c
+index 4958e7c..10d3853 100644
+--- a/hal/hal_com.c
++++ b/hal/hal_com.c
+@@ -12957,7 +12957,11 @@ ParseQualifiedString(
+ 		return _FALSE;
+ 
+ 	j = (*Start) - 2;
+-	strncpy((char *)Out, (const char *)(In + i), j - i + 1);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++	memcpy_and_pad(Out, j - i + 1, In + i, j - i + 1, '\0');
++#else
++	strncpy(Out, In + i, j - i + 1);
++#endif
+ 
+ 	return _TRUE;
+ }
+diff --git a/hal/hal_com_phycfg.c b/hal/hal_com_phycfg.c
+index 0468691..8bb0304 100644
+--- a/hal/hal_com_phycfg.c
++++ b/hal/hal_com_phycfg.c
+@@ -4926,9 +4926,15 @@ PHY_ConfigRFWithTxPwrTrackParaFile(
+ 				if (strlen(szLine) < 10 || szLine[0] != '[')
+ 					continue;
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(band, sizeof(band), szLine + 1, 2, '\0');
++				memcpy_and_pad(path, sizeof(path), szLine + 5, 1, '\0');
++				memcpy_and_pad(sign, sizeof(sign), szLine + 8, 1, '\0');
++#else
+ 				strncpy(band, szLine + 1, 2);
+ 				strncpy(path, szLine + 5, 1);
+ 				strncpy(sign, szLine + 8, 1);
++#endif
+ 
+ 				i = 10; /* szLine+10 */
+ 				if (!ParseQualifiedString(szLine, &i, rate, '[', ']')) {
+diff --git a/hal/hal_hci/hal_sdio.c b/hal/hal_hci/hal_sdio.c
+index c04526c..6e3f84c 100644
+--- a/hal/hal_hci/hal_sdio.c
++++ b/hal/hal_hci/hal_sdio.c
+@@ -37,13 +37,21 @@ static void dump_mac_page0(PADAPTER padapter)
+ 		p = &str_out[0];
+ 		len = snprintf(str_val, sizeof(str_val),
+ 			       "0x%02x: ", index);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++		memcpy_and_pad(str_out, len, str_val, len, '\0');
++#else
+ 		strncpy(str_out, str_val, len);
++#endif
+ 		p += len;
+ 
+ 		for (i = 0 ; i < 16 ; i++) {
+ 			len = snprintf(str_val, sizeof(str_val), "%02x ",
+ 				       rtw_read8(padapter, index + i));
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++			memcpy_and_pad(p, len, str_val, len, '\0');
++#else
+ 			strncpy(p, str_val, len);
++#endif
+ 			p += len;
+ 		}
+ 		RTW_INFO("%s\n", str_out);
+diff --git a/hal/phydm/phydm_debug.c b/hal/phydm/phydm_debug.c
+index e80e471..d9d19b3 100644
+--- a/hal/phydm/phydm_debug.c
++++ b/hal/phydm/phydm_debug.c
+@@ -5154,8 +5154,13 @@ void phydm_fw_trace_handler(void *dm_void, u8 *cmd_buf, u8 cmd_len)
+ 		return;
+ 	}
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++	memcpy_and_pad(&dm->fw_debug_trace[dm->c2h_cmd_start], (cmd_len - 1),
++		       &cmd_buf[1], (cmd_len - 1), '\0');
++#else
+ 	strncpy((char *)&dm->fw_debug_trace[dm->c2h_cmd_start],
+ 		(char *)&cmd_buf[1], (cmd_len - 1));
++#endif
+ 	dm->c2h_cmd_start += (cmd_len - 1);
+ 	dm->fw_buff_is_enpty = false;
+ 
+diff --git a/os_dep/linux/ioctl_cfg80211.c b/os_dep/linux/ioctl_cfg80211.c
+index 92fef4d..ab68d1c 100644
+--- a/os_dep/linux/ioctl_cfg80211.c
++++ b/os_dep/linux/ioctl_cfg80211.c
+@@ -1750,7 +1750,11 @@ static int cfg80211_rtw_add_key(struct wiphy *wiphy,
+ 		goto addkey_end;
+ 	}
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++	strscpy_pad((char *)param->u.crypt.alg, alg_name, IEEE_CRYPT_ALG_NAME_LEN);
++#else
+ 	strncpy((char *)param->u.crypt.alg, alg_name, IEEE_CRYPT_ALG_NAME_LEN);
++#endif
+ 
+ 
+ 	if (!mac_addr || is_broadcast_ether_addr(mac_addr)
+@@ -4649,7 +4653,11 @@ static int rtw_cfg80211_add_monitor_if(_adapter *padapter, char *name, struct ne
+ 	}
+ 
+ 	mon_ndev->type = ARPHRD_IEEE80211_RADIOTAP;
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++	strscpy_pad(mon_ndev->name, name, IFNAMSIZ);
++#else
+ 	strncpy(mon_ndev->name, name, IFNAMSIZ);
++#endif
+ 	mon_ndev->name[IFNAMSIZ - 1] = 0;
+ #if (LINUX_VERSION_CODE > KERNEL_VERSION(4, 11, 8))
+ 	mon_ndev->priv_destructor = rtw_ndev_destructor;
+diff --git a/os_dep/linux/ioctl_linux.c b/os_dep/linux/ioctl_linux.c
+index 376d770..066286e 100644
+--- a/os_dep/linux/ioctl_linux.c
++++ b/os_dep/linux/ioctl_linux.c
+@@ -3145,7 +3145,11 @@ static int rtw_wx_set_enc_ext(struct net_device *dev,
+ 		goto exit;
+ 	}
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++	strscpy_pad((char *)param->u.crypt.alg, alg_name, IEEE_CRYPT_ALG_NAME_LEN);
++#else
+ 	strncpy((char *)param->u.crypt.alg, alg_name, IEEE_CRYPT_ALG_NAME_LEN);
++#endif
+ 
+ 	if (pext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY)
+ 		param->u.crypt.set_tx = 1;
+@@ -5773,7 +5777,11 @@ static int rtw_rereg_nd_name(struct net_device *dev,
+ #endif
+ 			reg_ifname = padapter->registrypriv.if2name;
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++		strscpy_pad(rereg_priv->old_ifname, reg_ifname, IFNAMSIZ);
++#else
+ 		strncpy(rereg_priv->old_ifname, reg_ifname, IFNAMSIZ);
++#endif
+ 		rereg_priv->old_ifname[IFNAMSIZ - 1] = 0;
+ 	}
+ 
+@@ -5798,7 +5806,11 @@ static int rtw_rereg_nd_name(struct net_device *dev,
+ 		/* rtw_ips_mode_req(&padapter->pwrctrlpriv, rereg_priv->old_ips_mode); */
+ 	}
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++	strscpy_pad(rereg_priv->old_ifname, new_ifname, IFNAMSIZ);
++#else
+ 	strncpy(rereg_priv->old_ifname, new_ifname, IFNAMSIZ);
++#endif
+ 	rereg_priv->old_ifname[IFNAMSIZ - 1] = 0;
+ 
+ 	if (_rtw_memcmp(new_ifname, "disable%d", 9) == _TRUE) {
+diff --git a/os_dep/linux/os_intfs.c b/os_dep/linux/os_intfs.c
+index 44d35c5..fc1393d 100644
+--- a/os_dep/linux/os_intfs.c
++++ b/os_dep/linux/os_intfs.c
+@@ -1602,7 +1602,11 @@ static int rtw_ndev_init(struct net_device *dev)
+ 
+ 	RTW_PRINT(FUNC_ADPT_FMT" if%d mac_addr="MAC_FMT"\n"
+ 		, FUNC_ADPT_ARG(adapter), (adapter->iface_id + 1), MAC_ARG(dev->dev_addr));
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++	strscpy_pad(adapter->old_ifname, dev->name, IFNAMSIZ);
++#else
+ 	strncpy(adapter->old_ifname, dev->name, IFNAMSIZ);
++#endif
+ 	adapter->old_ifname[IFNAMSIZ - 1] = '\0';
+ 	rtw_adapter_proc_init(dev);
+ 
+diff --git a/os_dep/linux/rtw_cfgvendor.c b/os_dep/linux/rtw_cfgvendor.c
+index 2a1eeed..8555879 100644
+--- a/os_dep/linux/rtw_cfgvendor.c
++++ b/os_dep/linux/rtw_cfgvendor.c
+@@ -1381,8 +1381,12 @@ static int rtw_cfgvendor_logger_start_logging(struct wiphy *wiphy,
+ 		type = nla_type(iter);
+ 		switch (type) {
+ 			case LOGGER_ATTRIBUTE_RING_NAME:
+-				strncpy(ring_name, nla_data(iter),
+-					MIN(sizeof(ring_name) -1, nla_len(iter)));
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(ring_name, sizeof(ring_name), nla_data(iter),
++					MIN(sizeof(ring_name) - 1, nla_len(iter)), '\0');
++#else
++				strncpy(ring_name, nla_data(iter), MIN(sizeof(ring_name) - 1, nla_len(iter)));
++#endif
+ 				break;
+ 			case LOGGER_ATTRIBUTE_LOG_LEVEL:
+ 				log_level = nla_get_u32(iter);
+@@ -1510,8 +1514,12 @@ static int rtw_cfgvendor_logger_get_ring_data(struct wiphy *wiphy,
+ 		type = nla_type(iter);
+ 		switch (type) {
+ 			case LOGGER_ATTRIBUTE_RING_NAME:
+-				strncpy(ring_name, nla_data(iter),
+-					MIN(sizeof(ring_name) -1, nla_len(iter)));
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0))
++				memcpy_and_pad(ring_name, sizeof(ring_name), nla_data(iter),
++					MIN(sizeof(ring_name) - 1, nla_len(iter)), '\0');
++#else
++				strncpy(ring_name, nla_data(iter), MIN(sizeof(ring_name) - 1, nla_len(iter)));
++#endif
+ 				RTW_INFO(" %s LOGGER_ATTRIBUTE_RING_NAME : %s\n", __func__, ring_name);
+ 				break;
+ 			default:
+-- 
+2.43.0
+
