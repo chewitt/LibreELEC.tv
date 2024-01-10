@@ -37,9 +37,9 @@ create_multi_keymap() {
 post_makeinstall_target() {
   local f keymap
 
-  if [ ! "${LIBREELEC_VERSION}" == "devel" ]; then
-    rm ${INSTALL}/usr/bin/v4l2-compliance
-  fi
+  #if [ ! "${LIBREELEC_VERSION}" == "devel" ]; then
+  #  rm ${INSTALL}/usr/bin/v4l2-compliance
+  #fi
 
   cp ${PKG_BUILD}/contrib/lircd2toml.py ${INSTALL}/usr/bin/
 
