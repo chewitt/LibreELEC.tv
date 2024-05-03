@@ -1,0 +1,59 @@
+From 5f5d9e2ca064aa51fe935c17dd062f7fcbdc5b20 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Thu, 28 Mar 2024 14:03:39 +0000
+Subject: [PATCH 6/6] ARM: dts: meson: revert Odroid C2 usb changes
+
+Let's see if reverting the USB changes restores USB DAC support
+to a working state again?
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/dts/meson-gxbb-odroidc2.dts | 26 +++++++++++++++-----------
+ 1 file changed, 15 insertions(+), 11 deletions(-)
+
+diff --git a/arch/arm/dts/meson-gxbb-odroidc2.dts b/arch/arm/dts/meson-gxbb-odroidc2.dts
+index 01356437a07..201596247fd 100644
+--- a/arch/arm/dts/meson-gxbb-odroidc2.dts
++++ b/arch/arm/dts/meson-gxbb-odroidc2.dts
+@@ -250,6 +250,21 @@
+ 	};
+ };
+ 
++&gpio_ao {
++	/*
++	 * WARNING: The USB Hub on the Odroid-C2 needs a reset signal
++	 * to be turned high in order to be detected by the USB Controller
++	 * This signal should be handled by a USB specific power sequence
++	 * in order to reset the Hub when USB bus is powered down.
++	 */
++	hog-0 {
++		gpio-hog;
++		gpios = <GPIOAO_4 GPIO_ACTIVE_HIGH>;
++		output-high;
++		line-name = "usb-hub-reset";
++	};
++};
++
+ &hdmi_tx {
+ 	status = "okay";
+ 	pinctrl-0 = <&hdmi_hpd_pins>, <&hdmi_i2c_pins>;
+@@ -399,16 +414,5 @@
+ };
+ 
+ &usb1 {
+-	dr_mode = "host";
+-	#address-cells = <1>;
+-	#size-cells = <0>;
+ 	status = "okay";
+-
+-	hub@1 {
+-		/* Genesys Logic GL852G USB 2.0 hub */
+-		compatible = "usb5e3,610";
+-		reg = <1>;
+-		vdd-supply = <&p5v0>;
+-		reset-gpio = <&gpio_ao GPIOAO_4 GPIO_ACTIVE_LOW>;
+-	};
+ };
+-- 
+2.34.1
+
