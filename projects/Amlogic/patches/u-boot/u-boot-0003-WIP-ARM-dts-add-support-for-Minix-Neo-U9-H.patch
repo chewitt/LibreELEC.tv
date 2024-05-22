@@ -1,7 +1,7 @@
 From af19c206fc02d56413181f45d9aa5527d3c2d0af Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 8 Mar 2024 07:57:41 +0000
-Subject: [PATCH 3/6] WIP: ARM: dts: add support for Minix Neo U9-H
+Subject: [PATCH 3/7] WIP: ARM: dts: add support for Minix Neo U9-H
 
 Import device tree files for the Minix Neo U9-H from Linux 6.7.y and include
 the minimal u-boot.dtsi file for GXM boards.

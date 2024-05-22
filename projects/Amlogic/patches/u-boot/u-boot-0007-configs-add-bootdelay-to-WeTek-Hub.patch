@@ -1,0 +1,27 @@
+From c8502a6dc82e216ee9833accd205ec2baf9a95de Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Wed, 22 May 2024 03:25:09 +0000
+Subject: [PATCH 7/7] configs: add bootdelay to WeTek Hub
+
+Let's see if this helps with WeTek Hub boot issues.
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ configs/wetek-hub_defconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/wetek-hub_defconfig b/configs/wetek-hub_defconfig
+index fd92b041e73..5583676336f 100644
+--- a/configs/wetek-hub_defconfig
++++ b/configs/wetek-hub_defconfig
+@@ -5,6 +5,7 @@ CONFIG_NR_DRAM_BANKS=1
+ CONFIG_HAS_CUSTOM_SYS_INIT_SP_ADDR=y
+ CONFIG_CUSTOM_SYS_INIT_SP_ADDR=0x20000000
+ CONFIG_ENV_SIZE=0x2000
++CONFIG_BOOTDELAY=5
+ CONFIG_DM_GPIO=y
+ CONFIG_DEFAULT_DEVICE_TREE="meson-gxbb-wetek-hub"
+ CONFIG_OF_LIBFDT_OVERLAY=y
+-- 
+2.34.1
+

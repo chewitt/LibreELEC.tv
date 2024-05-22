@@ -1,7 +1,7 @@
 From 5f5d9e2ca064aa51fe935c17dd062f7fcbdc5b20 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 28 Mar 2024 14:03:39 +0000
-Subject: [PATCH 6/6] ARM: dts: meson: revert Odroid C2 usb changes
+Subject: [PATCH 6/7] ARM: dts: meson: revert Odroid C2 usb changes
 
 Let's see if reverting the USB changes restores USB DAC support
 to a working state again?
