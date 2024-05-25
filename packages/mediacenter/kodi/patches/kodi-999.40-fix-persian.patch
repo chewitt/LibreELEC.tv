@@ -1,0 +1,22 @@
+From 5329bb3dff0b76bc9e0e560c5a021be97c38b02c Mon Sep 17 00:00:00 2001
+From: Jose Luis Marti <joseluis.marti@gmail.com>
+Date: Fri, 24 May 2024 19:41:23 +0200
+Subject: [PATCH] [Input] Fix Persian keyboard layout
+
+---
+ system/keyboardlayouts/persian.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/system/keyboardlayouts/persian.xml b/system/keyboardlayouts/persian.xml
+index e92f5878f9ca7..a7edea52a1b45 100644
+--- a/system/keyboardlayouts/persian.xml
++++ b/system/keyboardlayouts/persian.xml
+@@ -15,7 +15,7 @@ Default font lacks support for all characters
+       <row>1234567890</row>
+       <row>\|{}ّ[]</row>
+       <row>؛:«»ةآأإيئؤ</row>
+-      <row>/<>؟ٰك</row>
++      <row>/&lt;&gt;؟ٰك</row>
+     </keyboard>
+     <keyboard modifiers="symbol,shift+symbol">
+       <row>)!@#$%^&amp;*(</row>
