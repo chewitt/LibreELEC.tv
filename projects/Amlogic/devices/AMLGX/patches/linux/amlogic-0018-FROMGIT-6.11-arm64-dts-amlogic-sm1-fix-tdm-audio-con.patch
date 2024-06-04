@@ -1,0 +1,63 @@
+From 2ab453359a5bedaed78c243e75db29535b43b70e Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 4 Jun 2024 16:16:46 +0200
+Subject: [PATCH 18/87] FROMGIT(6.11): arm64: dts: amlogic: sm1: fix tdm
+ audio-controller clock order
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ arch/arm64/boot/dts/amlogic/meson-sm1.dtsi | 24 +++++++++++-----------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-sm1.dtsi b/arch/arm64/boot/dts/amlogic/meson-sm1.dtsi
+index 643f94d9d08e..6822c2f3cfed 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-sm1.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-sm1.dtsi
+@@ -17,10 +17,10 @@ tdmif_a: audio-controller-0 {
+ 		compatible = "amlogic,axg-tdm-iface";
+ 		#sound-dai-cells = <0>;
+ 		sound-name-prefix = "TDM_A";
+-		clocks = <&clkc_audio AUD_CLKID_MST_A_MCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_A_SCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_A_LRCLK>;
+-		clock-names = "mclk", "sclk", "lrclk";
++		clocks = <&clkc_audio AUD_CLKID_MST_A_SCLK>,
++			 <&clkc_audio AUD_CLKID_MST_A_LRCLK>,
++			 <&clkc_audio AUD_CLKID_MST_A_MCLK>;
++		clock-names = "sclk", "lrclk", "mclk";
+ 		status = "disabled";
+ 	};
+ 
+@@ -28,10 +28,10 @@ tdmif_b: audio-controller-1 {
+ 		compatible = "amlogic,axg-tdm-iface";
+ 		#sound-dai-cells = <0>;
+ 		sound-name-prefix = "TDM_B";
+-		clocks = <&clkc_audio AUD_CLKID_MST_B_MCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_B_SCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_B_LRCLK>;
+-		clock-names = "mclk", "sclk", "lrclk";
++		clocks = <&clkc_audio AUD_CLKID_MST_B_SCLK>,
++			 <&clkc_audio AUD_CLKID_MST_B_LRCLK>,
++			 <&clkc_audio AUD_CLKID_MST_B_MCLK>;
++		clock-names = "sclk", "lrclk", "mclk";
+ 		status = "disabled";
+ 	};
+ 
+@@ -39,10 +39,10 @@ tdmif_c: audio-controller-2 {
+ 		compatible = "amlogic,axg-tdm-iface";
+ 		#sound-dai-cells = <0>;
+ 		sound-name-prefix = "TDM_C";
+-		clocks = <&clkc_audio AUD_CLKID_MST_C_MCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_C_SCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_C_LRCLK>;
+-		clock-names = "mclk", "sclk", "lrclk";
++		clocks = <&clkc_audio AUD_CLKID_MST_C_SCLK>,
++			 <&clkc_audio AUD_CLKID_MST_C_LRCLK>,
++			 <&clkc_audio AUD_CLKID_MST_C_MCLK>;
++		clock-names = "sclk", "lrclk", "mclk";
+ 		status = "disabled";
+ 	};
+ 
+-- 
+2.34.1
+

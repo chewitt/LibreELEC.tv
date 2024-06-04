@@ -1,7 +1,11 @@
-From e4592b803eb8ff3eda15c030906cc33226cc794e Mon Sep 17 00:00:00 2001
+From 4588e6fc70300bb1118e9dd62d24dde07b97867e Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:47:40 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0009-6.11-wifi-rtlwifi-Add-rtl8192du-dm.-c-h.patch
 Subject: [PATCH 09/12] 6.11: wifi: rtlwifi: Add rtl8192du/dm.{c,h}
+========
+Subject: [PATCH 19/89] FROMGIT(6.11): wifi: rtlwifi: Add rtl8192du/dm.{c,h}
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0019-FROMGIT-6.11-wifi-rtlwifi-Add-rtl8192du-dm.-c-h.patch
 
 These contain functions related to the dynamic mechanism, which runs
 every two seconds to adjust to changes in the environment.

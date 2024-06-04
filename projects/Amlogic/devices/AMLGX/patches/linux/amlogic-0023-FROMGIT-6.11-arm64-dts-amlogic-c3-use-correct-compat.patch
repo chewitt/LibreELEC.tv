@@ -1,0 +1,34 @@
+From b4724af7ca76f22c7b4a995336b17969ca4ebbb0 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 4 Jun 2024 16:33:47 +0200
+Subject: [PATCH 23/87] FROMGIT(6.11): arm64: dts: amlogic: c3: use correct
+ compatible for gpio_intc node
+
+This fixes the following:
+interrupt-controller@4080: compatible: 'oneOf' conditional failed, one must be fixed:
+	['amlogic,meson-gpio-intc', 'amlogic,c3-gpio-intc'] is too long
+	'amlogic,meson-gpio-intc' is not one of ['amlogic,meson8-gpio-intc', 'amlogic,meson8b-gpio-intc', 'amlogic,meson-gxbb-gpio-intc', 'amlogic,meson-gxl-gpio-intc', 'amlogic,meson-axg-gpio-intc', 'amlogic,meson-g12a-gpio-intc', 'amlogic,meson-sm1-gpio-intc', 'amlogic,meson-a1-gpio-intc', 'amlogic,meson-s4-gpio-intc', 'amlogic,c3-gpio-intc', 'amlogic,t7-gpio-intc']
+	'amlogic,meson-gpio-intc' was expected
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ arch/arm64/boot/dts/amlogic/amlogic-c3.dtsi | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/amlogic-c3.dtsi b/arch/arm64/boot/dts/amlogic/amlogic-c3.dtsi
+index 32a754fe7990..f8fb060c49ae 100644
+--- a/arch/arm64/boot/dts/amlogic/amlogic-c3.dtsi
++++ b/arch/arm64/boot/dts/amlogic/amlogic-c3.dtsi
+@@ -111,8 +111,7 @@ gpio: bank@4000 {
+ 			};
+ 
+ 			gpio_intc: interrupt-controller@4080 {
+-				compatible = "amlogic,meson-gpio-intc",
+-					     "amlogic,c3-gpio-intc";
++				compatible = "amlogic,c3-gpio-intc", "amlogic,meson-gpio-intc";
+ 				reg = <0x0 0x4080 0x0 0x0020>;
+ 				interrupt-controller;
+ 				#interrupt-cells = <2>;
+-- 
+2.34.1
+

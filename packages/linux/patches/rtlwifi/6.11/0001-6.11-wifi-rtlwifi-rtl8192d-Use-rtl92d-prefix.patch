@@ -1,7 +1,11 @@
-From dec5fc45e4b69ac5c4c628fa9e482199d6e5ad71 Mon Sep 17 00:00:00 2001
+From 4d0a1cba7b9f6bf3c26bede6d66119dddc9dd928 Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:43:37 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0001-6.11-wifi-rtlwifi-rtl8192d-Use-rtl92d-prefix.patch
 Subject: [PATCH 01/12] 6.11: wifi: rtlwifi: rtl8192d: Use "rtl92d"
+========
+Subject: [PATCH 11/89] FROMGIT(6.11): wifi: rtlwifi: rtl8192d: Use "rtl92d"
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0011-FROMGIT-6.11-wifi-rtlwifi-rtl8192d-Use-rtl92d-prefix.patch
  prefix
 
 Some functions moved from rtl8192de still use the "rtl92de" prefix.
@@ -19,7 +23,7 @@ Signed-off-by: Bitterblue Smith <rtl8821cerfe2@gmail.com>
  7 files changed, 135 insertions(+), 135 deletions(-)
 
 diff --git a/drivers/net/wireless/realtek/rtlwifi/rtl8192d/hw_common.c b/drivers/net/wireless/realtek/rtlwifi/rtl8192d/hw_common.c
-index 920bfb4eaaef..3b14eec08b64 100644
+index 6570d5e168e9..97e0d9c01e0a 100644
 --- a/drivers/net/wireless/realtek/rtlwifi/rtl8192d/hw_common.c
 +++ b/drivers/net/wireless/realtek/rtlwifi/rtl8192d/hw_common.c
 @@ -14,7 +14,7 @@

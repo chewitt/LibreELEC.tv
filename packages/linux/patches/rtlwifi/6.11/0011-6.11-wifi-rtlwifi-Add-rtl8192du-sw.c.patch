@@ -1,7 +1,11 @@
-From 11fc9ecc1d73fd506a3bd359bf3f8b9a94ca59df Mon Sep 17 00:00:00 2001
+From 8a3ea1c1b796c3aecad5febb7c0538a890506e18 Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:48:32 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0011-6.11-wifi-rtlwifi-Add-rtl8192du-sw.c.patch
 Subject: [PATCH 11/12] 6.11: wifi: rtlwifi: Add rtl8192du/sw.c
+========
+Subject: [PATCH 21/89] FROMGIT(6.11): wifi: rtlwifi: Add rtl8192du/sw.c
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0021-FROMGIT-6.11-wifi-rtlwifi-Add-rtl8192du-sw.c.patch
 
 This contains the new module's entry point.
 

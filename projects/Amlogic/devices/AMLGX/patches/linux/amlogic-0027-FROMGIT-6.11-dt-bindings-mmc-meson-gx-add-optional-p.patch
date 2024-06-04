@@ -1,0 +1,31 @@
+From b7e63936da0824c7e53263a01a911ba347d81b1d Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 5 Jun 2024 11:09:09 +0200
+Subject: [PATCH 27/87] FROMGIT(6.11): dt-bindings: mmc: meson-gx: add optional
+ power-domains
+
+On newer SoCs, the MMC controller can require a power-domain to operate,
+add it as optional.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../devicetree/bindings/mmc/amlogic,meson-gx-mmc.yaml          | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/mmc/amlogic,meson-gx-mmc.yaml b/Documentation/devicetree/bindings/mmc/amlogic,meson-gx-mmc.yaml
+index bc403ae9e5d9..57646575a13f 100644
+--- a/Documentation/devicetree/bindings/mmc/amlogic,meson-gx-mmc.yaml
++++ b/Documentation/devicetree/bindings/mmc/amlogic,meson-gx-mmc.yaml
+@@ -51,6 +51,9 @@ properties:
+       set when controller's internal DMA engine cannot access the DRAM memory,
+       like on the G12A dedicated SDIO controller.
+ 
++  power-domains:
++    maxItems: 1
++
+ required:
+   - compatible
+   - reg
+-- 
+2.34.1
+

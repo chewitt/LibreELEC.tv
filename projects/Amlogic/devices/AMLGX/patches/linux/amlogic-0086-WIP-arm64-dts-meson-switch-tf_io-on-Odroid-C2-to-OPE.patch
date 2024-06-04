@@ -1,0 +1,41 @@
+From f59e47d9b32127d31780028f9d5e43a9844f2af4 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sun, 9 Jun 2024 06:52:56 +0000
+Subject: [PATCH 86/87] WIP: arm64: dts: meson: switch tf_io on Odroid C2 to
+ OPEN_DRAIN
+
+UART logs from Odroid C2 boards failing to boot from SD card shows
+there is no blockdev:
+
+<12>[    1.230596] Checking disk(s):  LABEL=LIBREELEC LABEL=STORAGE
+...
+<12>[   14.423259] fsck: fsck: couldn't find matching filesystem: LABEL=LIBREELEC
+<3>[   14.451387] LABEL=LIBREELEC: Can't lookup blockdev
+<3>[   14.451449] LABEL=LIBREELEC: Can't lookup blockdev
+
+Switching the tf_io regulator from 'ACTIVE_HIGH' to 'OPEN_DRAIN'
+as reported in [0] allows the card to be reset, allowing boot.
+
+[0] https://github.com/MichaIng/DietPi/issues/5414#issuecomment-1462629461
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts
+index 089d0f3d0e03..3e16be1741b0 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts
+@@ -102,7 +102,7 @@ tf_io: gpio-regulator-tf-io {
+ 		/*
+ 		 * signal name from schematics: TF_3V3N_1V8_EN
+ 		 */
+-		gpios = <&gpio_ao GPIOAO_3 GPIO_ACTIVE_HIGH>;
++		gpios = <&gpio_ao GPIOAO_3 GPIO_OPEN_DRAIN>;
+ 		gpios-states = <0>;
+ 
+ 		states = <3300000 0>,
+-- 
+2.34.1
+

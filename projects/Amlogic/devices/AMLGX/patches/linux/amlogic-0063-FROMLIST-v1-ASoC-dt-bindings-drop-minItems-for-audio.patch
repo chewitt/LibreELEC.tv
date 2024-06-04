@@ -1,0 +1,32 @@
+From 7288c3b3608cb97c0069683c93892cb02034677a Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 4 Jun 2024 16:23:35 +0200
+Subject: [PATCH 63/87] FROMLIST(v1): ASoC: dt-bindings: drop minItems for
+ audio-widgets
+
+Like "audio-routing" drop the minItems: 2 from the "audio-widgets", because
+any limit here - lower or upper- is rather meaningless.
+
+This will also fix `dtbs_check` warnings like:
+sound: audio-widgets: ['Speaker', '7J4-14 LEFT', 'Speaker', '7J4-11 RIGHT'] is too long
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../devicetree/bindings/sound/amlogic,gx-sound-card.yaml         | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/sound/amlogic,gx-sound-card.yaml b/Documentation/devicetree/bindings/sound/amlogic,gx-sound-card.yaml
+index d4277d342e69..0ecdaf7190e9 100644
+--- a/Documentation/devicetree/bindings/sound/amlogic,gx-sound-card.yaml
++++ b/Documentation/devicetree/bindings/sound/amlogic,gx-sound-card.yaml
+@@ -23,7 +23,6 @@ properties:
+ 
+   audio-widgets:
+     $ref: /schemas/types.yaml#/definitions/non-unique-string-array
+-    minItems: 2
+     description: |-
+       A list off component DAPM widget. Each entry is a pair of strings,
+       the first being the widget type, the second being the widget name
+-- 
+2.34.1
+

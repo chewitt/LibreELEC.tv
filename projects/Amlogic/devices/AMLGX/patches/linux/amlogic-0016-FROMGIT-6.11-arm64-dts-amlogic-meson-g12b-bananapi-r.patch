@@ -1,0 +1,56 @@
+From 0d331b2a034b5d6369d3a5ce082fa4afc7c4e7ff Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 4 Jun 2024 15:28:31 +0200
+Subject: [PATCH 16/87] FROMGIT(6.11): arm64: dts: amlogic:
+ meson-g12b-bananapi: remove invalid fan on wrong pwm_cd controller
+
+The fan is connected to the GPIOAO_10 pin, which can be connected to the pwm_AO_cd
+controller, but this one is already used for the vddcpu_b regulator.
+
+The fan was wrongly described as using the pwm_cd with the invalid "pwm-gpios"
+property, both are wrong so remove the fan until we find an acceptable solution.
+
+This fixes the following error:
+pwm@1a000: 'pwm-gpios' does not match any of the regexes: 'pinctrl-[0-9]+'
+        from schema $id: http://devicetree.org/schemas/pwm/pwm-amlogic.yaml#
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../boot/dts/amlogic/meson-g12b-bananapi.dtsi      | 14 --------------
+ 1 file changed, 14 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12b-bananapi.dtsi b/arch/arm64/boot/dts/amlogic/meson-g12b-bananapi.dtsi
+index 4b8db872bbf3..6a346cb86a53 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-g12b-bananapi.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-g12b-bananapi.dtsi
+@@ -44,13 +44,6 @@ emmc_pwrseq: emmc-pwrseq {
+ 		reset-gpios = <&gpio BOOT_12 GPIO_ACTIVE_LOW>;
+ 	};
+ 
+-	fan0: pwm-fan {
+-		compatible = "pwm-fan";
+-		#cooling-cells = <2>;
+-		cooling-levels = <0 120 170 220>;
+-		pwms = <&pwm_cd 1 40000 0>;
+-	};
+-
+ 	hdmi-connector {
+ 		compatible = "hdmi-connector";
+ 		type = "a";
+@@ -374,13 +367,6 @@ &pwm_ab {
+ 	clock-names = "clkin0";
+ };
+ 
+-&pwm_cd {
+-	status = "okay";
+-	pinctrl-0 = <&pwm_d_x6_pins>;
+-	pinctrl-names = "default";
+-	pwm-gpios = <&gpio GPIOAO_10 GPIO_ACTIVE_HIGH>;
+-};
+-
+ &pwm_ef {
+ 	status = "okay";
+ 	pinctrl-0 = <&pwm_e_pins>;
+-- 
+2.34.1
+

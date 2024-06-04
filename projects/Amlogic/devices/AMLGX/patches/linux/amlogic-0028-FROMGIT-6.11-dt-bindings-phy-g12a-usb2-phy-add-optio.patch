@@ -1,0 +1,31 @@
+From a9712a2090ed8ce5b0da1b541d22f2152e4eae7f Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 5 Jun 2024 11:09:54 +0200
+Subject: [PATCH 28/87] FROMGIT(6.11): dt-bindings: phy: g12a-usb2-phy: add
+ optional power-domains
+
+On newer SoCs, the USB2 PHY can require a power-domain to operate,
+add it as optional.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../devicetree/bindings/phy/amlogic,g12a-usb2-phy.yaml         | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/phy/amlogic,g12a-usb2-phy.yaml b/Documentation/devicetree/bindings/phy/amlogic,g12a-usb2-phy.yaml
+index 0031fb6a4e76..1a0c436b87a0 100644
+--- a/Documentation/devicetree/bindings/phy/amlogic,g12a-usb2-phy.yaml
++++ b/Documentation/devicetree/bindings/phy/amlogic,g12a-usb2-phy.yaml
+@@ -41,6 +41,9 @@ properties:
+       Phandle to a regulator that provides power to the PHY. This
+       regulator will be managed during the PHY power on/off sequence.
+ 
++  power-domains:
++    maxItems: 1
++
+ required:
+   - compatible
+   - reg
+-- 
+2.34.1
+

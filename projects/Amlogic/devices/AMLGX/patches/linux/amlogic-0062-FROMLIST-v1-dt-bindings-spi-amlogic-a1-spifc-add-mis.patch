@@ -1,0 +1,31 @@
+From 070b7aac7d79b5391b582097e6ea23d203b38a2a Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 5 Jun 2024 11:11:51 +0200
+Subject: [PATCH 62/87] FROMLIST(v1): dt-bindings: spi: amlogic,a1-spifc: add
+ missing power-domains
+
+On the Amlogic A1, the SPI FC controller can require a power-domain to
+operate, add it as optional.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ Documentation/devicetree/bindings/spi/amlogic,a1-spifc.yaml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/spi/amlogic,a1-spifc.yaml b/Documentation/devicetree/bindings/spi/amlogic,a1-spifc.yaml
+index ea47d30eef43..043879b434ac 100644
+--- a/Documentation/devicetree/bindings/spi/amlogic,a1-spifc.yaml
++++ b/Documentation/devicetree/bindings/spi/amlogic,a1-spifc.yaml
+@@ -23,6 +23,9 @@ properties:
+   clocks:
+     maxItems: 1
+ 
++  power-domains:
++    maxItems: 1
++
+ required:
+   - compatible
+   - reg
+-- 
+2.34.1
+

@@ -1,0 +1,63 @@
+From 6eba367b430aef5986412b7db797f6fa90187542 Mon Sep 17 00:00:00 2001
+From: Jerome Brunet <jbrunet@baylibre.com>
+Date: Tue, 25 Jun 2024 13:54:41 +0200
+Subject: [PATCH 39/87] FROMGIT(6.11): arm64: dts: amlogic: g12: bump spdif
+ output drive strength
+
+Spdif output currently uses a 0.5mA drive strength by default.
+While the result depends on how the spdif output is hooked to
+rest of the system, this is a bit weak and signal quality
+may be poor. This was reported on the vim3l for example.
+
+Increase the drive strength to 3mA, as used for TDM, to be on the
+safe side.
+
+Fixes: 649675db939d ("arm64: dts: meson: g12a: add spdifouts")
+Signed-off-by: Jerome Brunet <jbrunet@baylibre.com>
+---
+ arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi b/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi
+index 142c05993728..1718e4c8da2d 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi
+@@ -987,7 +987,7 @@ spdif_out_h_pins: spdif-out-h {
+ 						mux {
+ 							groups = "spdif_out_h";
+ 							function = "spdif_out";
+-							drive-strength-microamp = <500>;
++							drive-strength-microamp = <3000>;
+ 							bias-disable;
+ 						};
+ 					};
+@@ -996,7 +996,7 @@ spdif_out_a11_pins: spdif-out-a11 {
+ 						mux {
+ 							groups = "spdif_out_a11";
+ 							function = "spdif_out";
+-							drive-strength-microamp = <500>;
++							drive-strength-microamp = <3000>;
+ 							bias-disable;
+ 						};
+ 					};
+@@ -1005,7 +1005,7 @@ spdif_out_a13_pins: spdif-out-a13 {
+ 						mux {
+ 							groups = "spdif_out_a13";
+ 							function = "spdif_out";
+-							drive-strength-microamp = <500>;
++							drive-strength-microamp = <3000>;
+ 							bias-disable;
+ 						};
+ 					};
+@@ -1826,7 +1826,7 @@ spdif_ao_out_pins: spdif-ao-out {
+ 					mux {
+ 						groups = "spdif_ao_out";
+ 						function = "spdif_ao_out";
+-						drive-strength-microamp = <500>;
++						drive-strength-microamp = <3000>;
+ 						bias-disable;
+ 					};
+ 				};
+-- 
+2.34.1
+

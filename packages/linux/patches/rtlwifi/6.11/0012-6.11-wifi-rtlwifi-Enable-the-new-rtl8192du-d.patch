@@ -1,7 +1,11 @@
-From da2287b41888e02866f1416caa36c148c5723f8b Mon Sep 17 00:00:00 2001
+From a571a43d7f4bae498a6542bfaefcf67bde8d733a Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:49:00 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0012-6.11-wifi-rtlwifi-Enable-the-new-rtl8192du-d.patch
 Subject: [PATCH 12/12] 6.11: wifi: rtlwifi: Enable the new rtl8192du
+========
+Subject: [PATCH 22/89] FROMGIT(6.11): wifi: rtlwifi: Enable the new rtl8192du
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0022-FROMGIT-6.11-wifi-rtlwifi-Enable-the-new-rtl8192du-d.patch
  driver
 
 The RTL8192DU is an older Wifi 4 dual band chip. It comes in two

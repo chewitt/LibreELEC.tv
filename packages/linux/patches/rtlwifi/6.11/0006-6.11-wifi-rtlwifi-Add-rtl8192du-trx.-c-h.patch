@@ -1,7 +1,11 @@
-From 8125d619567b9a3620244251b8eab25074cafcfa Mon Sep 17 00:00:00 2001
+From 8978e75039886f4f6207d64ea0f6101677becdfd Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:46:26 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0006-6.11-wifi-rtlwifi-Add-rtl8192du-trx.-c-h.patch
 Subject: [PATCH 06/12] 6.11: wifi: rtlwifi: Add rtl8192du/trx.{c,h}
+========
+Subject: [PATCH 16/89] FROMGIT(6.11): wifi: rtlwifi: Add rtl8192du/trx.{c,h}
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0016-FROMGIT-6.11-wifi-rtlwifi-Add-rtl8192du-trx.-c-h.patch
 
 These contain routines related to sending frames to the chip.
 

@@ -1,7 +1,11 @@
-From 07d8e12d4523008675013f91d46a8a8d133a41c2 Mon Sep 17 00:00:00 2001
+From 5aba0bba163d885a9ef40142c4b49f3f62b32bc7 Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:47:19 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0008-6.11-wifi-rtlwifi-Add-rtl8192du-fw.-c-h-and-.patch
 Subject: [PATCH 08/12] 6.11: wifi: rtlwifi: Add rtl8192du/fw.{c,h}
+========
+Subject: [PATCH 18/89] FROMGIT(6.11): wifi: rtlwifi: Add rtl8192du/fw.{c,h}
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0018-FROMGIT-6.11-wifi-rtlwifi-Add-rtl8192du-fw.-c-h-and-.patch
  and rtl8192du/led.{c,h}
 
 fw.c contains a function for loading the firmware.

@@ -1,0 +1,40 @@
+From 35c119d8724b42c552950cd4ff70f15dc5d14fc7 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Tue, 11 Jun 2024 15:50:59 +0000
+Subject: [PATCH 71/87] FROMLIST(v1): drm: bridge: dw_hdmi: Update EDID during
+ hotplug processing
+
+Update successfully read EDID during hotplug processing to ensure the
+connector diplay_info is always up-to-date.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+index 256e00a97a9a..a9c39584d31b 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+@@ -2458,6 +2458,18 @@ dw_hdmi_connector_detect(struct drm_connector *connector, bool force)
+ 
+ 	status = dw_hdmi_detect(hdmi);
+ 
++	/* Update EDID during hotplug processing (force=false) */
++	if (status == connector_status_connected && !force) {
++		const struct drm_edid *drm_edid;
++
++		drm_edid = dw_hdmi_edid_read(hdmi, connector);
++		if (drm_edid)
++			drm_edid_connector_update(connector, drm_edid);
++		cec_notifier_set_phys_addr(hdmi->cec_notifier,
++			connector->display_info.source_physical_address);
++		drm_edid_free(drm_edid);
++	}
++
+ 	if (status == connector_status_disconnected)
+ 		cec_notifier_phys_addr_invalidate(hdmi->cec_notifier);
+ 
+-- 
+2.34.1
+

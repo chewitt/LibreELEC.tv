@@ -1,7 +1,11 @@
-From c791ad6e48ba58f4473b899ba7bf2de1d1536d17 Mon Sep 17 00:00:00 2001
+From e202f616c552d94dbb3127f06689cd48e8492f4a Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:48:02 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0010-6.11-wifi-rtlwifi-Constify-rtl_hal_cfg.-ops-.patch
 Subject: [PATCH 10/12] 6.11: wifi: rtlwifi: Constify
+========
+Subject: [PATCH 20/89] FROMGIT(6.11): wifi: rtlwifi: Constify
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0020-FROMGIT-6.11-wifi-rtlwifi-Constify-rtl_hal_cfg.-ops-.patch
  rtl_hal_cfg.{ops,usb_interface_cfg} and rtl_priv.cfg
 
 This allows the drivers to declare the structs rtl_hal_cfg, rtl_hal_ops,
@@ -77,10 +81,10 @@ index 12529afc0510..b66d6f9ae564 100644
  int rtl_usb_suspend(struct usb_interface *pusb_intf, pm_message_t message);
  int rtl_usb_resume(struct usb_interface *pusb_intf);
 diff --git a/drivers/net/wireless/realtek/rtlwifi/wifi.h b/drivers/net/wireless/realtek/rtlwifi/wifi.h
-index 2e88359ba917..940df771a764 100644
+index 6a8212fd36af..ae6e351bc83c 100644
 --- a/drivers/net/wireless/realtek/rtlwifi/wifi.h
 +++ b/drivers/net/wireless/realtek/rtlwifi/wifi.h
-@@ -2383,9 +2383,9 @@ struct rtl_hal_cfg {
+@@ -2356,9 +2356,9 @@ struct rtl_hal_cfg {
  	bool write_readback;
  	char *name;
  	char *alt_fw_name;
@@ -92,7 +96,7 @@ index 2e88359ba917..940df771a764 100644
  	enum rtl_spec_ver spec_ver;
  
  	/*this map used for some registers or vars
-@@ -2734,7 +2734,7 @@ struct rtl_priv {
+@@ -2707,7 +2707,7 @@ struct rtl_priv {
  	/* hal_cfg : for diff cards
  	 * intf_ops : for diff interrface usb/pcie
  	 */

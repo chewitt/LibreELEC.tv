@@ -1,7 +1,11 @@
-From f42c4cb0031563e684a66ea2e21072387d9fcc7f Mon Sep 17 00:00:00 2001
+From a28b736ebee7bd365d343ac59cbb4c53a44b00ae Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:46:51 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0007-6.11-wifi-rtlwifi-Add-rtl8192du-rf.-c-h.patch
 Subject: [PATCH 07/12] 6.11: wifi: rtlwifi: Add rtl8192du/rf.{c,h}
+========
+Subject: [PATCH 17/89] FROMGIT(6.11): wifi: rtlwifi: Add rtl8192du/rf.{c,h}
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0017-FROMGIT-6.11-wifi-rtlwifi-Add-rtl8192du-rf.-c-h.patch
 
 These contain one RF configuration function and some functions related
 to dual MAC operation.

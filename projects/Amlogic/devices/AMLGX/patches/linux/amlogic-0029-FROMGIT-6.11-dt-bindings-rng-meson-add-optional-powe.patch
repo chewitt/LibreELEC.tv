@@ -1,0 +1,31 @@
+From a0d3e9054d2112f48bc9835e8eda8b6d286a4253 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 5 Jun 2024 11:10:43 +0200
+Subject: [PATCH 29/87] FROMGIT(6.11): dt-bindings: rng: meson: add optional
+ power-domains
+
+On newer SoCs, the random number generator can require a power-domain to
+operate, add it as optional.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ Documentation/devicetree/bindings/rng/amlogic,meson-rng.yaml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/rng/amlogic,meson-rng.yaml b/Documentation/devicetree/bindings/rng/amlogic,meson-rng.yaml
+index afa52af442a7..f03b87e1b01c 100644
+--- a/Documentation/devicetree/bindings/rng/amlogic,meson-rng.yaml
++++ b/Documentation/devicetree/bindings/rng/amlogic,meson-rng.yaml
+@@ -26,6 +26,9 @@ properties:
+     items:
+       - const: core
+ 
++  power-domains:
++    maxItems: 1
++
+ required:
+   - compatible
+   - reg
+-- 
+2.34.1
+

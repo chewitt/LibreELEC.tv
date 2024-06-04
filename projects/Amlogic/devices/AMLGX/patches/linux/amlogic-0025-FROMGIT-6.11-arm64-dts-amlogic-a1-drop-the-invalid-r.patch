@@ -1,0 +1,29 @@
+From f8c795f590bcab0d82fe96831b7a896934e73ee8 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 4 Jun 2024 16:36:43 +0200
+Subject: [PATCH 25/87] FROMGIT(6.11): arm64: dts: amlogic: a1: drop the
+ invalid reset-name for usb@fe004400
+
+This fixes the following:
+usb@fe004400: 'reset-name' does not match any of the regexes: '^usb@[0-9a-f]+$', 'pinctrl-[0-9]+'
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ arch/arm64/boot/dts/amlogic/meson-a1.dtsi | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-a1.dtsi b/arch/arm64/boot/dts/amlogic/meson-a1.dtsi
+index 4be801d12c4b..ade3a51ce89d 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-a1.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-a1.dtsi
+@@ -453,7 +453,6 @@ usb: usb@fe004400 {
+ 			assigned-clocks = <&clkc_periphs CLKID_USB_BUS>;
+ 			assigned-clock-rates = <64000000>;
+ 			resets = <&reset RESET_USBCTRL>;
+-			reset-name = "usb_ctrl";
+ 
+ 			dr_mode = "otg";
+ 
+-- 
+2.34.1
+

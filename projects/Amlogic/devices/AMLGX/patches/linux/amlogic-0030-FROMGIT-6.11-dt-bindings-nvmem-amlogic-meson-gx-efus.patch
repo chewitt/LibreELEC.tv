@@ -1,0 +1,31 @@
+From 7c4379ecf73962cb3e95c13bc5ce86eeafd5954a Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 4 Jun 2024 16:38:38 +0200
+Subject: [PATCH 30/87] FROMGIT(6.11): dt-bindings: nvmem:
+ amlogic,meson-gx-efuse: add optional power-domains
+
+On newer SoCs, the NVMEM hardware can require a power-domain to operate,
+add it as optional.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../devicetree/bindings/nvmem/amlogic,meson-gxbb-efuse.yaml    | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/nvmem/amlogic,meson-gxbb-efuse.yaml b/Documentation/devicetree/bindings/nvmem/amlogic,meson-gxbb-efuse.yaml
+index 9801fe6f91b5..99ddc9a4af05 100644
+--- a/Documentation/devicetree/bindings/nvmem/amlogic,meson-gxbb-efuse.yaml
++++ b/Documentation/devicetree/bindings/nvmem/amlogic,meson-gxbb-efuse.yaml
+@@ -28,6 +28,9 @@ properties:
+     description: phandle to the secure-monitor node
+     $ref: /schemas/types.yaml#/definitions/phandle
+ 
++  power-domains:
++    maxItems: 1
++
+ required:
+   - compatible
+   - clocks
+-- 
+2.34.1
+

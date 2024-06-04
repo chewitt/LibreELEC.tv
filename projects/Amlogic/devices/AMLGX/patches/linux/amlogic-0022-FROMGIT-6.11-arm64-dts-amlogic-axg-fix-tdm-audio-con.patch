@@ -1,0 +1,82 @@
+From 1fe1aa27f859d992482395a652dfe63e38c72831 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 4 Jun 2024 16:31:40 +0200
+Subject: [PATCH 22/87] FROMGIT(6.11): arm64: dts: amlogic: axg: fix tdm
+ audio-controller clock order
+
+This fixes the following:
+audio-controller-0: clock-names:0: 'sclk' was expected
+	from schema $id: http://devicetree.org/schemas/sound/amlogic,axg-tdm-iface.yaml#
+audio-controller-0: clock-names:1: 'lrclk' was expected
+	from schema $id: http://devicetree.org/schemas/sound/amlogic,axg-tdm-iface.yaml#
+audio-controller-0: clock-names:2: 'mclk' was expected
+	from schema $id: http://devicetree.org/schemas/sound/amlogic,axg-tdm-iface.yaml#
+audio-controller-1: clock-names:0: 'sclk' was expected
+	from schema $id: http://devicetree.org/schemas/sound/amlogic,axg-tdm-iface.yaml#
+audio-controller-1: clock-names:1: 'lrclk' was expected
+	from schema $id: http://devicetree.org/schemas/sound/amlogic,axg-tdm-iface.yaml#
+audio-controller-1: clock-names:2: 'mclk' was expected
+	from schema $id: http://devicetree.org/schemas/sound/amlogic,axg-tdm-iface.yaml#
+audio-controller-2: clock-names:0: 'sclk' was expected
+	from schema $id: http://devicetree.org/schemas/sound/amlogic,axg-tdm-iface.yaml#
+audio-controller-2: clock-names:1: 'lrclk' was expected
+	from schema $id: http://devicetree.org/schemas/sound/amlogic,axg-tdm-iface.yaml#
+audio-controller-2: clock-names:2: 'mclk' was expected
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ arch/arm64/boot/dts/amlogic/meson-axg.dtsi | 24 +++++++++++-----------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-axg.dtsi b/arch/arm64/boot/dts/amlogic/meson-axg.dtsi
+index 6d12b760b90f..e9b22868983d 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-axg.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-axg.dtsi
+@@ -25,10 +25,10 @@ tdmif_a: audio-controller-0 {
+ 		compatible = "amlogic,axg-tdm-iface";
+ 		#sound-dai-cells = <0>;
+ 		sound-name-prefix = "TDM_A";
+-		clocks = <&clkc_audio AUD_CLKID_MST_A_MCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_A_SCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_A_LRCLK>;
+-		clock-names = "mclk", "sclk", "lrclk";
++		clocks = <&clkc_audio AUD_CLKID_MST_A_SCLK>,
++			 <&clkc_audio AUD_CLKID_MST_A_LRCLK>,
++			 <&clkc_audio AUD_CLKID_MST_A_MCLK>;
++		clock-names = "sclk", "lrclk", "mclk";
+ 		status = "disabled";
+ 	};
+ 
+@@ -36,10 +36,10 @@ tdmif_b: audio-controller-1 {
+ 		compatible = "amlogic,axg-tdm-iface";
+ 		#sound-dai-cells = <0>;
+ 		sound-name-prefix = "TDM_B";
+-		clocks = <&clkc_audio AUD_CLKID_MST_B_MCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_B_SCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_B_LRCLK>;
+-		clock-names = "mclk", "sclk", "lrclk";
++		clocks = <&clkc_audio AUD_CLKID_MST_B_SCLK>,
++			 <&clkc_audio AUD_CLKID_MST_B_LRCLK>,
++			 <&clkc_audio AUD_CLKID_MST_B_MCLK>;
++		clock-names = "sclk", "lrclk", "mclk";
+ 		status = "disabled";
+ 	};
+ 
+@@ -47,10 +47,10 @@ tdmif_c: audio-controller-2 {
+ 		compatible = "amlogic,axg-tdm-iface";
+ 		#sound-dai-cells = <0>;
+ 		sound-name-prefix = "TDM_C";
+-		clocks = <&clkc_audio AUD_CLKID_MST_C_MCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_C_SCLK>,
+-			 <&clkc_audio AUD_CLKID_MST_C_LRCLK>;
+-		clock-names = "mclk", "sclk", "lrclk";
++		clocks = <&clkc_audio AUD_CLKID_MST_C_SCLK>,
++			 <&clkc_audio AUD_CLKID_MST_C_LRCLK>,
++			 <&clkc_audio AUD_CLKID_MST_C_MCLK>;
++		clock-names = "sclk", "lrclk", "mclk";
+ 		status = "disabled";
+ 	};
+ 
+-- 
+2.34.1
+

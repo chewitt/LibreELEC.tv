@@ -1,0 +1,60 @@
+From 72f9216cef583a27fbc5e35ac1660daca680a102 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sun, 9 Jun 2024 06:38:39 +0000
+Subject: [PATCH 85/87] WIP: arm64: dts: meson: remove sd-uhs-ddr50 from Odroid
+ C2
+
+UART logs from Odroid C2 boards failing to boot from SD card shows
+mmc0 failing to complete ddr50 tuning:
+
+<3>[    4.138233] mmc0: tuning execution failed: -5
+<4>[    4.138265] mmc0: ddr50 tuning failed
+<6>[    4.138291] mmc0: new ultra high speed DDR50 SDHC card at address 0001
+<6>[    4.139698] mmcblk0: mmc0:0001 SD 14.6 GiB
+<3>[    6.810181] mmc0: tuning execution failed: -5
+<4>[    6.810218] mmc0: ddr50 tuning failed
+<3>[    6.811913] I/O error, dev mmcblk0, sector 0 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
+<3>[    6.812011] Buffer I/O error on dev mmcblk0, logical block 0, async page read
+<3>[    6.816526] I/O error, dev mmcblk0, sector 0 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
+<3>[    6.816543] Buffer I/O error on dev mmcblk0, logical block 0, async page read
+<6>[    6.816575] ldm_validate_partition_table(): Disk read failed.
+<3>[    6.821040] I/O error, dev mmcblk0, sector 0 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
+<3>[    6.821056] Buffer I/O error on dev mmcblk0, logical block 0, async page read
+<3>[    6.825544] I/O error, dev mmcblk0, sector 0 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
+<3>[    6.825560] Buffer I/O error on dev mmcblk0, logical block 0, async page read
+<6>[    6.825592]  mmcblk0: unable to read partition table
+<3>[    9.498181] mmc0: tuning execution failed: -5
+<4>[    9.498218] mmc0: ddr50 tuning failed
+<3>[    9.499848] I/O error, dev mmcblk0, sector 0 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
+<3>[    9.499870] Buffer I/O error on dev mmcblk0, logical block 0, async page read
+
+Neither the Linux 3.14.y source used in older LibreELEC releases [0]
+or the Linux 3.16.y source from Hardkernel [1] describe sd-uhs-ddr50
+capabilities so remove this to align with the vendor kernel and stop
+the tuning failure.
+
+[0] https://github.com/LibreELEC/linux-amlogic/blob/amlogic-3.14.y/arch/arm64/boot/dts/meson64_odroidc2.dts#L341-L345
+[1] https://github.com/hardkernel/linux/blob/odroidc2-v3.16.y/arch/arm64/boot/dts/meson64_odroidc2.dts#L348-L352
+
+Fixes: 7e2b33ffec17 ("arm64: dts: meson: odroid-c2: add missing mmc modes")
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts
+index c37cc6b036cd..089d0f3d0e03 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts
+@@ -347,7 +347,7 @@ &sd_emmc_b {
+ 	sd-uhs-sdr12;
+ 	sd-uhs-sdr25;
+ 	sd-uhs-sdr50;
+-	sd-uhs-ddr50;
++	sd-uhs-sdr104;
+ 	max-frequency = <100000000>;
+ 	disable-wp;
+ 
+-- 
+2.34.1
+

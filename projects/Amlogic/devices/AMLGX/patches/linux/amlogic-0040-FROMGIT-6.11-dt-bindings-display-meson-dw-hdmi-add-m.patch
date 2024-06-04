@@ -1,0 +1,44 @@
+From e2d698819da13f1366b647a3c334020bf7fb38e4 Mon Sep 17 00:00:00 2001
+From: Jerome Brunet <jbrunet@baylibre.com>
+Date: Tue, 25 Jun 2024 16:50:14 +0200
+Subject: [PATCH 40/87] FROMGIT(6.11): dt-bindings: display: meson-dw-hdmi: add
+ missing power-domain
+
+All Amlogic instances of the Synopsys HDMI controller need a power domain
+enabled. This is currently missing because the Amlogic HDMI driver directly
+pokes the power domain controller registers, which it should not do.
+
+Instead The HDMI controller should use the power controller.
+Fix the bindings accordingly.
+
+Signed-off-by: Jerome Brunet <jbrunet@baylibre.com>
+---
+ .../devicetree/bindings/display/amlogic,meson-dw-hdmi.yaml   | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/display/amlogic,meson-dw-hdmi.yaml b/Documentation/devicetree/bindings/display/amlogic,meson-dw-hdmi.yaml
+index 0c85894648d8..84d68b8cfccc 100644
+--- a/Documentation/devicetree/bindings/display/amlogic,meson-dw-hdmi.yaml
++++ b/Documentation/devicetree/bindings/display/amlogic,meson-dw-hdmi.yaml
+@@ -71,6 +71,10 @@ properties:
+       - const: iahb
+       - const: venci
+ 
++  power-domains:
++    maxItems: 1
++    description: phandle to the associated power domain
++
+   resets:
+     minItems: 3
+ 
+@@ -129,6 +133,7 @@ examples:
+         reset-names = "hdmitx_apb", "hdmitx", "hdmitx_phy";
+         clocks = <&clk_isfr>, <&clk_iahb>, <&clk_venci>;
+         clock-names = "isfr", "iahb", "venci";
++        power-domains = <&pd_vpu>;
+         #address-cells = <1>;
+         #size-cells = <0>;
+ 
+-- 
+2.34.1
+

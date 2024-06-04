@@ -1,0 +1,29 @@
+From e94de775194979de0e507061376b9460e66f7443 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Tue, 4 Jun 2024 16:27:04 +0200
+Subject: [PATCH 20/87] FROMGIT(6.11): arm64: dts: amlogic: g12a-u200: drop
+ invalid sound-dai-cells
+
+This fixes the following:
+audio-amplifier-0: '#sound-dai-cells' does not match any of the regexes: 'pinctrl-[0-9]+'
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ arch/arm64/boot/dts/amlogic/meson-g12a-u200.dts | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-u200.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-u200.dts
+index 3da7922d83f1..f1a071e13dee 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-g12a-u200.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-g12a-u200.dts
+@@ -24,7 +24,6 @@ dioo2133: audio-amplifier-0 {
+ 		compatible = "simple-audio-amplifier";
+ 		enable-gpios = <&gpio_ao GPIOAO_2 GPIO_ACTIVE_HIGH>;
+ 		VCC-supply = <&vcc_5v>;
+-		#sound-dai-cells = <0>;
+ 		sound-name-prefix = "10U2";
+ 	};
+ 
+-- 
+2.34.1
+

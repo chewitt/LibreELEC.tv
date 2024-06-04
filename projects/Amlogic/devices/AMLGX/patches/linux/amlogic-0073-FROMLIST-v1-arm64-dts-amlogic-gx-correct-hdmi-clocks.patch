@@ -1,0 +1,57 @@
+From 429fe72bebb531eb956483c0100e34795a822ad9 Mon Sep 17 00:00:00 2001
+From: Jerome Brunet <jbrunet@baylibre.com>
+Date: Wed, 26 Jun 2024 17:27:30 +0200
+Subject: [PATCH 73/87] FROMLIST(v1): arm64: dts: amlogic: gx: correct hdmi
+ clocks
+
+The clocks provided to HDMI tx are not consistent between gx and g12:
+* gx receives the peripheral clock as 'isfr' while g12 receives it as
+  'iahb'
+* g12 gets the HDMI system clock as 'isfr' but gx does not even get it.
+  It surely needs that clock since the driver is directly poking around
+  the clock controller's registers for that clock.
+
+Align gx SoCs with g12 and provide:
+ * the HDMI peripheral clock as 'iahb'
+ * the HDMI system clock as 'isfr'
+
+Fixes: 6939db7e0dbf ("ARM64: dts: meson-gx: Add support for HDMI output")
+Signed-off-by: Jerome Brunet <jbrunet@baylibre.com>
+---
+ arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi | 4 ++--
+ arch/arm64/boot/dts/amlogic/meson-gxl.dtsi  | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
+index d8a386c31914..041c37b809f2 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-gxbb.dtsi
+@@ -311,8 +311,8 @@ &hdmi_tx {
+ 		 <&reset RESET_HDMI_SYSTEM_RESET>,
+ 		 <&reset RESET_HDMI_TX>;
+ 	reset-names = "hdmitx_apb", "hdmitx", "hdmitx_phy";
+-	clocks = <&clkc CLKID_HDMI_PCLK>,
+-		 <&clkc CLKID_CLK81>,
++	clocks = <&clkc CLKID_HDMI>,
++		 <&clkc CLKID_HDMI_PCLK>,
+ 		 <&clkc CLKID_GCLK_VENCI_INT0>;
+ 	clock-names = "isfr", "iahb", "venci";
+ 	power-domains = <&pwrc PWRC_GXBB_VPU_ID>;
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
+index 82386feb5177..067108800a58 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-gxl.dtsi
+@@ -323,8 +323,8 @@ &hdmi_tx {
+ 		 <&reset RESET_HDMI_SYSTEM_RESET>,
+ 		 <&reset RESET_HDMI_TX>;
+ 	reset-names = "hdmitx_apb", "hdmitx", "hdmitx_phy";
+-	clocks = <&clkc CLKID_HDMI_PCLK>,
+-		 <&clkc CLKID_CLK81>,
++	clocks = <&clkc CLKID_HDMI>,
++		 <&clkc CLKID_HDMI_PCLK>,
+ 		 <&clkc CLKID_GCLK_VENCI_INT0>;
+ 	clock-names = "isfr", "iahb", "venci";
+ 	power-domains = <&pwrc PWRC_GXBB_VPU_ID>;
+-- 
+2.34.1
+

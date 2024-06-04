@@ -1,7 +1,11 @@
-From 76b9d3316e2d5db38de05e1ad8fe3c6acaabf21a Mon Sep 17 00:00:00 2001
+From b33b985e4a4756ad2e663afb0d3bf88f800c87e8 Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:44:09 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0002-6.11-wifi-rtlwifi-Add-rtl8192du-table.-c-h.patch
 Subject: [PATCH 02/12] 6.11: wifi: rtlwifi: Add rtl8192du/table.{c,h}
+========
+Subject: [PATCH 12/89] FROMGIT(6.11): wifi: rtlwifi: Add rtl8192du/table.{c,h}
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0012-FROMGIT-6.11-wifi-rtlwifi-Add-rtl8192du-table.-c-h.patch
 
 These contain the MAC, BB, RF, and AGC initialisation tables for
 RTL8192DU.

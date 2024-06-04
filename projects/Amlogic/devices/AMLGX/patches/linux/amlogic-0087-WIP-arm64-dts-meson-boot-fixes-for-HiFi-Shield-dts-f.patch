@@ -1,0 +1,61 @@
+From 3045f4fff2f0cba058db7276d8f9527272342015 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sun, 9 Jun 2024 06:37:59 +0000
+Subject: [PATCH 87/87] WIP: arm64: dts: meson: boot fixes for HiFi-Shield dts
+ files
+
+Set tf_io to OPEN_DRAIN and drop sd-uhs-ddr50 to fix SD boot
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ .../arm64/boot/dts/amlogic/meson-gxbb-odroidc2-hifishield.dts | 4 ++--
+ .../boot/dts/amlogic/meson-gxbb-odroidc2-hifishield2.dts      | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2-hifishield.dts b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2-hifishield.dts
+index 80b44c2abac2..fe51396aa4bf 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2-hifishield.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2-hifishield.dts
+@@ -109,7 +109,7 @@ tf_io: gpio-regulator-tf-io {
+ 		/*
+ 		 * signal name from schematics: TF_3V3N_1V8_EN
+ 		 */
+-		gpios = <&gpio_ao GPIOAO_3 GPIO_ACTIVE_HIGH>;
++		gpios = <&gpio_ao GPIOAO_3 GPIO_OPEN_DRAIN>;
+ 		gpios-states = <0>;
+ 
+ 		states = <3300000 0>,
+@@ -380,7 +380,7 @@ &sd_emmc_b {
+ 	sd-uhs-sdr12;
+ 	sd-uhs-sdr25;
+ 	sd-uhs-sdr50;
+-	sd-uhs-ddr50;
++	sd-uhs-sdr104;
+ 	max-frequency = <100000000>;
+ 	disable-wp;
+ 
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2-hifishield2.dts b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2-hifishield2.dts
+index e94d6dc75fec..8caa867d4d5c 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2-hifishield2.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2-hifishield2.dts
+@@ -109,7 +109,7 @@ tf_io: gpio-regulator-tf-io {
+ 		/*
+ 		 * signal name from schematics: TF_3V3N_1V8_EN
+ 		 */
+-		gpios = <&gpio_ao GPIOAO_3 GPIO_ACTIVE_HIGH>;
++		gpios = <&gpio_ao GPIOAO_3 GPIO_OPEN_DRAIN>;
+ 		gpios-states = <0>;
+ 
+ 		states = <3300000 0>,
+@@ -392,7 +392,7 @@ &sd_emmc_b {
+ 	sd-uhs-sdr12;
+ 	sd-uhs-sdr25;
+ 	sd-uhs-sdr50;
+-	sd-uhs-ddr50;
++	sd-uhs-sdr104;
+ 	max-frequency = <100000000>;
+ 	disable-wp;
+ 
+-- 
+2.34.1
+

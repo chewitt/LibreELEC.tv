@@ -1,7 +1,11 @@
-From 40249d26740fceb059f121dde0922de1f9ec209a Mon Sep 17 00:00:00 2001
+From 8abd9658088abcfc1ac8ba8a4fad5f435af538af Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:46:02 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0005-6.11-wifi-rtlwifi-Add-rtl8192du-phy.-c-h.patch
 Subject: [PATCH 05/12] 6.11: wifi: rtlwifi: Add rtl8192du/phy.{c,h}
+========
+Subject: [PATCH 15/89] FROMGIT(6.11): wifi: rtlwifi: Add rtl8192du/phy.{c,h}
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0015-FROMGIT-6.11-wifi-rtlwifi-Add-rtl8192du-phy.-c-h.patch
 
 These contain mostly the calibration and channel switching routines
 for RTL8192DU.

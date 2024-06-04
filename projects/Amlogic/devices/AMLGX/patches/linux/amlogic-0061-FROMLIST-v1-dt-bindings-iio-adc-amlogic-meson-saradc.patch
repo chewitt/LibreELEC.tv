@@ -1,0 +1,31 @@
+From 404e8cd550d772af765b18fc964f906f934e91e7 Mon Sep 17 00:00:00 2001
+From: Neil Armstrong <neil.armstrong@linaro.org>
+Date: Wed, 5 Jun 2024 11:08:27 +0200
+Subject: [PATCH 61/87] FROMLIST(v1): dt-bindings: iio: adc:
+ amlogic,meson-saradc: add optional power-domains
+
+On newer SoCs, the NVMEM hardware can require a power-domain to operate,
+add it as optional.
+
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../devicetree/bindings/iio/adc/amlogic,meson-saradc.yaml      | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/iio/adc/amlogic,meson-saradc.yaml b/Documentation/devicetree/bindings/iio/adc/amlogic,meson-saradc.yaml
+index b2fef72267b4..26344eedef0b 100644
+--- a/Documentation/devicetree/bindings/iio/adc/amlogic,meson-saradc.yaml
++++ b/Documentation/devicetree/bindings/iio/adc/amlogic,meson-saradc.yaml
+@@ -67,6 +67,9 @@ properties:
+   nvmem-cell-names:
+     const: temperature_calib
+ 
++  power-domains:
++    maxItems: 1
++
+ allOf:
+   - if:
+       properties:
+-- 
+2.34.1
+

@@ -1,0 +1,29 @@
+From 5f6f40b994d9e7671b1e50602b7c75b3b6e8d8a7 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Fri, 21 Jun 2024 07:55:24 +0000
+Subject: [PATCH 31/87] FROMGIT(6.11): dt-bindings: sound: add ti,pcm5242 to
+ pcm512x
+
+Add ti,pcm5242 to the pcm512x driver file
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ Documentation/devicetree/bindings/sound/pcm512x.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/sound/pcm512x.txt b/Documentation/devicetree/bindings/sound/pcm512x.txt
+index 77006a4aec4a..47878a6df608 100644
+--- a/Documentation/devicetree/bindings/sound/pcm512x.txt
++++ b/Documentation/devicetree/bindings/sound/pcm512x.txt
+@@ -6,7 +6,7 @@ on the board). The TAS575x devices only support I2C.
+ Required properties:
+ 
+   - compatible : One of "ti,pcm5121", "ti,pcm5122", "ti,pcm5141",
+-                 "ti,pcm5142", "ti,tas5754" or "ti,tas5756"
++                 "ti,pcm5142", "ti,pcm5242", "ti,tas5754" or "ti,tas5756"
+ 
+   - reg : the I2C address of the device for I2C, the chip select
+           number for SPI.
+-- 
+2.34.1
+

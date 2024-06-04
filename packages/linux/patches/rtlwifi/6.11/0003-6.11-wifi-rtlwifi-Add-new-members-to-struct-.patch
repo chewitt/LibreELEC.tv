@@ -1,7 +1,11 @@
-From 34ddbe7398b1e23d78192999dcc88a7f57bcaae5 Mon Sep 17 00:00:00 2001
+From a9af5bf1175a88642554e56ccdd039ee0c5d0470 Mon Sep 17 00:00:00 2001
 From: Bitterblue Smith <rtl8821cerfe2@gmail.com>
 Date: Thu, 23 May 2024 17:44:39 +0300
+<<<<<<<< HEAD:packages/linux/patches/rtlwifi/6.11/0003-6.11-wifi-rtlwifi-Add-new-members-to-struct-.patch
 Subject: [PATCH 03/12] 6.11: wifi: rtlwifi: Add new members to struct
+========
+Subject: [PATCH 13/89] FROMGIT(6.11): wifi: rtlwifi: Add new members to struct
+>>>>>>>> 66002929f7 (linux: update Amlogic to Linux 6.10.y):projects/Amlogic/devices/AMLGX/patches/linux/amlogic-0013-FROMGIT-6.11-wifi-rtlwifi-Add-new-members-to-struct-.patch
  rtl_priv for RTL8192DU
 
 These are needed for the dual MAC version of RTL8192DU.
@@ -18,10 +22,10 @@ Signed-off-by: Bitterblue Smith <rtl8821cerfe2@gmail.com>
  1 file changed, 6 insertions(+)
 
 diff --git a/drivers/net/wireless/realtek/rtlwifi/wifi.h b/drivers/net/wireless/realtek/rtlwifi/wifi.h
-index 4f1c21c130f4..2e88359ba917 100644
+index 442419568734..6a8212fd36af 100644
 --- a/drivers/net/wireless/realtek/rtlwifi/wifi.h
 +++ b/drivers/net/wireless/realtek/rtlwifi/wifi.h
-@@ -2773,6 +2773,12 @@ struct rtl_priv {
+@@ -2746,6 +2746,12 @@ struct rtl_priv {
  	 */
  	bool use_new_trx_flow;
  
