@@ -3,12 +3,12 @@
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="RTL8812AU"
-PKG_VERSION="63cf0b4584aa8878b0fe8ab38017f31c319bde3d"
-PKG_SHA256="b4056ffd11707f9be3fd3ac2c9215c9d4315edac7a592790bb69fbb50ec49340"
+PKG_VERSION="dbff59f93e43f740340e59210efa93927677adb7"
+PKG_SHA256="21f99d22254415af8f8a9536d54994673ba02e990764f9811e6aa4d6adf754a8"
 PKG_LICENSE="GPL"
-PKG_SITE="https://github.com/aircrack-ng/rtl8812au"
-PKG_URL="https://github.com/aircrack-ng/rtl8812au/archive/${PKG_VERSION}.tar.gz"
-PKG_LONGDESC="Realtek RTL8812AU Linux driver"
+PKG_SITE="https://github.com/lwfinger/rtw88"
+PKG_URL="https://github.com/lwfinger/rtw88/archive/${PKG_VERSION}.tar.gz"
+PKG_LONGDESC="Realtek RTL8812AU Linux driver using upstream test sources!"
 PKG_IS_KERNEL_PKG="yes"
 
 pre_make_target() {
@@ -19,11 +19,13 @@ make_target() {
   make V=1 \
        ARCH=${TARGET_KERNEL_ARCH} \
        KSRC=$(kernel_path) \
-       CROSS_COMPILE=${TARGET_KERNEL_PREFIX} \
-       CONFIG_POWER_SAVING=n
+       CROSS_COMPILE=${TARGET_KERNEL_PREFIX}
 }
 
 makeinstall_target() {
-  mkdir -p ${INSTALL}/$(get_full_module_dir)/${PKG_NAME}
-    cp *.ko ${INSTALL}/$(get_full_module_dir)/${PKG_NAME}
+  mkdir -p ${INSTALL}/$(get_full_module_dir)/rtw88
+    cp *.ko ${INSTALL}/$(get_full_module_dir)/rtw88
+
+  mkdir -p ${INSTALL}/$(get_full_firmware_dir)/rtw88
+    cp *fw.bin ${INSTALL}/$(get_full_firmware_dir)/rtw88
 }
