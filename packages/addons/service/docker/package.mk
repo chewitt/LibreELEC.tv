@@ -44,3 +44,38 @@ addon() {
 post_install_addon() {
   sed -e "s/@DISTRO_PKG_SETTINGS_ID@/${DISTRO_PKG_SETTINGS_ID}/g" -i "${INSTALL}/default.py"
 }
+
+post_makeinstall_target() {
+  mkdir -p ${INSTALL}/etc
+    # docker.conf
+    cp -P ${PKG_DIR}/config/docker.conf ${INSTALL}/etc
+
+  mkdir -p ${INSTALL}/usr/bin
+    # dockermon.py
+    cp -P ${PKG_DIR}/lib/dockermon.py ${INSTALL}/usr/bin/dockermon
+
+    # cli
+    cp -P $(get_build_dir cli)/bin/docker ${INSTALL}/usr/bin
+
+    # moby
+    cp -P $(get_build_dir moby)/bin/dockerd ${INSTALL}/usr/bin
+    cp -P $(get_build_dir moby)/bin/docker-proxy ${INSTALL}/usr//bin/docker-proxy
+
+    # containerd
+    cp -P $(get_build_dir containerd)/bin/containerd ${INSTALL}/usr/bin/containerd
+    cp -P $(get_build_dir containerd)/bin/containerd-shim ${INSTALL}/usr//bin/containerd-shim
+    cp -P $(get_build_dir containerd)/bin/containerd-shim-runc-v2 ${INSTALL}/usr/bin/containerd-shim-runc-v2
+
+    # ctop
+    cp -P $(get_build_dir ctop)/bin/ctop ${INSTALL}/usr/bin/ctop
+
+    # runc
+    cp -P $(get_build_dir runc)/bin/runc ${INSTALL}/usr/bin/runc
+
+    # tini
+    cp -P $(get_build_dir tini)/.${TARGET_NAME}/tini-static ${INSTALL}/usr/bin/docker-init
+}
+
+#post_install() {
+#  enable_service docker.service
+#}
