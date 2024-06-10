@@ -170,16 +170,16 @@ VERSION="${LIBREELEC_VERSION}"
 ID="${DISTRONAME,,}"
 VERSION_ID="${OS_VERSION}"
 PRETTY_NAME="${DISTRONAME} (${LIBREELEC_BUILD}): ${LIBREELEC_VERSION}"
-HOME_URL="https://libreelec.tv"
-BUG_REPORT_URL="${ORIGIN_URL}"
+HOME_URL="https://triolinux.org"
+BUG_REPORT_URL="https://business.trio.so/support"
 BUILD_ID="${GIT_HASH}"
-LIBREELEC_ARCH="${LIBREELEC_ARCH}"
-LIBREELEC_BUILD="${LIBREELEC_BUILD}"
-LIBREELEC_PROJECT="${PROJECT}"
+TRIOLINUX_ARCH="${LIBREELEC_ARCH}"
+TRIOLINUX_BUILD="${LIBREELEC_BUILD}"
+TRIOLINUX_PROJECT="${PROJECT}"
 EOF
-[ -n "${DEVICE}" ] && echo "LIBREELEC_DEVICE=\"${DEVICE}\"" >>${INSTALL}/etc/os-release
-[ -n "${BUILDER_NAME}" ] && echo "BUILDER_NAME=\"${BUILDER_NAME}\"" >>${INSTALL}/etc/os-release
-[ -n "${BUILDER_VERSION}" ] && echo "BUILDER_VERSION=\"${BUILDER_VERSION}\"" >>${INSTALL}/etc/os-release
+[ -n "${DEVICE}" ] && echo "TRIOLINUX_DEVICE=\"${DEVICE}\"" >> ${INSTALL}/etc/os-release
+[ -n "${BUILDER_NAME}" ] && echo "BUILDER_NAME=\"${BUILDER_NAME}\"" >> ${INSTALL}/etc/os-release
+[ -n "${BUILDER_VERSION}" ] && echo "BUILDER_VERSION=\"${BUILDER_VERSION}\"" >> ${INSTALL}/etc/os-release
 
 # Create /etc/issue
 cat <<EOF >${INSTALL}/etc/issue
