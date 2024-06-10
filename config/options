@@ -21,14 +21,14 @@ DISTRO_DIR="${ROOT}/distributions"
 PROJECT_DIR="${ROOT}/projects"
 
 # determines DISTRO, if not forced by user
-DISTRO="${DISTRO:-LibreELEC}"
+DISTRO="${DISTRO:-TrioLinux}"
 
 # determines PROJECT, if not forced by user
-export PROJECT="${PROJECT:-Generic}"
+export PROJECT="${PROJECT:-Appliance}"
 
 # default to Generic device if building Generic project without device set
-if [ "${PROJECT}" = "Generic" -a -z "${DEVICE}" ]; then
-  export DEVICE="Generic"
+if [ "${PROJECT}" = "Appliance" -a -z "${DEVICE}" ]; then
+  export DEVICE="Appliance"
 fi
 
 # determines TARGET_ARCH, if not forced by user
