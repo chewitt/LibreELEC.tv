@@ -26,7 +26,7 @@ if [ -e /storage/.please_resize_me ] ; then
     sync
     echo "Resizing is not permitted - the system has already been initialised." | tee -a $LOG
     mount -o remount,ro /flash
-    StartProgress countdown "Rebooting in 15s... " 15 "NOW"
+    StartProgress countdown "Rebooting in 5s... " 5 "NOW"
     reboot -f
   fi
 
