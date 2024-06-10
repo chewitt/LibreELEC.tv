@@ -1,0 +1,16 @@
+[Unit]
+Description=System Logging Service
+Requires=syslog.socket
+Documentation=http://www.rsyslog.com/doc/
+
+[Service]
+Type=notify
+Environment=RSYSLOG_MODDIR=/storage/rsyslog
+ExecStartPre=/bin/sh /bin/rsyslog.init
+ExecStart=/usr/bin/rsyslogd -n -f /storage/.config/rsyslog.conf
+StandardOutput=null
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=syslog.service
