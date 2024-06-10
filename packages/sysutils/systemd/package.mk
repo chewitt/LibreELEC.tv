@@ -134,13 +134,13 @@ post_makeinstall_target() {
   safe_remove ${INSTALL}/usr/lib/udev/rules.d/73-seat-late.rules
 
   # remove getty units, we dont want a console
-  safe_remove ${INSTALL}/usr/lib/systemd/system/autovt@.service
-  safe_remove ${INSTALL}/usr/lib/systemd/system/console-getty.service
-  safe_remove ${INSTALL}/usr/lib/systemd/system/container-getty@.service
-  safe_remove ${INSTALL}/usr/lib/systemd/system/getty.target
-  safe_remove ${INSTALL}/usr/lib/systemd/system/getty@.service
-  safe_remove ${INSTALL}/usr/lib/systemd/system/serial-getty@.service
-  safe_remove ${INSTALL}/usr/lib/systemd/system/*.target.wants/getty.target
+#  safe_remove ${INSTALL}/usr/lib/systemd/system/autovt@.service
+#  safe_remove ${INSTALL}/usr/lib/systemd/system/console-getty.service
+#  safe_remove ${INSTALL}/usr/lib/systemd/system/container-getty@.service
+#  safe_remove ${INSTALL}/usr/lib/systemd/system/getty.target
+#  safe_remove ${INSTALL}/usr/lib/systemd/system/getty@.service
+#  safe_remove ${INSTALL}/usr/lib/systemd/system/serial-getty@.service
+#  safe_remove ${INSTALL}/usr/lib/systemd/system/*.target.wants/getty.target
 
   # remove other notused or nonsense stuff (our /etc is ro)
   safe_remove ${INSTALL}/usr/lib/systemd/systemd-update-done
@@ -205,6 +205,8 @@ post_makeinstall_target() {
   sed -e "s,^.*SystemMaxUse=.*$,SystemMaxUse=10M,g" -i ${INSTALL}/etc/systemd/journald.conf
 
   # tune logind.conf
+  sed -e "s,^.*NAutoVTs=.*$,NAutoVTs=2,g" -i ${INSTALL}/etc/systemd/logind.conf
+  sed -e "s,^.*ReserveVT=.*$,ReserveVT=6,g" -i ${INSTALL}/etc/systemd/logind.conf
   sed -e "s,^.*HandleLidSwitch=.*$,HandleLidSwitch=ignore,g" -i ${INSTALL}/etc/systemd/logind.conf
   if [ "${DISPLAYSERVER}" = "no" ]; then
     sed -e "s,^.*HandlePowerKey=.*$,HandlePowerKey=poweroff,g" -i ${INSTALL}/etc/systemd/logind.conf
@@ -306,4 +308,5 @@ post_install() {
   enable_service network-base.service
   enable_service systemd-timesyncd.service
   enable_service systemd-timesyncd-setup.service
+  enable_service getty@tty0.service
 }
