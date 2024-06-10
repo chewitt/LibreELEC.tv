@@ -47,3 +47,13 @@ addon() {
     cp ${l} ${ADDON_BUILD}/${PKG_ADDON_ID}/lib/rsyslog/
   done
 }
+
+post_makeinstall_target() {
+  mkdir -p ${INSTALL}/usr/bin
+    cp -P ${PKG_INSTALL}/usr/sbin/rsyslogd ${INSTALL}/usr/bin/
+
+    for l in $(find ${PKG_BUILD} -name *.so)
+    do
+      cp -P ${l} ${INSTALL}/usr/lib/rsyslog/
+    done
+}
