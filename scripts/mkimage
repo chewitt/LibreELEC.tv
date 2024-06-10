@@ -110,7 +110,7 @@ echo "image: merging part2 into disk image..."
 dd if="${LE_TMP}/part2.ext4" of="${DISK}" bs=512 seek="${STORAGE_PART_START}" conv=fsync,notrunc >"${SAVE_ERROR}" 2>&1 || show_error
 
 # create disk image for virtual appliance
-if [ "${PROJECT}" = "Generic" ]; then
+if [ "${PROJECT}" = "Generic" ] || [ "${PROJECT}" = "Appliance" ]; then
   echo "image: creating open virtual appliance..."
   # duplicate ${DISK} so anything we do to it directly doesn't effect original
   dd if="${DISK}" of="${DISK_BASENAME}.tmp" bs=1M conv=fsync >"${SAVE_ERROR}" 2>&1 || show_error
@@ -137,30 +137,14 @@ sync
 if [ "${BOOTLOADER}" = "syslinux" ]; then
   # create bootloader configuration
   echo "image: creating bootloader configuration..."
-  cat <<EOF >"${LE_TMP}/syslinux.cfg"
-SAY Wait for installer mode to start automatically in 5 seconds...
-SAY
-SAY Options
-SAY =======
-SAY installer: permanently install ${DISTRO} to HDD/SSD
-SAY live: boot ${DISTRO} using RAM for temporary storage
-SAY run: boot ${DISTRO} using this USB memory device for storage
-SAY
-DEFAULT installer
+  cat << EOF > "${LE_TMP}/syslinux.cfg"
+DEFAULT trio
 TIMEOUT 50
 PROMPT 1
 
-LABEL installer
+LABEL trio
   KERNEL /${KERNEL_NAME}
-  APPEND boot=UUID=${UUID_SYSTEM} installer quiet systemd.debug_shell vga=current
-
-LABEL live
-  KERNEL /${KERNEL_NAME}
-  APPEND boot=UUID=${UUID_SYSTEM} live quiet vga=current
-
-LABEL run
-  KERNEL /${KERNEL_NAME}
-  APPEND boot=UUID=${UUID_SYSTEM} disk=UUID=${UUID_STORAGE} portable quiet
+  APPEND boot=UUID=${UUID_SYSTEM} disk=UUID=${UUID_STORAGE} setfbres=720 nosplash quiet ssh console=tty0
 EOF
 
   cat <<EOF >"${LE_TMP}/grub.cfg"
@@ -295,7 +279,7 @@ echo "image: merging part1 into disk image..."
 dd if="${LE_TMP}/part1.fat" of="${DISK}" bs=512 seek="${SYSTEM_PART_START}" conv=fsync,notrunc >"${SAVE_ERROR}" 2>&1 || show_error
 
 # finalize virtual appliance
-if [ "${PROJECT}" = "Generic" ]; then
+if [ "${PROJECT}" = "Generic" ] || [ "${PROJECT}" = "Appliance" ]; then
   # change syslinux default to 'run'
   echo "image: modifying files on part1 for open virtual appliance..."
   sed -e "/DEFAULT/ s/installer/run/" -i "${LE_TMP}/syslinux.cfg"
