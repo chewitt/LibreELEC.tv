@@ -1,7 +1,7 @@
-From c8502a6dc82e216ee9833accd205ec2baf9a95de Mon Sep 17 00:00:00 2001
+From 31015c0e1a651a13e27576a16d7f4847190cad5f Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 22 May 2024 03:25:09 +0000
-Subject: [PATCH 7/7] configs: add bootdelay to WeTek Hub
+Subject: [PATCH 8/8] WIP: configs: add bootdelay to WeTek Hub
 
 Let's see if this helps with WeTek Hub boot issues.
 

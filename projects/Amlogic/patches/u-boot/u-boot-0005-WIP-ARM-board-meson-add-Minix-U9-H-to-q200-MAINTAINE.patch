@@ -1,7 +1,7 @@
-From 71ad4d483e9d731a32a480d32c89dc5a5801ac55 Mon Sep 17 00:00:00 2001
+From b309796ce251ce33e8e8b1362793481ed32cfd36 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 8 Mar 2024 08:10:39 +0000
-Subject: [PATCH 4/7] WIP: ARM: board: meson: add Minix U9-H to q200
+Subject: [PATCH 5/8] WIP: ARM: board: meson: add Minix U9-H to q200
  MAINTAINERS file
 
 Add references for Minix U9-H to the q200 MAINTAINERS file.
