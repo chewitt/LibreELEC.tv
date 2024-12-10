@@ -1,0 +1,306 @@
+From 9bcf04df0e3dfc48cfd67983c434c7210b523ec8 Mon Sep 17 00:00:00 2001
+From: sarbes <sarbes@kodi.tv>
+Date: Sun, 24 Nov 2024 18:27:17 +0100
+Subject: [PATCH] GUILIB: Load greyscale textures as such, instead of
+ converting to RGBA
+
+---
+ xbmc/guilib/FFmpegImage.cpp | 73 +++++++++++++++++++++++++++++++++----
+ xbmc/guilib/FFmpegImage.h   | 11 +++++-
+ xbmc/guilib/Texture.cpp     | 18 +++++++--
+ xbmc/guilib/TextureBase.cpp |  9 ++++-
+ xbmc/guilib/TextureBase.h   |  3 +-
+ xbmc/guilib/iimage.h        | 12 +++++-
+ 6 files changed, 109 insertions(+), 17 deletions(-)
+
+diff --git a/xbmc/guilib/FFmpegImage.cpp b/xbmc/guilib/FFmpegImage.cpp
+index f1d50fcb75fa2..c01b2e84dc63f 100644
+--- a/xbmc/guilib/FFmpegImage.cpp
++++ b/xbmc/guilib/FFmpegImage.cpp
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright (C) 2012-2018 Team Kodi
++ *  Copyright (C) 2012-2024 Team Kodi
+  *  This file is part of Kodi - https://kodi.tv
+  *
+  *  SPDX-License-Identifier: GPL-2.0-or-later
+@@ -9,6 +9,7 @@
+ 
+ #include "cores/FFmpeg.h"
+ #include "guilib/Texture.h"
++#include "guilib/TextureFormats.h"
+ #include "settings/AdvancedSettings.h"
+ #include "settings/Settings.h"
+ #include "settings/SettingsComponent.h"
+@@ -366,12 +367,61 @@ void CFFmpegImage::FreeIOCtx(AVIOContext** ioctx)
+   av_freep(ioctx);
+ }
+ 
++unsigned int CFFmpegImage::GetKDFormat()
++{
++  if (!m_pFrame || !m_pFrame->data[0])
++    return KD_TEX_FMT_UNKNOWN;
++
++  switch (m_pFrame->format)
++  {
++    case AV_PIX_FMT_GRAY8:
++      return KD_TEX_FMT_SDR_R8;
++    case AV_PIX_FMT_GRAY8A:
++      return KD_TEX_FMT_SDR_RG8;
++    default:
++      return KD_TEX_FMT_UNKNOWN;
++  }
++}
++
++unsigned int CFFmpegImage::GetKDSwizzle()
++{
++  if (!m_pFrame || !m_pFrame->data[0])
++    return KD_TEX_SWIZ_RGBA;
++
++  switch (m_pFrame->format)
++  {
++    case AV_PIX_FMT_GRAY8:
++      return KD_TEX_SWIZ_RRR1;
++    case AV_PIX_FMT_GRAY8A:
++      return KD_TEX_SWIZ_RRRG;
++    default:
++      return KD_TEX_SWIZ_RGBA;
++  }
++}
++
+ bool CFFmpegImage::Decode(unsigned char * const pixels, unsigned int width, unsigned int height,
+                           unsigned int pitch, unsigned int format)
+ {
+-  if (m_width == 0 || m_height == 0 || format != XB_FMT_A8R8G8B8)
++  if (m_width == 0 || m_height == 0)
+     return false;
+ 
++  AVPixelFormat dstFormat = AV_PIX_FMT_RGB32;
++
++  switch (format)
++  {
++    case KD_TEX_FMT_SDR_R8:
++      dstFormat = AV_PIX_FMT_GRAY8;
++      break;
++    case KD_TEX_FMT_SDR_RG8:
++      dstFormat = AV_PIX_FMT_GRAY8A;
++      break;
++    case XB_FMT_A8R8G8B8:
++      dstFormat = AV_PIX_FMT_RGB32;
++      break;
++    default:
++      return false;
++  }
++
+   if (pixels == nullptr)
+   {
+     CLog::Log(LOGERROR, "{} - No valid buffer pointer (nullptr) passed", __FUNCTION__);
+@@ -384,7 +434,7 @@ bool CFFmpegImage::Decode(unsigned char * const pixels, unsigned int width, unsi
+     return false;
+   }
+ 
+-  return DecodeFrame(m_pFrame, width, height, pitch, pixels);
++  return DecodeFrame(m_pFrame, width, height, pitch, pixels, dstFormat);
+ }
+ 
+ int CFFmpegImage::EncodeFFmpegFrame(AVCodecContext *avctx, AVPacket *pkt, int *got_packet, AVFrame *frame)
+@@ -431,7 +481,12 @@ int CFFmpegImage::DecodeFFmpegFrame(AVCodecContext *avctx, AVFrame *frame, int *
+   return 0;
+ }
+ 
+-bool CFFmpegImage::DecodeFrame(AVFrame* frame, unsigned int width, unsigned int height, unsigned int pitch, unsigned char * const pixels)
++bool CFFmpegImage::DecodeFrame(AVFrame* frame,
++                               unsigned int width,
++                               unsigned int height,
++                               unsigned int pitch,
++                               unsigned char* const pixels,
++                               AVPixelFormat dstFormat)
+ {
+   if (pixels == nullptr)
+   {
+@@ -447,7 +502,8 @@ bool CFFmpegImage::DecodeFrame(AVFrame* frame, unsigned int width, unsigned int
+   }
+ 
+   // we align on 16 as the input provided by the Texture also aligns the buffer size to 16
+-  int size = av_image_fill_arrays(pictureRGB->data, pictureRGB->linesize, NULL, AV_PIX_FMT_RGB32, width, height, 16);
++  const int size = av_image_fill_arrays(pictureRGB->data, pictureRGB->linesize, NULL, dstFormat,
++                                        width, height, 16);
+   if (size < 0)
+   {
+     CLog::LogF(LOGERROR, "Could not allocate AVFrame member with {} x {} pixels", width, height);
+@@ -469,7 +525,7 @@ bool CFFmpegImage::DecodeFrame(AVFrame* frame, unsigned int width, unsigned int
+   else
+   {
+     // We need an extra buffer and copy it manually afterwards
+-    pictureRGB->format = AV_PIX_FMT_RGB32;
++    pictureRGB->format = dstFormat;
+     pictureRGB->width = width;
+     pictureRGB->height = height;
+     // we copy the data manually later so give a chance to intrinsics (e.g. mmx, neon)
+@@ -488,7 +544,7 @@ bool CFFmpegImage::DecodeFrame(AVFrame* frame, unsigned int width, unsigned int
+   AVPixelFormat pixFormat = ConvertFormats(frame);
+ 
+   SwsContext* context = sws_getContext(m_originalWidth, m_originalHeight, pixFormat, width, height,
+-                                       AV_PIX_FMT_RGB32, SWS_BICUBIC, NULL, NULL, NULL);
++                                       dstFormat, SWS_BICUBIC, NULL, NULL, NULL);
+ 
+   if (range == AVCOL_RANGE_JPEG)
+   {
+@@ -756,7 +812,8 @@ std::shared_ptr<Frame> CFFmpegImage::ReadFrame()
+ 
+   frame->m_pitch = avframe->width * 4;
+   frame->m_pImage = (unsigned char*) av_malloc(avframe->height * frame->m_pitch);
+-  DecodeFrame(avframe, avframe->width, avframe->height, frame->m_pitch, frame->m_pImage);
++  DecodeFrame(avframe, avframe->width, avframe->height, frame->m_pitch, frame->m_pImage,
++              AV_PIX_FMT_RGB32);
+   av_frame_free(&avframe);
+   return frame;
+ }
+diff --git a/xbmc/guilib/FFmpegImage.h b/xbmc/guilib/FFmpegImage.h
+index 8d34def513a59..90e750a7fe5f1 100644
+--- a/xbmc/guilib/FFmpegImage.h
++++ b/xbmc/guilib/FFmpegImage.h
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright (C) 2012-2018 Team Kodi
++ *  Copyright (C) 2012-2024 Team Kodi
+  *  This file is part of Kodi - https://kodi.tv
+  *
+  *  SPDX-License-Identifier: GPL-2.0-or-later
+@@ -62,6 +62,8 @@ class CFFmpegImage : public IImage
+ 
+   bool LoadImageFromMemory(unsigned char* buffer, unsigned int bufSize,
+                            unsigned int width, unsigned int height) override;
++  unsigned int GetKDFormat() override;
++  unsigned int GetKDSwizzle() override;
+   bool Decode(unsigned char * const pixels, unsigned int width, unsigned int height,
+               unsigned int pitch, unsigned int format) override;
+   bool CreateThumbnailFromSurface(unsigned char* bufferin, unsigned int width,
+@@ -78,7 +80,12 @@ class CFFmpegImage : public IImage
+ private:
+   static void FreeIOCtx(AVIOContext** ioctx);
+   AVFrame* ExtractFrame();
+-  bool DecodeFrame(AVFrame* m_pFrame, unsigned int width, unsigned int height, unsigned int pitch, unsigned char * const pixels);
++  bool DecodeFrame(AVFrame* m_pFrame,
++                   unsigned int width,
++                   unsigned int height,
++                   unsigned int pitch,
++                   unsigned char* const pixels,
++                   AVPixelFormat dstFormat);
+   static int EncodeFFmpegFrame(AVCodecContext *avctx, AVPacket *pkt, int *got_packet, AVFrame *frame);
+   static int DecodeFFmpegFrame(AVCodecContext *avctx, AVFrame *frame, int *got_frame, AVPacket *pkt);
+   static AVPixelFormat ConvertFormats(AVFrame* frame);
+diff --git a/xbmc/guilib/Texture.cpp b/xbmc/guilib/Texture.cpp
+index 9921b2e58d5ca..2b57bbf0e3427 100644
+--- a/xbmc/guilib/Texture.cpp
++++ b/xbmc/guilib/Texture.cpp
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright (C) 2005-2018 Team Kodi
++ *  Copyright (C) 2005-2024 Team Kodi
+  *  This file is part of Kodi - https://kodi.tv
+  *
+  *  SPDX-License-Identifier: GPL-2.0-or-later
+@@ -314,14 +314,26 @@ bool CTexture::LoadIImage(IImage* pImage,
+   // swscale headers for more info.
+   unsigned int textureWidth = ((width + 15) / 16) * 16;
+ 
+-  Allocate(textureWidth, height, XB_FMT_A8R8G8B8);
++  const unsigned int format = pImage->GetKDFormat();
++  const KD_TEX_SWIZ swizzle = static_cast<KD_TEX_SWIZ>(pImage->GetKDSwizzle());
++
++  if (format && SupportsFormat(static_cast<KD_TEX_FMT>(format), swizzle))
++  {
++    m_textureFormat = static_cast<KD_TEX_FMT>(format);
++    m_textureSwizzle = swizzle;
++    Allocate(textureWidth, height);
++  }
++  else
++  {
++    Allocate(textureWidth, height, XB_FMT_A8R8G8B8);
++  }
+ 
+   m_imageWidth = std::min(m_imageWidth, textureWidth);
+ 
+   if (m_pixels == nullptr)
+     return false;
+ 
+-  if (!pImage->Decode(m_pixels, width, height, GetPitch(), XB_FMT_A8R8G8B8))
++  if (!pImage->Decode(m_pixels, width, height, GetPitch(), format ? format : static_cast<unsigned int>(XB_FMT_A8R8G8B8)))
+     return false;
+ 
+   if (pImage->Orientation())
+diff --git a/xbmc/guilib/TextureBase.cpp b/xbmc/guilib/TextureBase.cpp
+index 5f2aff8bf7b66..80c470bd9789e 100644
+--- a/xbmc/guilib/TextureBase.cpp
++++ b/xbmc/guilib/TextureBase.cpp
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright (C) 2005-2018 Team Kodi
++ *  Copyright (C) 2005-2024 Team Kodi
+  *  This file is part of Kodi - https://kodi.tv
+  *
+  *  SPDX-License-Identifier: GPL-2.0-or-later
+@@ -24,9 +24,14 @@
+ void CTextureBase::Allocate(uint32_t width, uint32_t height, XB_FMT format)
+ {
+   SetKDFormat(format);
++  m_format = format;
++  Allocate(width, height);
++}
++
++void CTextureBase::Allocate(uint32_t width, uint32_t height)
++{
+   m_imageWidth = m_originalWidth = width;
+   m_imageHeight = m_originalHeight = height;
+-  m_format = format;
+   m_orientation = 0;
+ 
+   m_textureWidth = m_imageWidth;
+diff --git a/xbmc/guilib/TextureBase.h b/xbmc/guilib/TextureBase.h
+index 5f214491fccc7..d43fb92755c88 100644
+--- a/xbmc/guilib/TextureBase.h
++++ b/xbmc/guilib/TextureBase.h
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright (C) 2005-2018 Team Kodi
++ *  Copyright (C) 2005-2024 Team Kodi
+  *  This file is part of Kodi - https://kodi.tv
+  *
+  *  SPDX-License-Identifier: GPL-2.0-or-later
+@@ -78,6 +78,7 @@ class CTextureBase
+ 
+   // allocates staging texture space.
+   void Allocate(uint32_t width, uint32_t height, XB_FMT format);
++  void Allocate(uint32_t width, uint32_t height);
+   void ClampToEdge();
+ 
+   /*! \brief rounds to power of two. deprecated. */
+diff --git a/xbmc/guilib/iimage.h b/xbmc/guilib/iimage.h
+index 299e74c6f2b06..a733a9816cdae 100644
+--- a/xbmc/guilib/iimage.h
++++ b/xbmc/guilib/iimage.h
+@@ -1,5 +1,5 @@
+ /*
+- *  Copyright (C) 2012-2018 Team Kodi
++ *  Copyright (C) 2012-2024 Team Kodi
+  *  This file is part of Kodi - https://kodi.tv
+  *
+  *  SPDX-License-Identifier: GPL-2.0-or-later
+@@ -25,6 +25,16 @@ class IImage
+    \return true if the image could be loaded
+    */
+   virtual bool LoadImageFromMemory(unsigned char* buffer, unsigned int bufSize, unsigned int width, unsigned int height)=0;
++  /*!
++   \brief The decoder can offer a more suiting Kodi texture format (for example KD_TEX_FMT_SDR_R8), in addition to the legacy XB_FMT_A8R8G8B8. 
++   \return The Kodi texture format.
++   */
++  virtual unsigned int GetKDFormat() { return 0; }
++  /*!
++   \brief Specifies how the decoded texture has to be swizzled (default KD_TEX_SWIZ_RGBA).
++   \return The Kodi texture swizzle.
++   */
++  virtual unsigned int GetKDSwizzle() { return 0; }
+   /*!
+    \brief Decodes the previously loaded image data to the output buffer in 32 bit raw bits
+    \param pixels The output buffer
