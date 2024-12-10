@@ -1,0 +1,113 @@
+From 595e5cd3f9b418a39af22e5ef09540f9c5191a75 Mon Sep 17 00:00:00 2001
+From: sarbes <sarbes@kodi.tv>
+Date: Thu, 31 Oct 2024 02:47:49 +0100
+Subject: [PATCH] GL/GLES: Optimize font vertices
+
+---
+ xbmc/guilib/GUIFontTTF.cpp     | 12 ++++--------
+ xbmc/guilib/GUIFontTTF.h       |  4 ++--
+ xbmc/guilib/GUIFontTTFGL.cpp   |  4 ++--
+ xbmc/guilib/GUIFontTTFGLES.cpp |  4 ++--
+ 4 files changed, 10 insertions(+), 14 deletions(-)
+
+diff --git a/xbmc/guilib/GUIFontTTF.cpp b/xbmc/guilib/GUIFontTTF.cpp
+index 5f491f6622896..ed26556a3e87f 100644
+--- a/xbmc/guilib/GUIFontTTF.cpp
++++ b/xbmc/guilib/GUIFontTTF.cpp
+@@ -1214,10 +1214,10 @@ void CGUIFontTTF::RenderCharacter(CGraphicContext& context,
+ #else
+   // when scaling by shader, we have to grow the vertex and texture coords
+   // by .5 or we would ommit pixels when animating.
+-  const float tl = (texture.x1 - .5f) * m_textureScaleX;
+-  const float tr = (texture.x2 + .5f) * m_textureScaleX;
+-  const float tt = (texture.y1 - .5f) * m_textureScaleY;
+-  const float tb = (texture.y2 + .5f) * m_textureScaleY;
++  const uint16_t tl = std::round((texture.x1 - .5f) * UINT16_MAX * m_textureScaleX);
++  const uint16_t tr = std::round((texture.x2 + .5f) * UINT16_MAX * m_textureScaleX);
++  const uint16_t tt = std::round((texture.y1 - .5f) * UINT16_MAX * m_textureScaleY);
++  const uint16_t tb = std::round((texture.y2 + .5f) * UINT16_MAX * m_textureScaleY);
+ #endif
+ 
+   vertices.resize(vertices.size() + VERTEX_PER_GLYPH);
+@@ -1277,25 +1277,21 @@ void CGUIFontTTF::RenderCharacter(CGraphicContext& context,
+   v[0].v = tt;
+   v[0].x = vertex.x1 - xOffset - 0.5f;
+   v[0].y = vertex.y1 - yOffset - 0.5f;
+-  v[0].z = 0;
+ 
+   v[1].u = tl;
+   v[1].v = tb;
+   v[1].x = vertex.x1 - xOffset - 0.5f;
+   v[1].y = vertex.y2 - yOffset + 0.5f;
+-  v[1].z = 0;
+ 
+   v[2].u = tr;
+   v[2].v = tt;
+   v[2].x = vertex.x2 - xOffset + 0.5f;
+   v[2].y = vertex.y1 - yOffset - 0.5f;
+-  v[2].z = 0;
+ 
+   v[3].u = tr;
+   v[3].v = tb;
+   v[3].x = vertex.x2 - xOffset + 0.5f;
+   v[3].y = vertex.y2 - yOffset + 0.5f;
+-  v[3].z = 0;
+ #endif
+ }
+ 
+diff --git a/xbmc/guilib/GUIFontTTF.h b/xbmc/guilib/GUIFontTTF.h
+index 2420659d92a5d..d897dbf3363d8 100644
+--- a/xbmc/guilib/GUIFontTTF.h
++++ b/xbmc/guilib/GUIFontTTF.h
+@@ -64,9 +64,9 @@ struct SVertex
+ #else
+ struct SVertex
+ {
+-  float x, y, z;
++  float x, y;
+   unsigned char r, g, b, a;
+-  float u, v;
++  uint16_t u, v;
+ };
+ #endif
+ 
+diff --git a/xbmc/guilib/GUIFontTTFGL.cpp b/xbmc/guilib/GUIFontTTFGL.cpp
+index 603d5086ac08a..6da769ceb0e7a 100644
+--- a/xbmc/guilib/GUIFontTTFGL.cpp
++++ b/xbmc/guilib/GUIFontTTFGL.cpp
+@@ -258,13 +258,13 @@ void CGUIFontTTFGL::LastEnd()
+         // Set up the offsets of the various vertex attributes within the buffer
+         // object bound to GL_ARRAY_BUFFER
+         glVertexAttribPointer(
+-            posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(SVertex),
++            posLoc, 2, GL_FLOAT, GL_FALSE, sizeof(SVertex),
+             reinterpret_cast<GLvoid*>(character * sizeof(SVertex) * 4 + offsetof(SVertex, x)));
+         glVertexAttribPointer(
+             colLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(SVertex),
+             reinterpret_cast<GLvoid*>(character * sizeof(SVertex) * 4 + offsetof(SVertex, r)));
+         glVertexAttribPointer(
+-            tex0Loc, 2, GL_FLOAT, GL_FALSE, sizeof(SVertex),
++            tex0Loc, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(SVertex),
+             reinterpret_cast<GLvoid*>(character * sizeof(SVertex) * 4 + offsetof(SVertex, u)));
+ 
+         glDrawElements(GL_TRIANGLES, 6 * count, GL_UNSIGNED_SHORT, 0);
+diff --git a/xbmc/guilib/GUIFontTTFGLES.cpp b/xbmc/guilib/GUIFontTTFGLES.cpp
+index 3a23a1d1f2496..2da18ce2e238b 100644
+--- a/xbmc/guilib/GUIFontTTFGLES.cpp
++++ b/xbmc/guilib/GUIFontTTFGLES.cpp
+@@ -253,13 +253,13 @@ void CGUIFontTTFGLES::LastEnd()
+         // Set up the offsets of the various vertex attributes within the buffer
+         // object bound to GL_ARRAY_BUFFER
+         glVertexAttribPointer(
+-            posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(SVertex),
++            posLoc, 2, GL_FLOAT, GL_FALSE, sizeof(SVertex),
+             reinterpret_cast<GLvoid*>(character * sizeof(SVertex) * 4 + offsetof(SVertex, x)));
+         glVertexAttribPointer(
+             colLoc, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(SVertex),
+             reinterpret_cast<GLvoid*>(character * sizeof(SVertex) * 4 + offsetof(SVertex, r)));
+         glVertexAttribPointer(
+-            tex0Loc, 2, GL_FLOAT, GL_FALSE, sizeof(SVertex),
++            tex0Loc, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(SVertex),
+             reinterpret_cast<GLvoid*>(character * sizeof(SVertex) * 4 + offsetof(SVertex, u)));
+ 
+         glDrawElements(GL_TRIANGLES, 6 * count, GL_UNSIGNED_SHORT, 0);
