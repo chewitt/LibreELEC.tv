@@ -1,7 +1,7 @@
-From c1aabff59ea22fa738468c6d6b27529486220a3f Mon Sep 17 00:00:00 2001
+From 8e4b2fc4dc92cff26c8f520b2c9cfdd281c27324 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 23 Mar 2024 20:30:02 +0100
-Subject: [PATCH 22/33] FROMLIST(v1): iio: adc: consistently use bool and enum
+Subject: [PATCH 26/42] FROMLIST(v1): iio: adc: consistently use bool and enum
  in struct meson_sar_adc_param
 
 Consistently use bool for any register bit that enables/disables

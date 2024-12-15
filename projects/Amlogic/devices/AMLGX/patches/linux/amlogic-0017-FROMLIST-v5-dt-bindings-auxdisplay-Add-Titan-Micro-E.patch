@@ -1,7 +1,7 @@
-From e46deeed69482ec684815f3a531cb8ad251fe142 Mon Sep 17 00:00:00 2001
+From 3db95517066fe9b15d5477ae64121d1948aeea7d Mon Sep 17 00:00:00 2001
 From: Heiner Kallweit <hkallweit1@gmail.com>
 Date: Sun, 20 Feb 2022 08:24:47 +0000
-Subject: [PATCH 13/33] FROMLIST(v5): dt-bindings: auxdisplay: Add Titan Micro
+Subject: [PATCH 17/42] FROMLIST(v5): dt-bindings: auxdisplay: Add Titan Micro
  Electronics TM1628
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
-From feec73f837332b144afb16d137b407192bf8b938 Mon Sep 17 00:00:00 2001
+From 78fefbe2855870fff2b575ec9e93c63cae882e95 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 3 Jan 2024 03:14:06 +0000
-Subject: [PATCH 28/33] FROMLIST(v1): arm64: dts: meson: drop broadcom
+Subject: [PATCH 11/42] FROMGIT(6.14): arm64: dts: meson: drop broadcom
  compatible from reference board SDIO nodes
 
 Drop the Broadcom compatible and use a generic sdio identifier with the Amlogic

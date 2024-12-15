@@ -1,7 +1,7 @@
-From 2d2fade84ccde0cd0675b66a1924a6196caea2ba Mon Sep 17 00:00:00 2001
+From 2a9750f5ece73ed5bb0b59b6ff7bf051ecec7c01 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 13 Apr 2019 05:41:51 +0000
-Subject: [PATCH 01/33] LOCAL: set meson-gx cma pool to 896MB
+Subject: [PATCH 01/42] LOCAL: set meson-gx cma pool to 896MB
 
 This change sets the CMA pool to a larger 896MB! value for vdec use
 

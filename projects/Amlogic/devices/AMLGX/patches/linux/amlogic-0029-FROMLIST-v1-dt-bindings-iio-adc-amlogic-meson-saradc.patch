@@ -1,7 +1,7 @@
-From 2576e48d539b38b0bd7dcdde8d6fac41976d3162 Mon Sep 17 00:00:00 2001
+From 09f9b6e643187ab2c04f7fc68862d6646532faae Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 23 Mar 2024 20:38:59 +0100
-Subject: [PATCH 25/33] FROMLIST(v1): dt-bindings: iio: adc:
+Subject: [PATCH 29/42] FROMLIST(v1): dt-bindings: iio: adc:
  amlogic,meson-saradc: add GXLX SoC compatible
 
 Add support for the GXLX SoC. GXLX is very similar to GXL but has three

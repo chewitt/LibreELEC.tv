@@ -1,7 +1,7 @@
-From 6a54c2089e7c40e29bcf7f0a916a6ac7fc476f6b Mon Sep 17 00:00:00 2001
+From cc431ae41a8c03e9edf9f9244bcfbf04327b40b3 Mon Sep 17 00:00:00 2001
 From: Heiner Kallweit <hkallweit1@gmail.com>
 Date: Mon, 4 Apr 2022 18:53:32 +0000
-Subject: [PATCH 17/33] FROMLIST(v5): MAINTAINERS: Add entry for tm1628
+Subject: [PATCH 21/42] FROMLIST(v5): MAINTAINERS: Add entry for tm1628
  auxdisplay driver
 
 Signed-off-by: Heiner Kallweit <hkallweit1@gmail.com>

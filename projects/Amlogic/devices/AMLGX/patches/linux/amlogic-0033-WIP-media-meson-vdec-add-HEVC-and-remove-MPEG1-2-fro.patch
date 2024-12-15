@@ -1,7 +1,7 @@
-From 5f53272ee614cf73ecaf34a7e53ee3654cd7558e Mon Sep 17 00:00:00 2001
+From e7ca6f67455d94277b25df1c24c658e929a13d0d Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 4 Jun 2024 10:49:58 +0000
-Subject: [PATCH 29/33] WIP: media: meson: vdec: add HEVC and remove MPEG1/2
+Subject: [PATCH 33/42] WIP: media: meson: vdec: add HEVC and remove MPEG1/2
  from GXLX
 
 This patch is required until GXLX support has been merged upstream.

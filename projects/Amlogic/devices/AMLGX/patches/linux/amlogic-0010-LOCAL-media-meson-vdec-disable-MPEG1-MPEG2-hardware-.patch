@@ -1,7 +1,7 @@
-From f9a06dc2af551e9c54c60b47262f7edadeceb023 Mon Sep 17 00:00:00 2001
+From 46d9fbf489676c19b64428650997ba8a078d1d02 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 5 Jan 2023 15:16:46 +0000
-Subject: [PATCH 10/33] LOCAL: media: meson: vdec: disable MPEG1/MPEG2 hardware
+Subject: [PATCH 10/42] LOCAL: media: meson: vdec: disable MPEG1/MPEG2 hardware
  decoding
 
 The MPEG1/2 decoder is broken and nobody has volunteered to poke

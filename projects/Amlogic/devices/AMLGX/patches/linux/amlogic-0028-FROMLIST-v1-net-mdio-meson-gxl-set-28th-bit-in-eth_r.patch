@@ -1,7 +1,7 @@
-From 5e3029b2cb9d6ab605542073be21fa9800155dd4 Mon Sep 17 00:00:00 2001
+From b652e02ff797673c0b8c22871961f145ab9496d5 Mon Sep 17 00:00:00 2001
 From: Da Xue <da@libre.computer>
 Date: Fri, 24 May 2024 15:17:37 +0000
-Subject: [PATCH 24/33] FROMLIST(v1): net: mdio: meson-gxl set 28th bit in
+Subject: [PATCH 28/42] FROMLIST(v1): net: mdio: meson-gxl set 28th bit in
  eth_reg2
 
 This bit is necessary to enable packets on the interface. Without this

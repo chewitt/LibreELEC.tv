@@ -1,7 +1,7 @@
-From 56e84bec23b10cabde822270d302894606e4b713 Mon Sep 17 00:00:00 2001
+From 0b932fd201426b5f2744c2f6b0ef5b9d84a1b61f Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 23 Mar 2024 20:04:49 +0100
-Subject: [PATCH 21/33] FROMLIST(v1): iio: adc: meson: fix voltage reference
+Subject: [PATCH 25/42] FROMLIST(v1): iio: adc: meson: fix voltage reference
  selection field name typo
 
 The field should be called "vref_voltage", without a typo in the word

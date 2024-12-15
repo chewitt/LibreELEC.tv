@@ -1,7 +1,7 @@
-From 606148e3e5f9dde444493b5e4ba08875606f938c Mon Sep 17 00:00:00 2001
+From 8bff862d50b215e2d0f6f3c6636820b294d889d7 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 23 Mar 2024 20:35:58 +0100
-Subject: [PATCH 23/33] FROMLIST(v1): iio: adc: meson: simplify
+Subject: [PATCH 27/42] FROMLIST(v1): iio: adc: meson: simplify
  MESON_SAR_ADC_REG11 register access
 
 Simply check the max_register value to decide whether

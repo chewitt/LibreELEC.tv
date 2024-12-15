@@ -1,7 +1,7 @@
-From 4d2be4c79a07f34759419a82e5939300d3a07725 Mon Sep 17 00:00:00 2001
+From f04ed5474ec1d3b25b81c437e64cd3931c25f645 Mon Sep 17 00:00:00 2001
 From: Andreas Baierl <ichgeh@imkreisrum.de>
 Date: Tue, 2 Apr 2024 14:22:52 +0000
-Subject: [PATCH 30/33] WIP: media: meson: vdec: reintroduce wiggle room
+Subject: [PATCH 34/42] WIP: media: meson: vdec: reintroduce wiggle room
 
 Without the wiggle room, it happens that matching offsets can't be found.
 This results in non-matches and afterwards in frame drops in userspace apps.

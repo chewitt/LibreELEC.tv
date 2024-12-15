@@ -1,7 +1,7 @@
-From f506a68611749da1f4b1077d68c3fd70209f5860 Mon Sep 17 00:00:00 2001
+From a6a1c7cc568d233f5f2283eff6fa5c4bb263e920 Mon Sep 17 00:00:00 2001
 From: Neil Armstrong <narmstrong@baylibre.com>
 Date: Thu, 3 Nov 2016 15:29:25 +0100
-Subject: [PATCH 05/33] LOCAL: arm64: dts: meson: add support for GX PM and
+Subject: [PATCH 05/42] LOCAL: arm64: dts: meson: add support for GX PM and
  Virtual RTC
 
 Signed-off-by: Neil Armstrong <narmstrong@baylibre.com>
