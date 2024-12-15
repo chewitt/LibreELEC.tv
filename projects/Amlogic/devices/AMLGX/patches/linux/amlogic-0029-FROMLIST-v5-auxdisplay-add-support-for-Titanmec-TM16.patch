@@ -1,7 +1,7 @@
-From c1711421b2572675ce9d5daae6ea74b553240599 Mon Sep 17 00:00:00 2001
+From 84b4857378799af96a7080b8d1ea13787d002e40 Mon Sep 17 00:00:00 2001
 From: Heiner Kallweit <hkallweit1@gmail.com>
 Date: Mon, 4 Apr 2022 18:51:20 +0000
-Subject: [PATCH 15/33] FROMLIST(v5): auxdisplay: add support for Titanmec
+Subject: [PATCH 29/51] FROMLIST(v5): auxdisplay: add support for Titanmec
  TM1628 7 segment display controller
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
-From 02c3bfc2944b0e2d90390319c2da2a5ccfc30231 Mon Sep 17 00:00:00 2001
+From 1540d51a2005df377ef37fe933aee4107af53f84 Mon Sep 17 00:00:00 2001
 From: Heiner Kallweit <hkallweit1@gmail.com>
 Date: Mon, 4 Apr 2022 18:52:34 +0000
-Subject: [PATCH 16/33] FROMLIST(v5): arm64: dts: meson-gxl-s905w-tx3-mini: add
+Subject: [PATCH 30/51] FROMLIST(v5): arm64: dts: meson-gxl-s905w-tx3-mini: add
  support for the 7 segment display
 
 This patch adds support for the 7 segment display of the device.
