@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2024-present Team LibreELEC (https://libreelec.tv)
+
+. /etc/profile
+
+ADDON="service.tailscale"
+
+oe_setup_addon "${ADDON}"
+
+if [ ! -f /storage/.kodi/userdata/addon_data/service.tailscale/tailscale.conf ]; then
+  # create addon_data dir
+  mkdir -p "/storage/.kodi/userdata/addon_data/${ADDON}" >/dev/null
+  # create tailscaled.conf
+  tee /storage/.kodi/userdata/addon_data/service.tailscale/tailscale.conf >/dev/null <<EOF
+# set the statedir and socket (do not change)
+STATE_DIRECTORY="/storage/.kodi/userdata/addon_data/service.tailscale"
+SOCKET="/run/tailscale/tailscale.socket"
+
+# set the port to listen on for vpn packets
+PORT="41641"
+
+# set extra flags passed to tailscaled
+FLAGS=""
+EOF
+fi
+
+do_start() {
+  # config
+  . /storage/.kodi/userdata/addon_data/service.tailscale/tailscale.conf
+
+  # cleanup
+  exec /storage/.kodi/addons/service.tailscale/bin/tailscaled --cleanup
+
+  # execute
+  exec /storage/.kodi/addons/service.tailscale/bin/tailscaled \
+       --statedir=${STATE_DIRECTORY} \
+       --socket=${SOCKET} \
+       --port=${PORT} \
+       ${FLAGS}
+}
+
+do_stop() {
+  # stop
+  exec /storage/.kodi/addons/service.tailscale/bin/tailscaled --stop
+
+  # cleanup
+  exec /storage/.kodi/addons/service.tailscale/bin/tailscaled --cleanup
+}
+
+case $1 in
+  start)
+    do_start
+    ;;
+  stop)
+    do_stop
+    ;;
+esac
