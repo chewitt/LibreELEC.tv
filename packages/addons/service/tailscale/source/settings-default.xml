@@ -1,0 +1,11 @@
+<settings version="2">
+    <setting id="PORT"                       default="41641"></setting>
+    <setting id="ACCEPT_DNS"                 default="false"></setting>
+    <setting id="ACCEPT_ROUTES"              default="false"></setting>
+    <setting id="SNAT_SUBNET_ROUTES"         default="false"></setting>
+    <setting id="ADVERTISE_ROUTES"           default="false"></setting>
+    <setting id="ADVERTISE_EXIT_NODE"        default="false"></setting>
+    <setting id="EXIT_NODE"                  default=""></setting>
+    <setting id="EXIT_NODE_ALLOW_LAN_ACCESS" default="false"></setting>
+    <setting id="TAILSCALE_WIZARD"           default="false"></setting>
+</settings>

@@ -1,0 +1,13 @@
+[Unit]
+Description=Tailscale Setup Service
+After=network-pre.target
+Wants=network-pre.target
+ConditionPathExists=!/storage/.kodi/userdata/addon_data/service.tailscale/tailscaled.conf
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c "/storage/.kodi/addons/service.tailscale/bin/tailscaled-setup"
+
+[Install]
+WantedBy=multi-user.target
