@@ -1,0 +1,13 @@
+<?xml version="2.0" encoding="utf-8" standalone="yes"?>
+<settings>
+  <category label="30000">
+    <setting label="30001" type="number" id="PORT"                       default="41641" />
+    <setting label="30002" type="bool"   id="ACCEPT_DNS"                 default="false" />
+    <setting label="30003" type="bool"   id="ACCEPT_ROUTES"              default="false" />
+    <setting label="30004" type="bool"   id="SNAT_SUBNET_ROUTES"         default="false" />
+    <setting label="30005" type="bool"   id="ADVERTISE_ROUTES"           default="false" />
+    <setting label="30006" type="bool"   id="ADVERTISE_EXIT_NODE"        default="false" />
+    <setting label="30007" type="text"   id="EXIT_NODE"                  default="" />
+    <setting label="30008" type="bool"   id="EXIT_NODE_ALLOW_LAN_ACCESS" default="false" />
+  </category>
+</settings>
