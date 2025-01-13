@@ -1,0 +1,38 @@
+From a0c22a57e0d637881346a855601c84b0231575be Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Wed, 5 Feb 2025 02:30:21 +0000
+Subject: [PATCH 58/59] TEST: media: meson: vdec: enable HEVC for g12a
+
+Enabled for testing. 8-bit media decodes. 10-bit crashes the SoC.
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/staging/media/meson/vdec/vdec_platform.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec_platform.c b/drivers/staging/media/meson/vdec/vdec_platform.c
+index 870e61dedd81..7d8b6fff2916 100644
+--- a/drivers/staging/media/meson/vdec/vdec_platform.c
++++ b/drivers/staging/media/meson/vdec/vdec_platform.c
+@@ -163,6 +163,18 @@ static const struct amvdec_format vdec_formats_g12a[] = {
+ 		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
+ 		.flags = V4L2_FMT_FLAG_COMPRESSED |
+ 			 V4L2_FMT_FLAG_DYN_RESOLUTION,
++	}, {
++		.pixfmt = V4L2_PIX_FMT_HEVC,
++		.min_buffers = 4,
++		.max_buffers = 24,
++		.max_width = 3840,
++		.max_height = 2160,
++		.vdec_ops = &vdec_hevc_ops,
++		.codec_ops = &codec_hevc_ops,
++		.firmware_path = "meson/vdec/g12a_hevc_mmu.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
++		.flags = V4L2_FMT_FLAG_COMPRESSED |
++			 V4L2_FMT_FLAG_DYN_RESOLUTION,
+ 	}, {
+ 		.pixfmt = V4L2_PIX_FMT_H264,
+ 		.min_buffers = 2,
+-- 
+2.34.1
+
