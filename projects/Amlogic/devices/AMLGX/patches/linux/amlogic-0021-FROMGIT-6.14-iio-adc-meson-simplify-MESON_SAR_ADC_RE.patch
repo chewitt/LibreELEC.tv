@@ -1,4 +1,4 @@
-From 57dd1613ffad9447ab060acf43c89e3fdb02f007 Mon Sep 17 00:00:00 2001
+From 06cd6334eec8ab7ec5adb311b78761cd71864d96 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 23 Mar 2024 20:35:58 +0100
 Subject: [PATCH 21/58] FROMGIT(6.14): iio: adc: meson: simplify
@@ -16,7 +16,7 @@ Signed-off-by: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  1 file changed, 8 insertions(+), 21 deletions(-)
 
 diff --git a/drivers/iio/adc/meson_saradc.c b/drivers/iio/adc/meson_saradc.c
-index 83849c2320e1..ba63ec05d8c0 100644
+index e9fa513439c0..7dbcc83cd6c7 100644
 --- a/drivers/iio/adc/meson_saradc.c
 +++ b/drivers/iio/adc/meson_saradc.c
 @@ -320,14 +320,12 @@ static const struct iio_chan_spec meson_sar_adc_and_temp_iio_channels[] = {

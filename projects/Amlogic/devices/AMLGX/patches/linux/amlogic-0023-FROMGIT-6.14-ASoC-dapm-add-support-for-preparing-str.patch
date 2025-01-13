@@ -1,0 +1,61 @@
+From f843561cc706ebb1508b9238079bb48b6a454739 Mon Sep 17 00:00:00 2001
+From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
+Date: Fri, 10 Jan 2025 22:07:30 +0100
+Subject: [PATCH 23/58] FROMGIT(6.14): ASoC: dapm: add support for preparing
+ streams
+
+Codec driver can implement .hw_params and/or .prepare from struct
+snd_soc_dai_ops. For codec-to-codec links only the former (.hw_params)
+callback has been called.
+
+On platforms like Amlogic Meson8/8b/8m2 the SoC's sound card
+(sound/soc/meson/gx-card.c) uses a codec-to-codec link for the HDMI
+codec output because further digital routing is required after the
+backend. The new DRM HDMI (audio) codec framework (which internally
+uses sound/soc/codecs/hdmi-codec.c) relies on the .prepare callback
+of the hdmi-codec to be called. Implement calls to
+snd_soc_dai_prepare() so the .prepare callback is called. In this
+case the mandatory part is the call to prepare the sink (which is
+the hdmi-codec on those platforms). Also call snd_soc_dai_prepare()
+for the source to stay consistent with the rest of the code (even
+though it's not strictly necessary to make the DRM HDMI codec
+framework work on Amlogic Meson8/8b/8m2).
+
+For platforms or sound cards without a codec-to-codec link with
+additional parameters (which applies to most hardware) this changes
+nothing as the .prepare callback is already called via
+snd_pcm_do_prepare() (as well as dpcm_fe_dai_prepare() and
+dpcm_be_dai_prepare()) on those.
+
+Suggested-by: Jerome Brunet <jbrunet@baylibre.com>
+Signed-off-by: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
+---
+ sound/soc/soc-dapm.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/sound/soc/soc-dapm.c b/sound/soc/soc-dapm.c
+index 99521c784a9b..ebb181aac7b7 100644
+--- a/sound/soc/soc-dapm.c
++++ b/sound/soc/soc-dapm.c
+@@ -4013,6 +4013,18 @@ static int snd_soc_dai_link_event(struct snd_soc_dapm_widget *w,
+ 		break;
+ 
+ 	case SND_SOC_DAPM_POST_PMU:
++		snd_soc_dapm_widget_for_each_source_path(w, path) {
++			source = path->source->priv;
++
++			snd_soc_dai_prepare(source, substream);
++		}
++
++		snd_soc_dapm_widget_for_each_sink_path(w, path) {
++			sink = path->sink->priv;
++
++			snd_soc_dai_prepare(sink, substream);
++		}
++
+ 		snd_soc_dapm_widget_for_each_sink_path(w, path) {
+ 			sink = path->sink->priv;
+ 
+-- 
+2.34.1
+

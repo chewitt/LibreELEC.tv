@@ -1,4 +1,4 @@
-From 1de6319b774217b31404dfeac7303402670a58a9 Mon Sep 17 00:00:00 2001
+From ea1ab9217b1829ac37f5937a76d76aab9bcf8765 Mon Sep 17 00:00:00 2001
 From: Anssi Hannula <anssi.hannula@iki.fi>
 Date: Sun, 17 Apr 2022 04:37:48 +0000
 Subject: [PATCH 09/58] LOCAL: ASoC: meson: assign internal PCM
@@ -24,7 +24,7 @@ Tested-by: Christian Hewitt <christianshewitt@gmail.com>
  2 files changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/sound/core/pcm_lib.c b/sound/core/pcm_lib.c
-index 6eaa950504cf..dbcf1f613fb4 100644
+index 6eaa950504cf..f2f05f1c4f98 100644
 --- a/sound/core/pcm_lib.c
 +++ b/sound/core/pcm_lib.c
 @@ -2612,7 +2612,10 @@ int snd_pcm_add_chmap_ctls(struct snd_pcm *pcm, int stream,
@@ -33,7 +33,7 @@ index 6eaa950504cf..dbcf1f613fb4 100644
  		knew.name = "Capture Channel Map";
 -	knew.device = pcm->device;
 +	if (pcm->internal && pcm->device)
-+		dev_info(pcm->card->dev, "workaround active: internal PCM chmap controls mapped to device 0\n");
++		dev_info(pcm->card->dev, "workaround: internal PCM chmap controls mapped to device 0\n");
 +	else
 +		knew.device = pcm->device;
  	knew.count = pcm->streams[stream].substream_count;

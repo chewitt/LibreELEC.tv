@@ -1,4 +1,4 @@
-From e29ff40f91293fa328007a5619276acd9d3ed517 Mon Sep 17 00:00:00 2001
+From 15418fbe14736e9cca5d956f72d1cebc5b309d3d Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 23 Mar 2024 20:30:02 +0100
 Subject: [PATCH 20/58] FROMGIT(6.14): iio: adc: consistently use bool and enum
@@ -15,7 +15,7 @@ Signed-off-by: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  1 file changed, 27 insertions(+), 20 deletions(-)
 
 diff --git a/drivers/iio/adc/meson_saradc.c b/drivers/iio/adc/meson_saradc.c
-index 4fe0688cb4d1..83849c2320e1 100644
+index 4cfbb3482a2e..e9fa513439c0 100644
 --- a/drivers/iio/adc/meson_saradc.c
 +++ b/drivers/iio/adc/meson_saradc.c
 @@ -156,9 +156,9 @@

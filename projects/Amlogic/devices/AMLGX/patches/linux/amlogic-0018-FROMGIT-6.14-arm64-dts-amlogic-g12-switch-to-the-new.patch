@@ -1,4 +1,4 @@
-From 3bd24f271e013ef166e88af74f7ab2931b4fb08c Mon Sep 17 00:00:00 2001
+From 0f86bec59bae846961ae1da862e78f1c62679ffa Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Fri, 27 Dec 2024 22:25:14 +0100
 Subject: [PATCH 18/58] FROMGIT(6.14): arm64: dts: amlogic: g12: switch to the
@@ -32,7 +32,7 @@ Signed-off-by: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  19 files changed, 28 insertions(+), 79 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi b/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi
-index 0bc28eb2079b..705c1c56112f 100644
+index 2a7f91b2a7cb..9b6593555912 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi
 +++ b/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi
 @@ -2060,8 +2060,11 @@ cecb_AO: cec@280 {

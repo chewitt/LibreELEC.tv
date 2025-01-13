@@ -1,4 +1,4 @@
-From a4658eb9da3ee5555a82be9bbd838fa14f2a914e Mon Sep 17 00:00:00 2001
+From 43089765e249622da5261d742eaac96339b023dd Mon Sep 17 00:00:00 2001
 From: Jerome Brunet <jbrunet@baylibre.com>
 Date: Fri, 13 Dec 2024 11:03:23 +0100
 Subject: [PATCH 12/58] FROMGIT(6.14): clk: amlogic: g12a: fix mmc A peripheral
@@ -23,10 +23,10 @@ Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/clk/meson/g12a.c b/drivers/clk/meson/g12a.c
-index 02dda57105b1..ff634d3a2f95 100644
+index cfffd434e998..d978516bba34 100644
 --- a/drivers/clk/meson/g12a.c
 +++ b/drivers/clk/meson/g12a.c
-@@ -4317,7 +4317,7 @@ static MESON_GATE(g12a_spicc_1,			HHI_GCLK_MPEG0,	14);
+@@ -4311,7 +4311,7 @@ static MESON_GATE(g12a_spicc_1,			HHI_GCLK_MPEG0,	14);
  static MESON_GATE(g12a_hiu_reg,			HHI_GCLK_MPEG0,	19);
  static MESON_GATE(g12a_mipi_dsi_phy,		HHI_GCLK_MPEG0,	20);
  static MESON_GATE(g12a_assist_misc,		HHI_GCLK_MPEG0,	23);

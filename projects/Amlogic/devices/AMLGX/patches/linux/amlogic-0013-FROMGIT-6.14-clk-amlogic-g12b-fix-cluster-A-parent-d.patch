@@ -1,4 +1,4 @@
-From 48432d3ed3b7011051afc3d422e50cd42ebf860b Mon Sep 17 00:00:00 2001
+From 57154bb4d5b483180f44eccf6d75f03daf4c827c Mon Sep 17 00:00:00 2001
 From: Jerome Brunet <jbrunet@baylibre.com>
 Date: Fri, 13 Dec 2024 15:30:17 +0100
 Subject: [PATCH 13/58] FROMGIT(6.14): clk: amlogic: g12b: fix cluster A parent
@@ -20,10 +20,10 @@ Signed-off-by: Jerome Brunet <jbrunet@baylibre.com>
  1 file changed, 24 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/clk/meson/g12a.c b/drivers/clk/meson/g12a.c
-index ff634d3a2f95..4f92b83965d5 100644
+index d978516bba34..ceabebb1863d 100644
 --- a/drivers/clk/meson/g12a.c
 +++ b/drivers/clk/meson/g12a.c
-@@ -1139,8 +1139,18 @@ static struct clk_regmap g12a_cpu_clk_div16_en = {
+@@ -1137,8 +1137,18 @@ static struct clk_regmap g12a_cpu_clk_div16_en = {
  	.hw.init = &(struct clk_init_data) {
  		.name = "cpu_clk_div16_en",
  		.ops = &clk_regmap_gate_ro_ops,
@@ -44,7 +44,7 @@ index ff634d3a2f95..4f92b83965d5 100644
  		},
  		.num_parents = 1,
  		/*
-@@ -1205,7 +1215,10 @@ static struct clk_regmap g12a_cpu_clk_apb_div = {
+@@ -1203,7 +1213,10 @@ static struct clk_regmap g12a_cpu_clk_apb_div = {
  	.hw.init = &(struct clk_init_data){
  		.name = "cpu_clk_apb_div",
  		.ops = &clk_regmap_divider_ro_ops,
@@ -56,7 +56,7 @@ index ff634d3a2f95..4f92b83965d5 100644
  		.num_parents = 1,
  	},
  };
-@@ -1239,7 +1252,10 @@ static struct clk_regmap g12a_cpu_clk_atb_div = {
+@@ -1237,7 +1250,10 @@ static struct clk_regmap g12a_cpu_clk_atb_div = {
  	.hw.init = &(struct clk_init_data){
  		.name = "cpu_clk_atb_div",
  		.ops = &clk_regmap_divider_ro_ops,
@@ -68,7 +68,7 @@ index ff634d3a2f95..4f92b83965d5 100644
  		.num_parents = 1,
  	},
  };
-@@ -1273,7 +1289,10 @@ static struct clk_regmap g12a_cpu_clk_axi_div = {
+@@ -1271,7 +1287,10 @@ static struct clk_regmap g12a_cpu_clk_axi_div = {
  	.hw.init = &(struct clk_init_data){
  		.name = "cpu_clk_axi_div",
  		.ops = &clk_regmap_divider_ro_ops,
@@ -80,7 +80,7 @@ index ff634d3a2f95..4f92b83965d5 100644
  		.num_parents = 1,
  	},
  };
-@@ -1308,13 +1327,6 @@ static struct clk_regmap g12a_cpu_clk_trace_div = {
+@@ -1306,13 +1325,6 @@ static struct clk_regmap g12a_cpu_clk_trace_div = {
  		.name = "cpu_clk_trace_div",
  		.ops = &clk_regmap_divider_ro_ops,
  		.parent_data = &(const struct clk_parent_data) {

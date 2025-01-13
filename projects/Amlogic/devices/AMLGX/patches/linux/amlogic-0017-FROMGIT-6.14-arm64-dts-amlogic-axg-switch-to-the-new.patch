@@ -1,4 +1,4 @@
-From e6298e5601c435f4b847271bfcf33044a343ec6a Mon Sep 17 00:00:00 2001
+From 9c7b250236dd22a17710194a02d20367f6b1842a Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Fri, 27 Dec 2024 22:25:13 +0100
 Subject: [PATCH 17/58] FROMGIT(6.14): arm64: dts: amlogic: axg: switch to the

@@ -1,0 +1,50 @@
+From d649a757ebddba3c21fa2106f9fa97b935b305f9 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 27 Jan 2025 17:52:10 +0000
+Subject: [PATCH 58/58] WIP: drm/panfrost: fix power transition timeout
+ warnings (again)
+
+Commit 2bd02f5a0bac ("drm/panfrost: fix power transition timeout warnings")
+increased the timeout value from 1000ms to 2000ms but in recent kernels the
+messages started to spam the system log again. Increasing timeout values to
+the arbitrary value of 3000ms stops the noise and hopefully adds a little
+headroom so further increases aren't required in the future.
+
+[0] https://patchwork.kernel.org/project/dri-devel/patch/20240322164525.2617508-1-christianshewitt@gmail.com/
+
+Fixes: 22aa1a209018 ("drm/panfrost: Really power off GPU cores in panfrost_gpu_power_off()")
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/gpu/drm/panfrost/panfrost_gpu.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/panfrost/panfrost_gpu.c b/drivers/gpu/drm/panfrost/panfrost_gpu.c
+index f5abde3866fb..218c4d15955e 100644
+--- a/drivers/gpu/drm/panfrost/panfrost_gpu.c
++++ b/drivers/gpu/drm/panfrost/panfrost_gpu.c
+@@ -452,19 +452,19 @@ void panfrost_gpu_power_off(struct panfrost_device *pfdev)
+ 
+ 	gpu_write(pfdev, SHADER_PWROFF_LO, pfdev->features.shader_present);
+ 	ret = readl_relaxed_poll_timeout(pfdev->iomem + SHADER_PWRTRANS_LO,
+-					 val, !val, 1, 2000);
++					 val, !val, 1, 3000);
+ 	if (ret)
+ 		dev_err(pfdev->dev, "shader power transition timeout");
+ 
+ 	gpu_write(pfdev, TILER_PWROFF_LO, pfdev->features.tiler_present);
+ 	ret = readl_relaxed_poll_timeout(pfdev->iomem + TILER_PWRTRANS_LO,
+-					 val, !val, 1, 2000);
++					 val, !val, 1, 3000);
+ 	if (ret)
+ 		dev_err(pfdev->dev, "tiler power transition timeout");
+ 
+ 	gpu_write(pfdev, L2_PWROFF_LO, pfdev->features.l2_present);
+ 	ret = readl_poll_timeout(pfdev->iomem + L2_PWRTRANS_LO,
+-				 val, !val, 0, 2000);
++				 val, !val, 0, 3000);
+ 	if (ret)
+ 		dev_err(pfdev->dev, "l2 power transition timeout");
+ }
+-- 
+2.34.1
+

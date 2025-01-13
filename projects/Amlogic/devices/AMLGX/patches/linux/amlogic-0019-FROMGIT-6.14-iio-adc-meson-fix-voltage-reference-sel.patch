@@ -1,4 +1,4 @@
-From a6281657db05969415768f451e0a00ea78d3ed4f Mon Sep 17 00:00:00 2001
+From a179d778674b916a719b59ef207028bb13320276 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 23 Mar 2024 20:04:49 +0100
 Subject: [PATCH 19/58] FROMGIT(6.14): iio: adc: meson: fix voltage reference
@@ -13,7 +13,7 @@ Signed-off-by: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/iio/adc/meson_saradc.c b/drivers/iio/adc/meson_saradc.c
-index e16b0e28974e..4fe0688cb4d1 100644
+index 2d475b43e717..4cfbb3482a2e 100644
 --- a/drivers/iio/adc/meson_saradc.c
 +++ b/drivers/iio/adc/meson_saradc.c
 @@ -327,7 +327,7 @@ struct meson_sar_adc_param {
