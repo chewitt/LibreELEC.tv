@@ -1,4 +1,4 @@
-From 1e4c25a0f363de1786a93af1276978001dffdb55 Mon Sep 17 00:00:00 2001
+From 276f5f64ce9b82f0e83ab28002eb36f052949152 Mon Sep 17 00:00:00 2001
 From: Neil Armstrong <narmstrong@baylibre.com>
 Date: Thu, 3 Nov 2016 15:29:25 +0100
 Subject: [PATCH 05/58] LOCAL: arm64: dts: meson: add support for GX PM and

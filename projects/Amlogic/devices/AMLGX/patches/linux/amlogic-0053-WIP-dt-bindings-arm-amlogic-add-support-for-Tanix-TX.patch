@@ -1,4 +1,4 @@
-From d5b9ce9ddd25fb5c578f510730c03144a0e421e6 Mon Sep 17 00:00:00 2001
+From 935b2a46395dd377d461197a6886ef128e308a45 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 9 Feb 2023 09:59:58 +0000
 Subject: [PATCH 53/58] WIP: dt-bindings: arm: amlogic: add support for Tanix

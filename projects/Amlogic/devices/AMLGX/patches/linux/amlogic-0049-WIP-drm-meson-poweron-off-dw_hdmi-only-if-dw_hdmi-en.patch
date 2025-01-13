@@ -1,4 +1,4 @@
-From 8d9cb36fc74da909c1514a89b319c95b9253055c Mon Sep 17 00:00:00 2001
+From 96eb67d38b3b6e2a5394604e1b3fb9f9ccbe10b8 Mon Sep 17 00:00:00 2001
 From: Luke Lu <luke.lu@libre.computer>
 Date: Wed, 13 Dec 2023 03:47:44 +0000
 Subject: [PATCH 49/58] WIP: drm/meson: poweron/off dw_hdmi only if dw_hdmi
@@ -19,10 +19,10 @@ dw_hdmi is enabled.
  3 files changed, 12 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
-index 189a9abe2035..c4a60be40603 100644
+index 7d6543fef353..8e94de2fa532 100644
 --- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
 +++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
-@@ -3642,6 +3642,12 @@ void dw_hdmi_resume(struct dw_hdmi *hdmi)
+@@ -3645,6 +3645,12 @@ void dw_hdmi_resume(struct dw_hdmi *hdmi)
  }
  EXPORT_SYMBOL_GPL(dw_hdmi_resume);
  
@@ -36,10 +36,10 @@ index 189a9abe2035..c4a60be40603 100644
  MODULE_AUTHOR("Andy Yan <andy.yan@rock-chips.com>");
  MODULE_AUTHOR("Yakir Yang <ykk@rock-chips.com>");
 diff --git a/drivers/gpu/drm/meson/meson_dw_hdmi.c b/drivers/gpu/drm/meson/meson_dw_hdmi.c
-index eaee6e750550..a91cedbeed3d 100644
+index 8460c93d74cb..c44ed72a1155 100644
 --- a/drivers/gpu/drm/meson/meson_dw_hdmi.c
 +++ b/drivers/gpu/drm/meson/meson_dw_hdmi.c
-@@ -823,7 +823,8 @@ static int __maybe_unused meson_dw_hdmi_pm_suspend(struct device *dev)
+@@ -809,7 +809,8 @@ static int __maybe_unused meson_dw_hdmi_pm_suspend(struct device *dev)
  	meson_dw_hdmi->data->top_write(meson_dw_hdmi,
  				       HDMITX_TOP_SW_RESET, 0);
  
@@ -49,7 +49,7 @@ index eaee6e750550..a91cedbeed3d 100644
  
  	return 0;
  }
-@@ -837,7 +838,9 @@ static int __maybe_unused meson_dw_hdmi_pm_resume(struct device *dev)
+@@ -823,7 +824,9 @@ static int __maybe_unused meson_dw_hdmi_pm_resume(struct device *dev)
  
  	meson_dw_hdmi_init(meson_dw_hdmi);
  

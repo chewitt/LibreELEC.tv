@@ -1,4 +1,4 @@
-From 2610446cf4c76d44a74d94fa15381925711f5f97 Mon Sep 17 00:00:00 2001
+From 247bdb209423d3a64099714b988c3d967a7c4ccc Mon Sep 17 00:00:00 2001
 From: Da Xue <da@libre.computer>
 Date: Tue, 8 Aug 2023 01:00:15 -0400
 Subject: [PATCH 46/58] WIP: net: phy: meson-gxl: implement
@@ -25,7 +25,7 @@ Signed-off-by: Luke Lu <luke.lu@libre.computer>
  1 file changed, 16 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/net/phy/meson-gxl.c b/drivers/net/phy/meson-gxl.c
-index bb9b33b6bce2..9ebe09b0cd8c 100644
+index 962ebbbc1348..55f281202fd4 100644
 --- a/drivers/net/phy/meson-gxl.c
 +++ b/drivers/net/phy/meson-gxl.c
 @@ -132,6 +132,21 @@ static int meson_gxl_config_init(struct phy_device *phydev)

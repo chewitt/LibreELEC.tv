@@ -1,4 +1,4 @@
-From c94221d0abeae2820c328dd90bdf58260b3db2de Mon Sep 17 00:00:00 2001
+From 23e7b741352c0a5f7b7d9f18e973aa3cf668b1bb Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 18 Jan 2022 15:09:12 +0000
 Subject: [PATCH 50/58] WIP: arm64: dts: meson: set p212/p23x/q20x SDIO to

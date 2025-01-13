@@ -1,4 +1,4 @@
-From 61d4d8fc7505b56e6b6fff1da6867783c4147151 Mon Sep 17 00:00:00 2001
+From 25bd59ff87a713e09232a8b15f9cb1421e42adef Mon Sep 17 00:00:00 2001
 From: Dongjin Kim <tobetter@gmail.com>
 Date: Thu, 10 Sep 2020 11:01:33 +0900
 Subject: [PATCH 47/58] WIP: drm/meson: add support for 2560x1440 resolution
@@ -16,7 +16,7 @@ Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
  2 files changed, 20 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/meson/meson_vclk.c b/drivers/gpu/drm/meson/meson_vclk.c
-index 2a942dc6a6dc..c7a98da6b1ce 100644
+index a2e93b500ed6..35884fd4ba1c 100644
 --- a/drivers/gpu/drm/meson/meson_vclk.c
 +++ b/drivers/gpu/drm/meson/meson_vclk.c
 @@ -357,6 +357,8 @@ enum {

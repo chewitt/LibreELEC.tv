@@ -1,4 +1,4 @@
-From e96a3e445695907574977ed7eabab53a617e0dd8 Mon Sep 17 00:00:00 2001
+From 872fadcf192d98de3d4ffd1bf2a62d4014ea914d Mon Sep 17 00:00:00 2001
 From: Luke Lu <luke.lu@libre.computer>
 Date: Mon, 21 Aug 2023 10:50:04 +0000
 Subject: [PATCH 48/58] WIP: drm/meson: do setup after resumption to fix hdmi
@@ -18,7 +18,7 @@ Signed-off-by: Luke Lu <luke.lu@libre.computer>
  3 files changed, 9 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
-index 0031f3c54882..189a9abe2035 100644
+index 996733ed2c00..7d6543fef353 100644
 --- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
 +++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
 @@ -2378,7 +2378,7 @@ static void initialize_hdmi_ih_mutes(struct dw_hdmi *hdmi)
@@ -50,10 +50,10 @@ index 0031f3c54882..189a9abe2035 100644
  static void dw_hdmi_update_power(struct dw_hdmi *hdmi)
  {
 diff --git a/drivers/gpu/drm/meson/meson_dw_hdmi.c b/drivers/gpu/drm/meson/meson_dw_hdmi.c
-index 5565f7777529..eaee6e750550 100644
+index 0d7c68b29dff..8460c93d74cb 100644
 --- a/drivers/gpu/drm/meson/meson_dw_hdmi.c
 +++ b/drivers/gpu/drm/meson/meson_dw_hdmi.c
-@@ -823,6 +823,8 @@ static int __maybe_unused meson_dw_hdmi_pm_suspend(struct device *dev)
+@@ -809,6 +809,8 @@ static int __maybe_unused meson_dw_hdmi_pm_suspend(struct device *dev)
  	meson_dw_hdmi->data->top_write(meson_dw_hdmi,
  				       HDMITX_TOP_SW_RESET, 0);
  
@@ -62,7 +62,7 @@ index 5565f7777529..eaee6e750550 100644
  	return 0;
  }
  
-@@ -835,6 +837,7 @@ static int __maybe_unused meson_dw_hdmi_pm_resume(struct device *dev)
+@@ -821,6 +823,7 @@ static int __maybe_unused meson_dw_hdmi_pm_resume(struct device *dev)
  
  	meson_dw_hdmi_init(meson_dw_hdmi);
  

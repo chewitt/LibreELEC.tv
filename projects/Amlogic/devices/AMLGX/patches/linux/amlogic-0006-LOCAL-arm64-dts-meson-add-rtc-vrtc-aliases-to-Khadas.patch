@@ -1,4 +1,4 @@
-From ec690a25fe036fa171b745e0d69ec531894269c1 Mon Sep 17 00:00:00 2001
+From 941265fdfeafe7497500c36863497d06613d5b87 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 21 Jan 2021 01:35:36 +0000
 Subject: [PATCH 06/58] LOCAL: arm64: dts: meson: add rtc/vrtc aliases to

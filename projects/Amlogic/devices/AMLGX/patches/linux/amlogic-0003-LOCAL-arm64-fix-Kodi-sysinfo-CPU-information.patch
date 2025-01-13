@@ -1,4 +1,4 @@
-From 6278379b84ca61605d0e86492caaba57b20644b6 Mon Sep 17 00:00:00 2001
+From 70ba92eae1422a4d32ceb61c8959b6de9a95944a Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 13 Apr 2019 05:45:18 +0000
 Subject: [PATCH 03/58] LOCAL: arm64: fix Kodi sysinfo CPU information
@@ -13,10 +13,10 @@ Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/arch/arm64/kernel/cpuinfo.c b/arch/arm64/kernel/cpuinfo.c
-index 44718d0482b3..1c6721d1b6b9 100644
+index 285d7d538342..117c83566fd7 100644
 --- a/arch/arm64/kernel/cpuinfo.c
 +++ b/arch/arm64/kernel/cpuinfo.c
-@@ -206,8 +206,7 @@ static int c_show(struct seq_file *m, void *v)
+@@ -222,8 +222,7 @@ static int c_show(struct seq_file *m, void *v)
  		 * "processor".  Give glibc what it expects.
  		 */
  		seq_printf(m, "processor\t: %d\n", i);

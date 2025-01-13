@@ -1,4 +1,4 @@
-From e4f842f8844f4e1b936b304624d29dc3298de563 Mon Sep 17 00:00:00 2001
+From 0505743125746c7e13cb139f5db975425ca308f4 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 19 Jan 2022 06:45:06 +0000
 Subject: [PATCH 52/58] WIP: arm64: dts: meson: add UHS SDIO capabilities to

@@ -1,4 +1,4 @@
-From 15a29e760d0488ec170293db626c4edddc364e9c Mon Sep 17 00:00:00 2001
+From ee1d1f77bfa8c9514e56dac65ac3b6a95bf24b4e Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 1 Feb 2021 19:27:40 +0000
 Subject: [PATCH 08/58] LOCAL: arm64: dts: meson: add rtc/vrtc aliases to Minix
