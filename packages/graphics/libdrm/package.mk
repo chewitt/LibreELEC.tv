@@ -14,8 +14,7 @@ PKG_LONGDESC="The userspace interface library to kernel DRM services."
 
 get_graphicdrivers
 
-PKG_MESON_OPTS_COMMON="-Dnouveau=disabled \
-                       -Domap=disabled \
+PKG_MESON_OPTS_COMMON="-Domap=disabled \
                        -Dexynos=disabled \
                        -Dtegra=disabled \
                        -Dcairo-tests=disabled \
@@ -59,6 +58,9 @@ listcontains "${GRAPHIC_DRIVERS}" "freedreno" &&
 
 listcontains "${GRAPHIC_DRIVERS}" "etnaviv" &&
   PKG_MESON_OPTS_TARGET+=" -Detnaviv=enabled" || PKG_MESON_OPTS_TARGET+=" -Detnaviv=disabled"
+
+listcontains "${GRAPHIC_DRIVERS}" "nouveau" &&
+  PKG_MESON_OPTS_TARGET+=" -Dnouveau=enabled" || PKG_MESON_OPTS_TARGET+=" -Dnouveau=disabled"
 
 post_makeinstall_target() {
   # Remove all test programs installed by install-test-programs=true except modetest
