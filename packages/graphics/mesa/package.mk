@@ -49,6 +49,10 @@ if [ "${DISPLAYSERVER}" = "x11" ]; then
   export X11_INCLUDES=
   PKG_MESON_OPTS_TARGET+=" -Dplatforms=x11 \
                            -Dglx=dri"
+  if listcontains "${GRAPHIC_DRIVERS}" "nouveau"; then
+    PKG_MESON_OPTS_TARGET+=" -Dlegacy-x11=dri2 \
+                             -Dvideo-codecs=all"
+  fi
 elif [ "${DISPLAYSERVER}" = "wl" ]; then
   PKG_DEPENDS_TARGET+=" wayland wayland-protocols"
   PKG_MESON_OPTS_TARGET+=" -Dplatforms=wayland \

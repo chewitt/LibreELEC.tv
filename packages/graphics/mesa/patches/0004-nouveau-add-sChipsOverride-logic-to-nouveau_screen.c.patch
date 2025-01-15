@@ -1,0 +1,66 @@
+From 8dfaa07dca514e05378754e2090c49e6c6855434 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Fri, 31 Jan 2025 14:15:42 +0000
+Subject: [PATCH 4/5] nouveau: add sChipsOverride logic to nouveau_screen.c
+
+Replicate the logic so that sChipsOverride identifiers are chosen before
+sChipsReleased identifiers.
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ src/gallium/drivers/nouveau/nouveau_screen.c | 25 +++++++++++++++++++-
+ 1 file changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/src/gallium/drivers/nouveau/nouveau_screen.c b/src/gallium/drivers/nouveau/nouveau_screen.c
+index 20a2f364aa3..bae8cfd2fed 100644
+--- a/src/gallium/drivers/nouveau/nouveau_screen.c
++++ b/src/gallium/drivers/nouveau/nouveau_screen.c
+@@ -30,6 +30,7 @@
+ #include "nouveau_mm.h"
+ #include "nouveau_buffer.h"
+ 
++#include "nouveau/headers/nvidia/g_nv_name_override.h"
+ #include "nouveau/headers/nvidia/g_nv_name_released.h"
+ 
+ #include <compiler/glsl_types.h>
+@@ -50,6 +51,28 @@ name_for_chip(uint32_t dev_id,
+               uint16_t subsystem_vendor_id)
+ {
+    const char *name = NULL;
++   for (uint32_t i = 0; i < ARRAY_SIZE(sChipsOverride); i++) {
++      const CHIPS_OVERRIDE *chip = &sChipsOverride[i];
++
++      if (dev_id != chip->devID)
++         continue;
++
++      if (chip->subSystemID == 0 && chip->subSystemVendorID == 0) {
++         /* When subSystemID and subSystemVendorID are both 0, this is the
++          * default name for the given chip. A more specific name may exist
++          * elsewhere in the list.
++          */
++         assert(name == NULL);
++         name = chip->name;
++         continue;
++      }
++
++      /* If we find a specific name, return it */
++      if (chip->subSystemID == subsystem_id &&
++          chip->subSystemVendorID == subsystem_vendor_id)
++         return chip->name;
++   }
++
+    for (uint32_t i = 0; i < ARRAY_SIZE(sChipsReleased); i++) {
+       const CHIPS_RELEASED *chip = &sChipsReleased[i];
+ 
+@@ -58,7 +81,7 @@ name_for_chip(uint32_t dev_id,
+ 
+       if (chip->subSystemID == 0 && chip->subSystemVendorID == 0) {
+          /* When subSystemID and subSystemVendorID are both 0, this is the
+-          * default name for the given chip.  A more specific name may exist
++          * default name for the given chip. A more specific name may exist
+           * elsewhere in the list.
+           */
+          assert(name == NULL);
+-- 
+2.34.1
+

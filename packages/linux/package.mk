@@ -103,7 +103,7 @@ makeinstall_host() {
 }
 
 pre_make_target() {
-  ( 
+  (
     cd ${ROOT}
     rm -rf ${BUILD}/initramfs
     rm -f ${STAMPS_INSTALL}/initramfs/install_target ${STAMPS_INSTALL}/*/install_init
@@ -145,6 +145,18 @@ pre_make_target() {
   # disable wireguard support if not enabled
   if [ ! "${WIREGUARD_SUPPORT}" = yes ]; then
     ${PKG_BUILD}/scripts/config --disable CONFIG_WIREGUARD
+  fi
+
+  # enable nouveau driver when required
+  if listcontains "${GRAPHIC_DRIVERS}" "nouveau"; then
+    ${PKG_BUILD}/scripts/config --enable CONFIG_DRM_NOUVEAU
+    ${PKG_BUILD}/scripts/config --enable CONFIG_DRM_NOUVEAU_BACKLIGHT
+    ${PKG_BUILD}/scripts/config --set-val CONFIG_NOUVEAU_DEBUG 5
+    ${PKG_BUILD}/scripts/config --set-val CONFIG_NOUVEAU_DEBUG_DEFAULT 3
+    # copy some extra firmware to linux tree
+    mkdir -p ${PKG_BUILD}/external-firmware
+      cp -a $(get_build_dir kernel-firmware)/.copied-firmware/nvidia ${PKG_BUILD}/external-firmware
+      cp -a $(get_build_dir nouveau-firmware)/firmware/nouveau ${PKG_BUILD}/external-firmware
   fi
 
   if [ "${TARGET_ARCH}" = "x86_64" ]; then

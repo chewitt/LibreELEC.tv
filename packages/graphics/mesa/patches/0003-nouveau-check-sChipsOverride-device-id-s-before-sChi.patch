@@ -1,0 +1,57 @@
+From 63887fd969677a2b2f9d3cd71a71299bf5a6c8fa Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Fri, 31 Jan 2025 13:41:43 +0000
+Subject: [PATCH 3/5] nouveau: check sChipsOverride device id's before
+ sChipsReleased
+
+Add support for checking sChipsOverride before sChipsReleased so we present
+meaningful names instead of 'NULL' values.
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ src/nouveau/winsys/nouveau_device.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/src/nouveau/winsys/nouveau_device.c b/src/nouveau/winsys/nouveau_device.c
+index 925df476be9..e4da11553d6 100644
+--- a/src/nouveau/winsys/nouveau_device.c
++++ b/src/nouveau/winsys/nouveau_device.c
+@@ -2,6 +2,7 @@
+ 
+ #include "nouveau_context.h"
+ 
++#include "nvidia/g_nv_name_override.h"
+ #include "nvidia/g_nv_name_released.h"
+ 
+ #include "drm-uapi/nouveau_drm.h"
+@@ -23,6 +24,27 @@ name_for_chip(uint32_t dev_id,
+               uint16_t subsystem_vendor_id)
+ {
+    const char *name = NULL;
++   for (uint32_t i = 0; i < ARRAY_SIZE(sChipsOverride); i++) {
++      const CHIPS_OVERRIDE *chip = &sChipsOverride[i];
++
++      if (dev_id != chip->devID)
++         continue;
++
++      if (chip->subSystemID == 0 && chip->subSystemVendorID == 0) {
++         /* When subSystemID and subSystemVendorID are both 0, this is the
++          * default name for the given chip.  A more specific name may exist
++          * elsewhere in the list.
++          */
++         assert(name == NULL);
++         name = chip->name;
++         continue;
++      }
++
++      if (chip->subSystemID == subsystem_id &&
++          chip->subSystemVendorID == subsystem_vendor_id)
++         return chip->name;
++   }
++
+    for (uint32_t i = 0; i < ARRAY_SIZE(sChipsReleased); i++) {
+       const CHIPS_RELEASED *chip = &sChipsReleased[i];
+ 
+-- 
+2.34.1
+
