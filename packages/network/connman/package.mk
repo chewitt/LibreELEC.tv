@@ -3,11 +3,12 @@
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="connman"
-PKG_VERSION="1.43"
-PKG_SHA256="22acfe9d5958d7983090232334a692eee66a12f3077e09e4f360276608156738"
+PKG_VERSION="a970b6cef63b6aa02fb0ce805cdda16ffc81fe65"
+PKG_SHA256=""
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.connman.net"
-PKG_URL="https://git.kernel.org/pub/scm/network/connman/connman.git/snapshot/connman-${PKG_VERSION}.tar.gz"
+PKG_URL="https://github.com/chewitt/connman/archive/${PKG_VERSION}.tar.gz"
+
 PKG_DEPENDS_TARGET="autotools:host gcc:host dbus glib iptables iwd readline"
 PKG_LONGDESC="A modular network connection manager."
 PKG_TOOLCHAIN="autotools"
