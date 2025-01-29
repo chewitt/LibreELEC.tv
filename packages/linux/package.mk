@@ -153,10 +153,6 @@ pre_make_target() {
     ${PKG_BUILD}/scripts/config --enable CONFIG_DRM_NOUVEAU_BACKLIGHT
     ${PKG_BUILD}/scripts/config --set-val CONFIG_NOUVEAU_DEBUG 5
     ${PKG_BUILD}/scripts/config --set-val CONFIG_NOUVEAU_DEBUG_DEFAULT 3
-    # copy some extra firmware to linux tree
-    mkdir -p ${PKG_BUILD}/external-firmware
-      cp -a $(get_build_dir kernel-firmware)/.copied-firmware/nvidia ${PKG_BUILD}/external-firmware
-      cp -a $(get_build_dir nouveau-firmware)/firmware/nouveau ${PKG_BUILD}/external-firmware
   fi
 
   if [ "${TARGET_ARCH}" = "x86_64" ]; then

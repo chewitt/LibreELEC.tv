@@ -23,3 +23,8 @@
 # Space separated list is supported,
 # e.g. GRAPHIC_DRIVERS="crocus i915 iris radeonsi nvidia vmware virtio"
   GRAPHIC_DRIVERS="nouveau"
+
+# additional Firmware to use (dvb-firmware, misc-firmware, wlan-firmware)
+# Space separated list is supported.
+# e.g. FIRMWARE="dvb-firmware misc-firmware wlan-firmware"
+  FIRMWARE+=" nouveau-firmware"
