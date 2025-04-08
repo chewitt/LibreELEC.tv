@@ -1,0 +1,46 @@
+From 6d4154d8d1e784a5f5a7d76e625f4f9e1b272a06 Mon Sep 17 00:00:00 2001
+From: Portisch <hugo.portisch@yahoo.de>
+Date: Thu, 3 Apr 2025 10:08:08 +0200
+Subject: [PATCH 1/2] Peripheral: fix SettingType::Boolean
+
+---
+ xbmc/peripherals/devices/Peripheral.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xbmc/peripherals/devices/Peripheral.cpp b/xbmc/peripherals/devices/Peripheral.cpp
+index 607c3c28f0698..963dbab6a86cc 100644
+--- a/xbmc/peripherals/devices/Peripheral.cpp
++++ b/xbmc/peripherals/devices/Peripheral.cpp
+@@ -545,7 +545,7 @@ bool CPeripheral::SetSetting(const std::string& strKey, const std::string& strVa
+     else if ((*it).second.m_setting->GetType() == SettingType::Number)
+       bChanged = SetSetting(strKey, (float)(strValue.empty() ? 0 : atof(strValue.c_str())));
+     else if ((*it).second.m_setting->GetType() == SettingType::Boolean)
+-      bChanged = SetSetting(strKey, strValue == "1");
++      bChanged = SetSetting(strKey, strValue == "1" || StringUtils::EqualsNoCase(strValue, "true"));
+   }
+   return bChanged;
+ }
+
+From dfa1c87f71ca7474c1e88dcdd1486a260a1f5442 Mon Sep 17 00:00:00 2001
+From: Portisch <hugo.portisch@yahoo.de>
+Date: Thu, 3 Apr 2025 11:01:23 +0200
+Subject: [PATCH 2/2] Peripheral: call also adapter OnSettingChanged
+
+---
+ xbmc/peripherals/dialogs/GUIDialogPeripheralSettings.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/xbmc/peripherals/dialogs/GUIDialogPeripheralSettings.cpp b/xbmc/peripherals/dialogs/GUIDialogPeripheralSettings.cpp
+index 6686c5f8f5f8f..4f58b1f754f2f 100644
+--- a/xbmc/peripherals/dialogs/GUIDialogPeripheralSettings.cpp
++++ b/xbmc/peripherals/dialogs/GUIDialogPeripheralSettings.cpp
+@@ -114,7 +114,8 @@ void CGUIDialogPeripheralSettings::OnSettingChanged(const std::shared_ptr<const
+   if (!peripheral)
+     return;
+ 
+-  peripheral->SetSetting(settingId, setting->ToString());
++  if (peripheral->SetSetting(settingId, setting->ToString()))
++    peripheral->OnSettingChanged(settingId);
+ 
+   // Refresh peripheral icon
+   UpdateIcon(peripheral->ControllerProfile());
