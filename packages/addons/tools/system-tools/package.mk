@@ -21,6 +21,7 @@ PKG_DEPENDS_TARGET="toolchain \
                     7-zip \
                     autossh \
                     bottom \
+                    btop \
                     diffutils \
                     dool \
                     dtach \
@@ -73,6 +74,10 @@ addon() {
 
     # bottom
     cp -P $(get_install_dir bottom)/btm ${ADDON_BUILD}/${PKG_ADDON_ID}/bin 2>/dev/null || :
+
+    # btop
+    cp -P $(get_install_dir btop)/usr/bin/btop ${ADDON_BUILD}/${PKG_ADDON_ID}/bin
+    cp -PR $(get_install_dir btop)/usr/local/share ${ADDON_BUILD}/${PKG_ADDON_ID}/local
 
     # diffutils
     cp -P $(get_install_dir diffutils)/usr/bin/{cmp,diff,diff3,sdiff} ${ADDON_BUILD}/${PKG_ADDON_ID}/bin
