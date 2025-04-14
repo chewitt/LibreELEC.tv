@@ -78,6 +78,14 @@ get_graphicdrivers() {
     V4L2_SUPPORT="yes"
   fi
 
+  if listcontains "${GRAPHIC_DRIVERS}" "nouveau"; then
+    COMPOSITE_SUPPORT="yes"
+    GALLIUM_DRIVERS+=" nouveau"
+    VDPAU_SUPPORT="yes"
+    VULKAN_DRIVERS_MESA+=" nouveau"
+    XORG_DRIVERS+=" nouveau"
+   fi
+
   if listcontains "${GRAPHIC_DRIVERS}" "nvidia"; then
     XORG_DRIVERS+=" nvidia"
     VULKAN_DRIVERS_CONFIG+=" nvidia"
