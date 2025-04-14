@@ -1,0 +1,116 @@
+From 633850fc819ce736cd116a25b935b1e963e47a56 Mon Sep 17 00:00:00 2001
+From: Dave Airlie <airlied@redhat.com>
+Date: Fri, 31 Jan 2025 14:12:29 +0000
+Subject: [PATCH 1/5] nouveau: generate a more useful renderer string.
+
+This adds the name from the database if available, also adds nouveau
+to it can be identified easier.
+
+OpenGL renderer string: NVIDIA GeForce RTX 2070 (nouveau, NV166)
+---
+ src/gallium/drivers/nouveau/nouveau_screen.c | 54 +++++++++++++++++++-
+ src/gallium/drivers/nouveau/nouveau_screen.h |  2 +-
+ 2 files changed, 54 insertions(+), 2 deletions(-)
+
+diff --git a/src/gallium/drivers/nouveau/nouveau_screen.c b/src/gallium/drivers/nouveau/nouveau_screen.c
+index 3d6defb4098..20a2f364aa3 100644
+--- a/src/gallium/drivers/nouveau/nouveau_screen.c
++++ b/src/gallium/drivers/nouveau/nouveau_screen.c
+@@ -30,6 +30,8 @@
+ #include "nouveau_mm.h"
+ #include "nouveau_buffer.h"
+ 
++#include "nouveau/headers/nvidia/g_nv_name_released.h"
++
+ #include <compiler/glsl_types.h>
+ 
+ /* XXX this should go away */
+@@ -42,6 +44,37 @@
+ 
+ int nouveau_mesa_debug = 0;
+ 
++static const char *
++name_for_chip(uint32_t dev_id,
++              uint16_t subsystem_id,
++              uint16_t subsystem_vendor_id)
++{
++   const char *name = NULL;
++   for (uint32_t i = 0; i < ARRAY_SIZE(sChipsReleased); i++) {
++      const CHIPS_RELEASED *chip = &sChipsReleased[i];
++
++      if (dev_id != chip->devID)
++         continue;
++
++      if (chip->subSystemID == 0 && chip->subSystemVendorID == 0) {
++         /* When subSystemID and subSystemVendorID are both 0, this is the
++          * default name for the given chip.  A more specific name may exist
++          * elsewhere in the list.
++          */
++         assert(name == NULL);
++         name = chip->name;
++         continue;
++      }
++
++      /* If we find a specific name, return it */
++      if (chip->subSystemID == subsystem_id &&
++          chip->subSystemVendorID == subsystem_vendor_id)
++         return chip->name;
++   }
++
++   return name;
++}
++
+ static const char *
+ nouveau_screen_get_name(struct pipe_screen *pscreen)
+ {
+@@ -291,6 +324,25 @@ nouveau_device_uuid(struct pipe_screen *pscreen, char *uuid)
+    nv_device_uuid(&screen->device->info, (void *)uuid, PIPE_UUID_SIZE, false);
+ }
+ 
++static void nouveau_init_renderer_string(struct nouveau_screen *screen)
++{
++   char first_name[256] = {}, second_name[32] = {};
++   uint64_t device_id;
++   int ret;
++
++   snprintf(second_name, sizeof(second_name), "(nouveau, NV%02X)", screen->device->chipset);
++   ret = nouveau_getparam(screen->device, NOUVEAU_GETPARAM_PCI_DEVICE, &device_id);
++   if (!ret) {
++      const char *name = name_for_chip(device_id, 0, 0);
++      if (name) {
++	 snprintf(first_name, sizeof(first_name), "%s", name);
++      }
++   }
++
++   snprintf(screen->chipset_name, sizeof(screen->chipset_name), "%s %s",
++	    first_name, second_name);
++}
++
+ int
+ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
+ {
+@@ -412,7 +464,7 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
+    if (!ret)
+       screen->cpu_gpu_time_delta = time - screen->cpu_gpu_time_delta * 1000;
+ 
+-   snprintf(screen->chipset_name, sizeof(screen->chipset_name), "NV%02X", dev->chipset);
++   nouveau_init_renderer_string(screen);
+    pscreen->get_name = nouveau_screen_get_name;
+    pscreen->get_screen_fd = nouveau_screen_get_fd;
+    pscreen->get_vendor = nouveau_screen_get_vendor;
+diff --git a/src/gallium/drivers/nouveau/nouveau_screen.h b/src/gallium/drivers/nouveau/nouveau_screen.h
+index 43e43bb2f3f..30f170e4086 100644
+--- a/src/gallium/drivers/nouveau/nouveau_screen.h
++++ b/src/gallium/drivers/nouveau/nouveau_screen.h
+@@ -30,7 +30,7 @@ struct nouveau_screen {
+    struct nouveau_client *client;
+    struct nouveau_pushbuf *pushbuf;
+ 
+-   char chipset_name[8];
++   char chipset_name[190];
+ 
+    bool initialized;
+ 
+-- 
+2.34.1
+
