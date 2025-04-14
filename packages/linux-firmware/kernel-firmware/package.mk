@@ -75,6 +75,12 @@ makeinstall_target() {
     rm -fr ${FW_TARGET_DIR}/brcm/brcmfmac43455*-sdio.*
   fi
 
+  # nvidia firmware for nouveau
+  if listcontains "${GRAPHIC_DRIVERS}" "nouveau"; then
+    cp -Lrv ${PKG_FW_SOURCE}/nvidia ${FW_TARGET_DIR}/
+    rm -rv ${FW_TARGET_DIR}/nvidia/tegra*
+  fi
+
   # brcm pcie firmware is only needed by x86_64
   [ "${TARGET_ARCH}" != "x86_64" ] && rm -fr ${FW_TARGET_DIR}/brcm/*-pcie.*
 
