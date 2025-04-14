@@ -1,0 +1,42 @@
+#!/bin/bash
+# Copyright (C) 2025-present Team LibreELEC (https://libreelec.tv)
+
+# The nVidia driver license [0] forbids redistribution of parts
+# of their driver binaries so we must download and extract files
+# to a firmware overlay folder. The script is based on prior-art
+# from [1].
+#
+# [0] https://www.nvidia.com/en-us/drivers/nvidia-license/
+# [1] https://nouveau.freedesktop.org/VideoAcceleration.html
+
+SOURCE="/tmp/nouveau"
+TARGET="/storage/.config/firmware/nouveau"
+DRIVER="340.108"
+
+# remove existing target dir
+rm -rf ${TARGET} 2> /dev/null || true
+
+# create target dir
+mkdir -p ${TARGET}
+
+# remove existing source dir
+rm -rf ${SOURCE} 2> /dev/null || true
+
+# create source dir
+mkdir -p ${SOURCE}
+
+# cd to source dir
+cd ${SOURCE} || return
+
+# download and extract firmware
+wget http://us.download.nvidia.com/XFree86/Linux-x86_64/${DRIVER}/NVIDIA-Linux-x86_64-${DRIVER}.run
+sh NVIDIA-Linux-x86_64-${DRIVER}.run --extract-only 2> /dev/null || true
+python3 /usr/bin/nouveau/nouveau-firmware.pyc
+sha256sum -c /usr/bin/nouveau/NVIDIA-Linux-x86_64-${DRIVER}.sha256
+cp -nR nv* vuc* ${TARGET}/ 2> /dev/null || true
+
+# remove source dir
+rm -rf ${SOURCE}
+
+# setup-complete
+touch ${TARGET}/.setup-complete

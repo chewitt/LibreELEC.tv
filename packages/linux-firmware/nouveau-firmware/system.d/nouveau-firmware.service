@@ -1,0 +1,13 @@
+[Unit]
+Description=Nouveau Firmware Download Service
+After=network-online.target nss-lookup.target time-sync.target
+Wants=network-online.target nss-lookup.target time-sync.target
+ConditionPathExists=!/storage/.config/firmware/nouveau/.setup-complete
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c "/usr/bin/nouveau/nouveau-firmware-setup"
+
+[Install]
+WantedBy=multi-user.target
