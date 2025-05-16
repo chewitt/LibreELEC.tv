@@ -1,7 +1,7 @@
-From 7c254b38d6481864d8348c4dca5ada8eeb0d53f1 Mon Sep 17 00:00:00 2001
+From 5580b931ad4ba699bafaa4df2b07e42b730d8beb Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 9 Feb 2023 10:11:39 +0000
-Subject: [PATCH 55/55] WIP: arm64: dts: meson: add 7-segment display to Tanix
+Subject: [PATCH 56/56] WIP: arm64: dts: meson: add 7-segment display to Tanix
  TX9 Pro
 
 Add support for the 7-segment VFD display of the device

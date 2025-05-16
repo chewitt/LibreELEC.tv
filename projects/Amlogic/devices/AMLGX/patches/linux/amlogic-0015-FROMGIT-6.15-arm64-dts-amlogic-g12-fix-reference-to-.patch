@@ -1,7 +1,7 @@
 From d9207b2496fb9ddbcf0b874af6920bcf2371752b Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sun, 20 Apr 2025 18:48:01 +0200
-Subject: [PATCH 15/55] FROMGIT(6.15): arm64: dts: amlogic: g12: fix reference
+Subject: [PATCH 15/56] FROMGIT(6.15): arm64: dts: amlogic: g12: fix reference
  to unknown/untested PWM clock
 
 Device-tree expects absent clocks to be specified as <0> (instead of

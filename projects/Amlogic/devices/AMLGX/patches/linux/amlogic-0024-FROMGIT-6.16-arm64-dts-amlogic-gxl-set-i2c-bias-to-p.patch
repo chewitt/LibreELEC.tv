@@ -1,7 +1,7 @@
 From 44b80f870a2ec32f321d6b690bddd546174e1b28 Mon Sep 17 00:00:00 2001
 From: Da Xue <da@libre.computer>
 Date: Fri, 25 Apr 2025 16:31:18 -0400
-Subject: [PATCH 24/55] FROMGIT(6.16): arm64: dts: amlogic: gxl: set i2c bias
+Subject: [PATCH 24/56] FROMGIT(6.16): arm64: dts: amlogic: gxl: set i2c bias
  to pull-up
 
 GXL I2C pins need internal pull-up enabled to operate if there

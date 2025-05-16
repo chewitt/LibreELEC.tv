@@ -1,7 +1,7 @@
-From 7814d0db70c4da0e6a82135af2d71424519177d4 Mon Sep 17 00:00:00 2001
+From d554cd3d85e8a9bcff6d9b53a0bd37c5211b7907 Mon Sep 17 00:00:00 2001
 From: Andreas Baierl <ichgeh@imkreisrum.de>
 Date: Thu, 20 Feb 2025 23:59:14 +0000
-Subject: [PATCH 44/55] WIP: media: meson: vdec: fix
+Subject: [PATCH 45/56] WIP: media: meson: vdec: fix
  V4L2_BUF_FLAG_{KEY|P|B}FRAME
 
 ffmpeg needs the keyframe flag to be set correctly, else

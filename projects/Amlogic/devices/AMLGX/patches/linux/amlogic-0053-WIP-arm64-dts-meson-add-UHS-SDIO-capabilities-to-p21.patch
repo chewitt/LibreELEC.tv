@@ -1,7 +1,7 @@
-From c2a167bc9c453c36e2b939f44f2f9a7476109e60 Mon Sep 17 00:00:00 2001
+From 72ce46011c55dac626ab72d0c93bb87fee4c3a98 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 19 Jan 2022 06:45:06 +0000
-Subject: [PATCH 52/55] WIP: arm64: dts: meson: add UHS SDIO capabilities to
+Subject: [PATCH 53/56] WIP: arm64: dts: meson: add UHS SDIO capabilities to
  p212/p23x/q20x
 
 Add UHS capabilities to the SDIO node to enable 100MHz speeds.

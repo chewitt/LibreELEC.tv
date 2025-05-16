@@ -1,7 +1,7 @@
-From 0e4b183b4d1c53af989628ca8901c73108bb3b47 Mon Sep 17 00:00:00 2001
+From 72df3294ac08304e97fa2cd14df12b76dbf14f5b Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 18 Jan 2022 15:09:12 +0000
-Subject: [PATCH 50/55] WIP: arm64: dts: meson: set p212/p23x/q20x SDIO to
+Subject: [PATCH 51/56] WIP: arm64: dts: meson: set p212/p23x/q20x SDIO to
  100MHz
 
 Amlogic datasheets describe 50MHz max-frequency for SDIO on GXL/GXM but

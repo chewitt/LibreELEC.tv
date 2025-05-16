@@ -1,7 +1,7 @@
 From eb2fe5d0c75ebe02ccdfab1c17697ef02b24da8f Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Tue, 31 Dec 2024 20:42:06 +0100
-Subject: [PATCH 21/55] FROMGIT(6.16): dt-bindings: iio: adc:
+Subject: [PATCH 21/56] FROMGIT(6.16): dt-bindings: iio: adc:
  amlogic,meson-saradc: Add GXLX SoC compatible
 
 Add a compatible string for the GXLX SoC. It's very similar to GXL but

@@ -1,7 +1,7 @@
 From f7410af04d5d6099a99a033136688328699c7c75 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 30 Apr 2025 11:51:27 +0000
-Subject: [PATCH 16/55] FROMGIT(6.15): arm64: dts: amlogic: dreambox: fix
+Subject: [PATCH 16/56] FROMGIT(6.15): arm64: dts: amlogic: dreambox: fix
  missing clkc_audio node
 
 Add the clkc_audio node to fix audio support on Dreambox One/Two.

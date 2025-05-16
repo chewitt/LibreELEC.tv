@@ -1,7 +1,7 @@
 From 13d3f57d955e74323bb2ec16e4b78e0f722d6044 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Andreas=20F=C3=A4rber?= <afaerber@suse.de>
 Date: Sun, 20 Feb 2022 08:23:12 +0000
-Subject: [PATCH 29/55] FROMLIST(v5): dt-bindings: vendor-prefixes: Add Titan
+Subject: [PATCH 29/56] FROMLIST(v5): dt-bindings: vendor-prefixes: Add Titan
  Micro Electronics
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

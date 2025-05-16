@@ -1,7 +1,7 @@
 From 22c4ce5ab3abb15c6e3e97ed09dd1a59f22465be Mon Sep 17 00:00:00 2001
 From: Neil Armstrong <neil.armstrong@linaro.org>
 Date: Wed, 5 Jun 2024 11:15:11 +0200
-Subject: [PATCH 39/55] FROMLIST(v1): dt-bindings: usb: dwc2: allow device
+Subject: [PATCH 39/56] FROMLIST(v1): dt-bindings: usb: dwc2: allow device
  sub-nodes
 
 Allow the '#address-cells', '#size-cells' and subnodes as defined in

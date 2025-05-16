@@ -1,7 +1,7 @@
 From 29f555feca8c3107a5731b3ee1aaa3139bcedc41 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 1 Jan 2025 07:16:49 +0000
-Subject: [PATCH 23/55] FROMGIT(6.16): arm64: dts: amlogic: gxlx-s905l-p271:
+Subject: [PATCH 23/56] FROMGIT(6.16): arm64: dts: amlogic: gxlx-s905l-p271:
  add saradc compatible
 
 Add the saradac node using the meson-gxlx-saradc compatible to ensure

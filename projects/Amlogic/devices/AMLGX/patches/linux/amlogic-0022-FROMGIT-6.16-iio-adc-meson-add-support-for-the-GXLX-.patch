@@ -1,7 +1,7 @@
 From 9e477da82afb28e19343ea8f27c5cbe8dd011b53 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 23 Mar 2024 20:44:41 +0100
-Subject: [PATCH 22/55] FROMGIT(6.16): iio: adc: meson: add support for the
+Subject: [PATCH 22/56] FROMGIT(6.16): iio: adc: meson: add support for the
  GXLX SoC
 
 The SARADC IP on the GXLX SoC itself is identical to the one found on

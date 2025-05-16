@@ -1,7 +1,7 @@
 From 632f5d3157fb5db48de377adb8019f1937533e00 Mon Sep 17 00:00:00 2001
 From: Heiner Kallweit <hkallweit1@gmail.com>
 Date: Sun, 20 Feb 2022 08:26:27 +0000
-Subject: [PATCH 31/55] FROMLIST(v5): docs: ABI: document tm1628 attribute
+Subject: [PATCH 31/56] FROMLIST(v5): docs: ABI: document tm1628 attribute
  display-text
 
 Document the attribute for reading / writing the text to be displayed on

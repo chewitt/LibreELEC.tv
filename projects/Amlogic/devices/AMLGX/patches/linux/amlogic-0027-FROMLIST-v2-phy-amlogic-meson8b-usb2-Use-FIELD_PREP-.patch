@@ -1,7 +1,7 @@
 From b955dfd9549480c8e7e76726fadf9078b8882cbc Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 29 Mar 2025 20:07:11 +0100
-Subject: [PATCH 27/55] FROMLIST(v2): phy: amlogic: meson8b-usb2: Use
+Subject: [PATCH 27/56] FROMLIST(v2): phy: amlogic: meson8b-usb2: Use
  FIELD_PREP instead of _SHIFT macros
 
 This simplifies the code by re-using the FIELD_PREP helper. No

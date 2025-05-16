@@ -1,7 +1,7 @@
 From 46257346eb613ee141712a6ed6ddf97efd249832 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Fri, 27 Dec 2024 22:25:14 +0100
-Subject: [PATCH 13/55] FROMGIT(6.15): arm64: dts: amlogic: g12: switch to the
+Subject: [PATCH 13/56] FROMGIT(6.15): arm64: dts: amlogic: g12: switch to the
  new PWM controller binding
 
 Use the new PWM controller binding which now relies on passing all

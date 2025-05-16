@@ -1,7 +1,7 @@
 From dcec0de116607bba150c5d0721f0d711d9cba2f6 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 29 Mar 2025 19:58:52 +0100
-Subject: [PATCH 18/55] FROMGIT(6.16): arm64: dts: amlogic: gxl: enable UART RX
+Subject: [PATCH 18/56] FROMGIT(6.16): arm64: dts: amlogic: gxl: enable UART RX
  and TX pull up by default
 
 Some boards have noise on the UART RX line when the UART pins are not

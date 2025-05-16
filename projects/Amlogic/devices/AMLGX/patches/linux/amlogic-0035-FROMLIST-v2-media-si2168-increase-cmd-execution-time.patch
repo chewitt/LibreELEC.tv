@@ -1,7 +1,7 @@
 From d724db741128f511f3e867fac6ecde99e96b418e Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 7 Feb 2025 04:29:08 +0000
-Subject: [PATCH 35/55] FROMLIST(v2): media: si2168: increase cmd execution
+Subject: [PATCH 35/56] FROMLIST(v2): media: si2168: increase cmd execution
  timeout value
 
 Testing with a MyGica T230C v2 USB device (0572:c68a) shows occasional

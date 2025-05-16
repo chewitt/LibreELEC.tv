@@ -1,7 +1,7 @@
 From bee8914209cb91e57f650bf8b74c915e7b7dc1c9 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sat, 29 Mar 2025 20:01:32 +0100
-Subject: [PATCH 20/55] FROMGIT(6.16): pinctrl: meson: define the pull up/down
+Subject: [PATCH 20/56] FROMGIT(6.16): pinctrl: meson: define the pull up/down
  resistor value as 60 kOhm
 
 The public datasheets of the following Amlogic SoCs describe a typical

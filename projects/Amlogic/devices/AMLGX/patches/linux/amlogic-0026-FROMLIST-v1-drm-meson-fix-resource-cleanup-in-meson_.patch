@@ -1,7 +1,7 @@
 From ded1e14e10fbc0318a75fc496df3eaab23aa9e2b Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Wed, 9 Apr 2025 23:44:22 +0200
-Subject: [PATCH 26/55] FROMLIST(v1): drm/meson: fix resource cleanup in
+Subject: [PATCH 26/56] FROMLIST(v1): drm/meson: fix resource cleanup in
  meson_drv_bind_master() on error
 
 meson_drv_bind_master() does not free resources in the order they are
