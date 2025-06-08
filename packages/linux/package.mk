@@ -29,6 +29,13 @@ case "${LINUX}" in
     PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
     PKG_PATCH_DIRS="raspberrypi rtlwifi/6.13 rtlwifi/6.14 rtlwifi/6.15"
     ;;
+  rockchip-devel)
+    PKG_VERSION="33755850faeb0e53e634390d147cc261a60d2898" # 6/6/2025
+    PKG_SHA256="2decf22d9d2127c2fb59e67bb23ba9e3264331bdbc208c102f746fcc7645eeab"
+    PKG_URL="https://gitlab.collabora.com/hardware-enablement/rockchip-3588/linux/-/archive/${PKG_VERSION}/${PKG_NAME}-${PKG_VERSION}.tar.gz"
+    PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
+    PKG_PATCH_DIRS="default"
+    ;;
   *)
     PKG_VERSION="6.15.1"
     PKG_SHA256="44f1bb84fe512e7bafe0e6dc85d38ec1c6c8fcbe97ccb51d8c19930b799f0d64"
