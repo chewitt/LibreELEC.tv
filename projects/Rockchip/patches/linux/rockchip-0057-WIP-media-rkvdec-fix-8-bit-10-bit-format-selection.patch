@@ -1,0 +1,38 @@
+From 9b0cff1056afbf8679a16b0c52231c6805a31bc5 Mon Sep 17 00:00:00 2001
+From: Alex Bee <knaerzche@gmail.com>
+Date: Sun, 20 Jul 2025 10:02:27 +0000
+Subject: [PATCH 57/57] WIP: media: rkvdec: fix 8-bit/10-bit format selection
+
+The driver is selecting the wrong format, resulting in 10-bit media
+being unplayable.
+
+Signed-off-by: Alex Bee <knaerzche@gmail.com>
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ .../platform/rockchip/rkvdec/rkvdec-hevc-common.c      | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/media/platform/rockchip/rkvdec/rkvdec-hevc-common.c b/drivers/media/platform/rockchip/rkvdec/rkvdec-hevc-common.c
+index 0cefec53fc97..a719aecb41bd 100644
+--- a/drivers/media/platform/rockchip/rkvdec/rkvdec-hevc-common.c
++++ b/drivers/media/platform/rockchip/rkvdec/rkvdec-hevc-common.c
+@@ -19,12 +19,10 @@ enum rkvdec_image_fmt rkvdec_hevc_get_image_fmt(struct rkvdec_ctx *ctx,
+ 	if (ctrl->id != V4L2_CID_STATELESS_HEVC_SPS)
+ 		return RKVDEC_IMG_FMT_ANY;
+ 
+-	if (sps->bit_depth_luma_minus8 == 0) {
+-		if (sps->chroma_format_idc == 2)
+-			return RKVDEC_IMG_FMT_422_8BIT;
+-		else
+-			return RKVDEC_IMG_FMT_420_8BIT;
+-	}
++	if (sps->bit_depth_luma_minus8 == 0)
++		return RKVDEC_IMG_FMT_420_8BIT;
++	else if (sps->bit_depth_luma_minus8 == 2)
++		return RKVDEC_IMG_FMT_420_10BIT;
+ 
+ 	return RKVDEC_IMG_FMT_ANY;
+ }
+-- 
+2.34.1
+

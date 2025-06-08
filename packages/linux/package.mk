@@ -29,6 +29,13 @@ case "${LINUX}" in
     PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
     PKG_PATCH_DIRS="raspberrypi rtlwifi/6.13 rtlwifi/6.14 rtlwifi/6.15"
     ;;
+  rockchip)
+    PKG_VERSION="89be9a83ccf1f88522317ce02f854f30d6115c41" # 6.16-rc7
+    PKG_SHA256="f52b88f3226355e8ebfb87c30434cc5307785487ee3ef81240346d430d08f516"
+    PKG_URL="https://github.com/chewitt/linux/archive/${PKG_VERSION}.tar.gz"
+    PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
+    PKG_PATCH_DIRS="default"
+    ;;
   *)
     PKG_VERSION="6.15.6"
     PKG_SHA256="2bb586c954277d070c8fdf6d7275faa93b4807d9bf3353b491d8149cca02b4fc"

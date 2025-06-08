@@ -1,0 +1,40 @@
+From 43305f1cd9cda0839025fccaff54ec38c241945a Mon Sep 17 00:00:00 2001
+From: Detlev Casanova <detlev.casanova@collabora.com>
+Date: Thu, 17 Jul 2025 17:56:19 -0400
+Subject: [PATCH 39/57] FROMLIST(v1): ASoC: hdac_hdmi: Use dev_info on invalid
+ ELD version
+
+When disconnected, the ELD data cannot be read by the display driver, so
+it just sets the data to 0.
+
+That makes the ELD parsing code read an ELD version of 0, which is
+invalid. In hdac_hdmi, that is logged with dev_err(), but should be
+logged with dev_info() instead as it is done in sound/core/pcm_drm_eld.c
+
+This avoids printing multiple messages like:
+
+    HDMI: Unknown ELD version 0
+
+in the kernel log when userspace tries to open the sound device.
+
+Signed-off-by: Detlev Casanova <detlev.casanova@collabora.com>
+---
+ sound/soc/codecs/hdac_hdmi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sound/soc/codecs/hdac_hdmi.c b/sound/soc/codecs/hdac_hdmi.c
+index 1139a2754ca3..4cc3b7a1062b 100644
+--- a/sound/soc/codecs/hdac_hdmi.c
++++ b/sound/soc/codecs/hdac_hdmi.c
+@@ -1232,7 +1232,7 @@ static int hdac_hdmi_parse_eld(struct hdac_device *hdev,
+ 						>> DRM_ELD_VER_SHIFT;
+ 
+ 	if (ver != ELD_VER_CEA_861D && ver != ELD_VER_PARTIAL) {
+-		dev_err(&hdev->dev, "HDMI: Unknown ELD version %d\n", ver);
++		dev_info(&hdev->dev, "HDMI: Unknown ELD version %d\n", ver);
+ 		return -EINVAL;
+ 	}
+ 
+-- 
+2.34.1
+
