@@ -36,6 +36,9 @@ make_target() {
   fi
 
   PKG_TRUST_INI="RKTRUST/${PKG_SOC}TRUST.ini"
+  if [ "${PKG_SOC}" = "RK3566" ]; then
+    PKG_TRUST_INI="RKTRUST/RK3568TRUST.ini"
+  fi
   if [ ! -f "${PKG_TRUST_INI}" ]; then
     PKG_TRUST_INI="RKTRUST/${DEVICE}TRUST.ini"
   fi
