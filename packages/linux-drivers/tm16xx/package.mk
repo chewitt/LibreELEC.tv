@@ -2,8 +2,8 @@
 # Copyright (C) 2025-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="tm16xx"
-PKG_VERSION="745fca0fe63915632d99f0f07ad5f12a7572ccd2"
-PKG_SHA256="5fb94b0cbb7d87ae97c1ac2b5f84f64bd9db5b84a9e80e52052e67ba80c732e8"
+PKG_VERSION="8ff599d3c40f61061c0b363315f616f63ac7714f"
+PKG_SHA256="edf6d3962272ae49425ea9f9acb210edd8781ca13f240c3c4596beaca99dcd10"
 PKG_LICENSE="GPLv2"
 PKG_SITE="https://github.com/jefflessard/tm16xx-display/"
 PKG_URL="https://github.com/jefflessard/tm16xx-display/archive/${PKG_VERSION}.tar.gz"
