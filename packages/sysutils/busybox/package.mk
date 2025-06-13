@@ -120,7 +120,6 @@ makeinstall_target() {
       sed -e "s/@DISTRONAME@-@OS_VERSION@/${DISTRONAME}-${OS_VERSION}/g" \
           -i ${INSTALL}/usr/bin/pastebinit
       ln -sf pastebinit ${INSTALL}/usr/bin/paste
-    cp ${PKG_DIR}/scripts/vfd-clock ${INSTALL}/usr/bin/
 
   mkdir -p ${INSTALL}/usr/sbin
     cp ${PKG_DIR}/scripts/kernel-overlays-setup ${INSTALL}/usr/sbin
