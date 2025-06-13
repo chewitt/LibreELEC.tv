@@ -120,7 +120,6 @@ makeinstall_target() {
       sed -e "s/@DISTRONAME@-@OS_VERSION@/${DISTRONAME}-${OS_VERSION}/g" \
           -i ${INSTALL}/usr/bin/pastebinit
       ln -sf pastebinit ${INSTALL}/usr/bin/paste
-    cp ${PKG_DIR}/scripts/vfd-clock ${INSTALL}/usr/bin/
 
   mkdir -p ${INSTALL}/usr/sbin
     cp ${PKG_DIR}/scripts/kernel-overlays-setup ${INSTALL}/usr/sbin
@@ -167,7 +166,6 @@ post_install() {
   enable_service ledfix.service
   enable_service shell.service
   enable_service show-version.service
-  enable_service vfd-clock.service
   enable_service var.mount
   enable_service locale.service
 
