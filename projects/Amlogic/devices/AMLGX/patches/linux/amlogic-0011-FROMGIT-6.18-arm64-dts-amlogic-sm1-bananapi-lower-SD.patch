@@ -1,7 +1,7 @@
-From 2411a183fc6f2806727cf9dcfe62dcd5e1199ce9 Mon Sep 17 00:00:00 2001
+From 169e6440390d23301d1a00294f9959bf1ec3b50a Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 3 May 2025 15:18:07 +0000
-Subject: [PATCH 17/37] FROMLIST(v1): arm64: dts: amlogic: sm1-bananapi: lower
+Subject: [PATCH 11/49] FROMGIT(6.18): arm64: dts: amlogic: sm1-bananapi: lower
  SD card speed for stability
 
 Users report being able to boot (u-boot) from SD card but kernel

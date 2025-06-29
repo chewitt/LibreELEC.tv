@@ -1,7 +1,7 @@
-From b2f06cfdd0e7d396d51aa733597f2a6631a4dc8c Mon Sep 17 00:00:00 2001
+From 809b4ac0c0221ee9478ea8f1411217132e77735b Mon Sep 17 00:00:00 2001
 From: Da Xue <da@libre.computer>
 Date: Sun, 22 Jun 2025 17:46:21 -0400
-Subject: [PATCH 26/37] WIP: mmc: meson-gx-mmc: add delay during poweroff
+Subject: [PATCH 26/49] WIP: mmc: meson-gx-mmc: add delay during poweroff
 
 ---
  drivers/mmc/host/meson-gx-mmc.c | 1 +
