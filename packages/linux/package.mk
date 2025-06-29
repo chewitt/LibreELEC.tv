@@ -16,8 +16,8 @@ PKG_PATCH_DIRS="${LINUX}"
 
 case "${LINUX}" in
   amlogic)
-    PKG_VERSION="86731a2a651e58953fc949573895f2fa6d456841" # 6.16-rc3
-    PKG_SHA256="008b00968a8bfc0627580b82a2d30c7304336a4f92a58e80cdbc2d4723e01840"
+    PKG_VERSION="4645fefac0b24d509b962c096b0327e87f34b1d2" # 6.16.5
+    PKG_SHA256="45daac22ef696b17041b0ef1584332a255c6f3d26bd604f7052b1f9e65bf13f0"
     PKG_URL="https://github.com/torvalds/linux/archive/${PKG_VERSION}.tar.gz"
     PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
     PKG_PATCH_DIRS="default rtlwifi/6.17"
@@ -160,6 +160,7 @@ pre_make_target() {
     ${PKG_BUILD}/scripts/config --enable CONFIG_TM16XX_SPI
     ${PKG_BUILD}/scripts/config --enable CONFIG_PANEL_CHANGE_MESSAGE
     ${PKG_BUILD}/scripts/config --set-str CONFIG_PANEL_BOOT_MESSAGE "${VFD_MESSAGE}"
+    ${PKG_BUILD}/scripts/config --enable CONFIG_INPUT_MATRIXKMAP
     # enable led activity triggers
     ${PKG_BUILD}/scripts/config --enable CONFIG_LEDS_TRIGGER_TIMER # Colon
     ${PKG_BUILD}/scripts/config --enable CONFIG_LEDS_TRIGGER_NETDEV # LAN/WLAN
