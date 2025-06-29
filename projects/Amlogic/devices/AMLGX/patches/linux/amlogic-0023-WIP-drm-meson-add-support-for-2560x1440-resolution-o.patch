@@ -1,7 +1,7 @@
-From 71facc1a41966252fd3368b8a6cfc02d3e91d85a Mon Sep 17 00:00:00 2001
+From 1a54392ef2e4d78fcba81b9b7b345c5116604b59 Mon Sep 17 00:00:00 2001
 From: Dongjin Kim <tobetter@gmail.com>
 Date: Thu, 10 Sep 2020 11:01:33 +0900
-Subject: [PATCH 23/37] WIP: drm/meson: add support for 2560x1440 resolution
+Subject: [PATCH 23/34] WIP: drm/meson: add support for 2560x1440 resolution
  output
 
 Add support for Quad HD (QHD) 2560x1440 resolution output. Timings

@@ -1,7 +1,7 @@
-From 6bf5753f848d4c9e66d5e55929b307715ee1d5c5 Mon Sep 17 00:00:00 2001
+From 1f0c84c3cabc99115d454ff2d6a7cb62c75f9d9f Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 9 Feb 2023 10:11:39 +0000
-Subject: [PATCH 36/37] WIP: arm64: dts: meson-gxm-tx9-pro: support the fd628
+Subject: [PATCH 33/34] WIP: arm64: dts: meson-gxm-tx9-pro: support the fd628
  display
 
 The TX9-Pro has an FD628 display. Add support using the tm166xx
@@ -15,7 +15,7 @@ Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
  1 file changed, 62 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-gxm-tx9-pro.dts b/arch/arm64/boot/dts/amlogic/meson-gxm-tx9-pro.dts
-index 9a62176cfe5a..08603b035868 100644
+index 9a62176cfe5a..066929fecfe3 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-gxm-tx9-pro.dts
 +++ b/arch/arm64/boot/dts/amlogic/meson-gxm-tx9-pro.dts
 @@ -9,6 +9,7 @@
@@ -49,8 +49,8 @@ index 9a62176cfe5a..08603b035868 100644
 +			spi-rx-delay-us = <1>;
 +			spi-max-frequency = <500000>;
 +
-+			tm16xx,digits = [00 01 02 03];
-+			tm16xx,segment-mapping = [03 01 02 06 04 05 00];
++			titanmec,digits = [00 01 02 03];
++			titanmec,segment-mapping = [03 01 02 06 04 05 00];
 +
 +			#address-cells = <2>;
 +			#size-cells = <0>;

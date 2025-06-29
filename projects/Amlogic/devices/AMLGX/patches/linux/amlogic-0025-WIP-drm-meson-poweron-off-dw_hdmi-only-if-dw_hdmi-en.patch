@@ -1,7 +1,7 @@
-From b31529fd0ef42632387ce46def44a4e847d88ce1 Mon Sep 17 00:00:00 2001
+From b73cf82107852ce13421fe1073bf70f76fae4dcb Mon Sep 17 00:00:00 2001
 From: Luke Lu <luke.lu@libre.computer>
 Date: Wed, 13 Dec 2023 03:47:44 +0000
-Subject: [PATCH 25/37] WIP: drm/meson: poweron/off dw_hdmi only if dw_hdmi
+Subject: [PATCH 25/34] WIP: drm/meson: poweron/off dw_hdmi only if dw_hdmi
  enabled
 
 dw_hdmi_poweron() assumes that hdmi->curr_conn is valid. Calling
