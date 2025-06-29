@@ -27,6 +27,8 @@
   DISTRO_BOOTLABEL="LEIOT"
   DISTRO_DISKLABEL="STORAGE"
 
+# VFD panel boot message (use UPPERCASE and padding)
+  VFD_MESSAGE="    LEIoT"
 
 ### BUILDSYSTEM SETTINGS ####
 

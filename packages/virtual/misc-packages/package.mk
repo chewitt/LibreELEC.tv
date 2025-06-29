@@ -9,3 +9,7 @@ PKG_URL=""
 PKG_DEPENDS_TARGET="toolchain ${ADDITIONAL_PACKAGES}"
 PKG_SECTION="virtual"
 PKG_LONGDESC="misc-packages: Metapackage for miscellaneous packages"
+
+if [ "${VFD_SUPPORT}" = "yes" ]; then
+  PKG_DEPENDS_TARGET+=" tm16xx-display"
+fi

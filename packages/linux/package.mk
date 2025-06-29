@@ -147,6 +147,26 @@ pre_make_target() {
     ${PKG_BUILD}/scripts/config --disable CONFIG_WIREGUARD
   fi
 
+  # disable vfd support if not enabled
+  if [ ! "${VFD_SUPPORT}" = yes ]; then
+    ${PKG_BUILD}/scripts/config --disable CONFIG_PANEL_CHANGE_MESSAGE
+  else
+    # enable the module and set distro boot message
+    ${PKG_BUILD}/scripts/config --enable CONFIG_AUXDISPLAY
+    ${PKG_BUILD}/scripts/config --enable CONFIG_LINEDISPLAY
+    ${PKG_BUILD}/scripts/config --enable CONFIG_TM16XX
+    ${PKG_BUILD}/scripts/config --enable CONFIG_TM16XX_KEYPAD
+    ${PKG_BUILD}/scripts/config --enable CONFIG_TM16XX_I2C
+    ${PKG_BUILD}/scripts/config --enable CONFIG_TM16XX_SPI
+    ${PKG_BUILD}/scripts/config --enable CONFIG_PANEL_CHANGE_MESSAGE
+    ${PKG_BUILD}/scripts/config --set-str CONFIG_PANEL_BOOT_MESSAGE "${VFD_MESSAGE}"
+    # enable led activity triggers
+    ${PKG_BUILD}/scripts/config --enable CONFIG_LEDS_TRIGGER_TIMER # Colon
+    ${PKG_BUILD}/scripts/config --enable CONFIG_LEDS_TRIGGER_NETDEV # LAN/WLAN
+    ${PKG_BUILD}/scripts/config --enable CONFIG_USB_LEDS_TRIGGER_USBPORT # USB
+    ${PKG_BUILD}/scripts/config --enable CONFIG_MMC # SD
+  fi
+
   if [ "${TARGET_ARCH}" = "x86_64" ]; then
     # copy some extra firmware to linux tree
     mkdir -p ${PKG_BUILD}/external-firmware
