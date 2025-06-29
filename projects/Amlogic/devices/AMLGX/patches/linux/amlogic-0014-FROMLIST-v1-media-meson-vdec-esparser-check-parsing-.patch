@@ -1,7 +1,7 @@
-From 3eb58e53708f534a47f4cccbd44efa36d5584a5c Mon Sep 17 00:00:00 2001
+From 3fedb6bcb20f892596a3a22f14e40bcb36fad1b8 Mon Sep 17 00:00:00 2001
 From: Neil Armstrong <narmstrong@baylibre.com>
 Date: Mon, 22 Nov 2021 09:15:21 +0000
-Subject: [PATCH 14/37] FROMLIST(v1): media: meson: vdec: esparser: check
+Subject: [PATCH 14/43] FROMLIST(v1): media: meson: vdec: esparser: check
  parsing state with hardware write pointer
 
 Also check the hardware write pointer to check if ES Parser has stalled.

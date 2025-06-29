@@ -1,7 +1,7 @@
-From 536382633e9e399907fe06f34f426184965b5ab1 Mon Sep 17 00:00:00 2001
+From 5b4206b54e81ae60c7e84a5a3020179ee1782b16 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 11 Jun 2025 11:23:44 +0000
-Subject: [PATCH 35/37] WIP: arm64: dts: meson-gxl-s905w-tx3-mini: support the
+Subject: [PATCH 41/43] WIP: arm64: dts: meson-gxl-s905w-tx3-mini: support the
  fd628 display
 
 The TX3-mini has an FD628 display. Add support using the tm166xx
@@ -15,7 +15,7 @@ Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
  1 file changed, 63 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts b/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts
-index 6705c2082a78..94cae3a59554 100644
+index 6705c2082a78..b1c438fec1bd 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts
 +++ b/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts
 @@ -10,6 +10,8 @@
@@ -50,8 +50,8 @@ index 6705c2082a78..94cae3a59554 100644
 +			spi-rx-delay-us = <1>;
 +			spi-max-frequency = <500000>;
 +
-+			tm16xx,digits = [03 02 01 00];
-+			tm16xx,segment-mapping = [03 04 05 00 01 02 06];
++			titanmec,digits = [03 02 01 00];
++			titanmec,segment-mapping = [03 04 05 00 01 02 06];
 +
 +			#address-cells = <2>;
 +			#size-cells = <0>;

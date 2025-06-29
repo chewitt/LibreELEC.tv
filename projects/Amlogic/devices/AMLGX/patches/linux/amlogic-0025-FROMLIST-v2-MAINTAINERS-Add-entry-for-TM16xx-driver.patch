@@ -1,0 +1,33 @@
+From 6b94e1641d8c6cf1eaa9960ca2cc381421745bff Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jean-Fran=C3=A7ois=20Lessard?= <jefflessard3@gmail.com>
+Date: Wed, 18 Jun 2025 21:29:57 -0400
+Subject: [PATCH 25/43] FROMLIST(v2): MAINTAINERS: Add entry for TM16xx driver
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Jean-François Lessard <jefflessard3@gmail.com>
+---
+ MAINTAINERS | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index c0b444e5fd5a..23f7d2cba9e5 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -25070,6 +25070,12 @@ F:	mm/memfd.c
+ F:	mm/shmem.c
+ F:	mm/shmem_quota.c
+ 
++TM16XX-COMPATIBLE LED CONTROLLERS DISPLAY DRIVER
++M:	Jean-François Lessard <jefflessard3@gmail.com>
++S:	Maintained
++F:	Documentation/devicetree/bindings/auxdisplay/titanmec,tm16xx.yaml
++F:	drivers/auxdisplay/tm16xx.c
++
+ TOMOYO SECURITY MODULE
+ M:	Kentaro Takeda <takedakn@nttdata.co.jp>
+ M:	Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
+-- 
+2.34.1
+

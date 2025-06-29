@@ -1,18 +1,23 @@
-From ea1f663261cea2fe53626fd2d96c5e8b4d475e28 Mon Sep 17 00:00:00 2001
-From: Christian Hewitt <christianshewitt@gmail.com>
-Date: Thu, 12 Jun 2025 10:25:29 +0000
-Subject: [PATCH 33/37] WIP: dt-bindings: vendor-prefixes: add Fuda Hisi
- Microelectronics
+From 17cd1bc50f036fb579cbbd148c6947a1675a895f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Andreas=20F=C3=A4rber?= <afaerber@suse.de>
+Date: Thu, 12 Dec 2019 04:39:37 +0100
+Subject: [PATCH 18/43] FROMLIST(v2): dt-bindings: vendor-prefixes: Add Fuda
+ Hisi Microelectronics
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-Add the "fdhisi" prefix for Fuda Hisi Microelectronics Co, Ltd.
+Assign vendor prefix "fdhisi", based on their domain name.
 
-Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+Cc: sales@fdhisi.com
+Signed-off-by: Andreas Färber <afaerber@suse.de>
+Signed-off-by: Jean-François Lessard <jefflessard3@gmail.com>
 ---
  Documentation/devicetree/bindings/vendor-prefixes.yaml | 2 ++
  1 file changed, 2 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/vendor-prefixes.yaml b/Documentation/devicetree/bindings/vendor-prefixes.yaml
-index 32f8f24ec809..d02615496b2b 100644
+index 5d2a7a8d3ac6..9e4d251e71d7 100644
 --- a/Documentation/devicetree/bindings/vendor-prefixes.yaml
 +++ b/Documentation/devicetree/bindings/vendor-prefixes.yaml
 @@ -531,6 +531,8 @@ patternProperties:
