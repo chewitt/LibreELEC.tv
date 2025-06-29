@@ -1,7 +1,7 @@
-From 61874bc3835b2326bb40bae200888657e7d38fa3 Mon Sep 17 00:00:00 2001
+From 10b62a133a5b5adf4febda7266e75eb0d142a368 Mon Sep 17 00:00:00 2001
 From: Benjamin Roszak <benjamin545@gmail.com>
 Date: Mon, 23 Jan 2023 10:56:46 +0000
-Subject: [PATCH 15/37] FROMLIST(v2): media: meson: vdec: implement 10bit
+Subject: [PATCH 15/43] FROMLIST(v2): media: meson: vdec: implement 10bit
  bitstream handling
 
 In order to support 10bit bitstream decoding, buffers and MMU

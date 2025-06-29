@@ -1,42 +1,41 @@
-From 536382633e9e399907fe06f34f426184965b5ab1 Mon Sep 17 00:00:00 2001
+From ac40fb8183203446ffcb54224b274466686f598c Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
-Date: Wed, 11 Jun 2025 11:23:44 +0000
-Subject: [PATCH 35/37] WIP: arm64: dts: meson-gxl-s905w-tx3-mini: support the
- fd628 display
+Date: Thu, 9 Feb 2023 10:11:39 +0000
+Subject: [PATCH 42/43] WIP: arm64: dts: meson-gxm-tx9-pro: support the fd628
+ display
 
-The TX3-mini has an FD628 display. Add support using the tm166xx
+The TX9-Pro has an FD628 display. Add support using the tm166xx
 kernel driver and userspace tools [0].
 
 [0] https://github.com/jefflessard/tm16xx-display
 
 Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
 ---
- .../dts/amlogic/meson-gxl-s905w-tx3-mini.dts  | 63 +++++++++++++++++++
- 1 file changed, 63 insertions(+)
+ .../boot/dts/amlogic/meson-gxm-tx9-pro.dts    | 62 +++++++++++++++++++
+ 1 file changed, 62 insertions(+)
 
-diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts b/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts
-index 6705c2082a78..94cae3a59554 100644
---- a/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts
-+++ b/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-tx3-mini.dts
-@@ -10,6 +10,8 @@
- 
- #include "meson-gxl-s905x.dtsi"
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxm-tx9-pro.dts b/arch/arm64/boot/dts/amlogic/meson-gxm-tx9-pro.dts
+index 9a62176cfe5a..066929fecfe3 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxm-tx9-pro.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-gxm-tx9-pro.dts
+@@ -9,6 +9,7 @@
+ #include "meson-gxm.dtsi"
  #include "meson-gx-p23x-q20x.dtsi"
-+#include <dt-bindings/gpio/gpio.h>
+ #include <dt-bindings/input/input.h>
 +#include <dt-bindings/leds/common.h>
  
  / {
- 	compatible = "oranth,tx3-mini", "amlogic,s905w", "amlogic,meson-gxl";
-@@ -19,6 +21,67 @@ memory@0 {
- 		device_type = "memory";
- 		reg = <0x0 0x0 0x0 0x40000000>; /* 1 GiB or 2 GiB */
+ 	compatible = "oranth,tx9-pro", "amlogic,s912", "amlogic,meson-gxm";
+@@ -37,6 +38,67 @@ button {
+ 			gpios = <&gpio_ao GPIOAO_2 GPIO_ACTIVE_LOW>;
+ 		};
  	};
 +
 +	display_client: spi {
 +		compatible = "spi-gpio";
 +		sck-gpios = <&gpio 76 GPIO_ACTIVE_HIGH>;
 +		mosi-gpios = <&gpio 75 GPIO_ACTIVE_HIGH>;
-+		cs-gpios = <&gpio_ao 4 GPIO_ACTIVE_LOW>;
++		cs-gpios = <&gpio 53 GPIO_ACTIVE_LOW>;
 +		num-chipselects = <1>;
 +
 +		#address-cells = <1>;
@@ -50,8 +49,8 @@ index 6705c2082a78..94cae3a59554 100644
 +			spi-rx-delay-us = <1>;
 +			spi-max-frequency = <500000>;
 +
-+			tm16xx,digits = [03 02 01 00];
-+			tm16xx,segment-mapping = [03 04 05 00 01 02 06];
++			titanmec,digits = [00 01 02 03];
++			titanmec,segment-mapping = [03 01 02 06 04 05 00];
 +
 +			#address-cells = <2>;
 +			#size-cells = <0>;
@@ -94,7 +93,7 @@ index 6705c2082a78..94cae3a59554 100644
 +	};
  };
  
- &ir {
+ &ethmac {
 -- 
 2.34.1
 

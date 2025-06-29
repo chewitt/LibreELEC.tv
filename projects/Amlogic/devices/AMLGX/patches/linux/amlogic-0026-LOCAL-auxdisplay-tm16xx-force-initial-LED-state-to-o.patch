@@ -1,0 +1,34 @@
+From ea852830efcc2de22e4e2905f8d07d65401a5d02 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Tue, 1 Jul 2025 05:36:48 +0000
+Subject: [PATCH 26/43] LOCAL: auxdisplay: tm16xx: force initial LED state to
+ off
+
+The default 0xFF results in all display elements being turned on
+during module load. Depending on device boot speed this either
+results in everything being illuminated for a while, or a quick
+flash before the userspace service blanks them before starting
+the clock. Setting to 0x00 blanks the display on module load for
+quieter boot.
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/auxdisplay/tm16xx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/auxdisplay/tm16xx.c b/drivers/auxdisplay/tm16xx.c
+index 26bb9f81782e..ca2496141508 100644
+--- a/drivers/auxdisplay/tm16xx.c
++++ b/drivers/auxdisplay/tm16xx.c
+@@ -906,7 +906,7 @@ static int tm16xx_display_init(struct tm16xx_display *display)
+ 		tm16xx_value_store(display->main_led.dev, NULL, default_value,
+ 				   strlen(default_value));
+ 	} else {
+-		memset(display->display_data, 0xFF, display->display_data_len);
++		memset(display->display_data, 0x00, display->display_data_len);
+ 		schedule_work(&display->flush_display);
+ 		flush_work(&display->flush_display);
+ 		memset(display->display_data, 0x00, display->display_data_len);
+-- 
+2.34.1
+

@@ -1,7 +1,7 @@
-From 5d95e031c6517a910173b80c50b800ffdc6493fa Mon Sep 17 00:00:00 2001
+From bed2c7365c22c6143e49f0359044afd9872c0cb5 Mon Sep 17 00:00:00 2001
 From: Luke Lu <luke.lu@libre.computer>
 Date: Mon, 21 Aug 2023 10:50:04 +0000
-Subject: [PATCH 24/37] WIP: drm/meson: do setup after resumption to fix hdmi
+Subject: [PATCH 33/43] WIP: drm/meson: do setup after resumption to fix hdmi
  output
 
 Some HDMI displays connected to gxl-based boards go black after

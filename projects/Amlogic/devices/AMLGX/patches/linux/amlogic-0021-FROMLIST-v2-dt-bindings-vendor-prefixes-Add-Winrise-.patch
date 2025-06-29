@@ -1,0 +1,32 @@
+From d5b9f536e5d912294defa3cd40f3a2e7ae123afa Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jean-Fran=C3=A7ois=20Lessard?= <jefflessard3@gmail.com>
+Date: Thu, 26 Jun 2025 04:53:24 +0000
+Subject: [PATCH 21/43] FROMLIST(v2): dt-bindings: vendor-prefixes: Add Winrise
+ Technology
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Assign vendor prefix "winrise", matching their domain name.
+
+Signed-off-by: Jean-François Lessard <jefflessard3@gmail.com>
+---
+ Documentation/devicetree/bindings/vendor-prefixes.yaml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/vendor-prefixes.yaml b/Documentation/devicetree/bindings/vendor-prefixes.yaml
+index f03ab02afe05..a3bf93e5dc61 100644
+--- a/Documentation/devicetree/bindings/vendor-prefixes.yaml
++++ b/Documentation/devicetree/bindings/vendor-prefixes.yaml
+@@ -1711,6 +1711,8 @@ patternProperties:
+     description: Wingtech Technology Co., Ltd.
+   "^winlink,.*":
+     description: WinLink Co., Ltd
++  "^winrise,.*":
++    description: Shenzhen Winrise Technology Co., Ltd.
+   "^winsen,.*":
+     description: Winsen Corp.
+   "^winstar,.*":
+-- 
+2.34.1
+

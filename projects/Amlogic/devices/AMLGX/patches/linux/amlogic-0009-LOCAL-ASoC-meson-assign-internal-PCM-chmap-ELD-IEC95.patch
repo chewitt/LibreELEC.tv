@@ -1,7 +1,7 @@
-From e751b7cfeaca07cef1b14cebbd4dc567ed50ed37 Mon Sep 17 00:00:00 2001
+From 49c64329241bdd4bd4b94a4e23bbeda9e62d0e13 Mon Sep 17 00:00:00 2001
 From: Anssi Hannula <anssi.hannula@iki.fi>
 Date: Sun, 17 Apr 2022 04:37:48 +0000
-Subject: [PATCH 09/37] LOCAL: ASoC: meson: assign internal PCM
+Subject: [PATCH 09/43] LOCAL: ASoC: meson: assign internal PCM
  chmap/ELD/IEC958 kctls to device 0
 
 On SoC sound devices utilizing codec2codec DAI links with an HDMI codec the kctls

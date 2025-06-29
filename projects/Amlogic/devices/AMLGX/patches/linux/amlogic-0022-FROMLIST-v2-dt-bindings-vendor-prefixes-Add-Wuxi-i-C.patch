@@ -1,0 +1,32 @@
+From adf8dddd6fc6ead716e3f494c99b01228d4447ad Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jean-Fran=C3=A7ois=20Lessard?= <jefflessard3@gmail.com>
+Date: Thu, 26 Jun 2025 05:11:48 +0000
+Subject: [PATCH 22/43] FROMLIST(v2): dt-bindings: vendor-prefixes: Add Wuxi
+ i-Core Electronics
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Assign vendor prefix "icore", based on their domain name.
+
+Signed-off-by: Jean-François Lessard <jefflessard3@gmail.com>
+---
+ Documentation/devicetree/bindings/vendor-prefixes.yaml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/vendor-prefixes.yaml b/Documentation/devicetree/bindings/vendor-prefixes.yaml
+index a3bf93e5dc61..def35300994e 100644
+--- a/Documentation/devicetree/bindings/vendor-prefixes.yaml
++++ b/Documentation/devicetree/bindings/vendor-prefixes.yaml
+@@ -694,6 +694,8 @@ patternProperties:
+     description: International Business Machines (IBM)
+   "^ibm,.*":
+     description: International Business Machines (IBM)
++  "^icore,.*":
++    description: Wuxi i-Core Electronics Co., Ltd.
+   "^icplus,.*":
+     description: IC Plus Corp.
+   "^idt,.*":
+-- 
+2.34.1
+
