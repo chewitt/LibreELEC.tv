@@ -19,6 +19,13 @@ case "${PROJECT}" in
     PKG_SHA256="66aead94c3884c9bc1ff2866f44d87f2f61d106bf203e1c723f83170b7e84297"
     PKG_URL="https://github.com/jc-kynesim/rpi-ffmpeg/archive/${PKG_VERSION}.tar.gz"
     ;;
+  Rockchip)
+    PKG_VERSION="789d3a1b156f81db4a469ecc70b92e2d8f32cbca" # inc. formats
+    PKG_FFMPEG_BRANCH="rockchip-7.1"
+    PKG_SHA256="172af31d9aa19f03a203fbc96945763614d2c8a86bebea467540db6d26049c27"
+    PKG_URL="https://github.com/chewitt/ffmpeg/archive/${PKG_VERSION}.tar.gz"
+    PKG_PATCH_DIRS+=" vf-deinterlace-v4l2m2m"
+    ;;
   RPi)
     PKG_FFMPEG_RPI="--disable-mmal --enable-sand"
     PKG_PATCH_DIRS+=" rpi"
@@ -35,7 +42,7 @@ esac
 
 post_unpack() {
   # Fix FFmpeg version
-  if [ "${PROJECT}" = "Amlogic" ]; then
+  if [ "${PROJECT}" = "Amlogic" ] || [ "${PROJECT}" = "Rockchip" ]; then
     echo "${PKG_FFMPEG_BRANCH}-${PKG_VERSION:0:7}" >${PKG_BUILD}/VERSION
   else
     echo "${PKG_VERSION}" >${PKG_BUILD}/RELEASE
