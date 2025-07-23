@@ -311,115 +311,12 @@ devices = \
       },
     },
     'RK3399': {
-      'hugsun-x99': {
-        'dtb': 'rk3399-hugsun-x99.dtb',
-        'config': 'evb-rk3399_defconfig',
-        'rockchip_legacy_boot': '1'
-      },
       'khadas-edge': {
         'dtb': 'rk3399-khadas-edge.dtb',
         'config': 'khadas-edge-rk3399_defconfig'
       },
-      'nanopc-t4': {
-        'dtb': 'rk3399-nanopc-t4.dtb',
-        'config': 'nanopc-t4-rk3399_defconfig'
-      },
-      'nanopi-m4': {
-        'dtb': 'rk3399-nanopi-m4.dtb',
-        'config': 'nanopi-m4-rk3399_defconfig'
-      },
-      'orangepi': {
-        'dtb': 'rk3399-orangepi.dtb',
-        'config': 'orangepi-rk3399_defconfig'
-      },
-      'rock960': {
-        'dtb': 'rk3399-rock960.dtb',
-        'config': 'rock960-rk3399_defconfig'
-      },
-      'rock-pi-4': {
-        'dtb': 'rk3399-rock-pi-4b.dtb',
-        'config': 'rock-pi-4-rk3399_defconfig'
-      },
-      'rock-pi-4-plus': {
-        'dtb': 'rk3399-rock-pi-4b-plus.dtb',
-        'config': 'rock-pi-4-rk3399_defconfig'
-      },
-      'rock-4c-plus': {
-        'dtb': 'rk3399-rock-4c-plus.dtb',
-        'config': 'rock-4c-plus-rk3399_defconfig'
-      },
-      'rock-4se': {
-       'dtb': 'rk3399-rock-4se.dtb',
-       'config': 'rock-4se-rk3399_defconfig'
-      },
-      'rock-pi-n10': {
-        'dtb': 'rk3399pro-rock-pi-n10.dtb',
-        'config': 'rock-pi-n10-rk3399pro_defconfig'
-      },
-      'rockpro64': {
-        'dtb': 'rk3399-rockpro64.dtb',
-        'config': 'rockpro64-rk3399_defconfig'
-      },
-      'roc-pc': {
-        'dtb': 'rk3399-roc-pc-mezzanine.dtb',
-        'config': 'roc-pc-mezzanine-rk3399_defconfig'
-      },
-      'roc-pc-plus': {
-        'dtb': 'rk3399-roc-pc-plus.dtb',
-        'config': 'roc-pc-rk3399_defconfig'
-      },
-      'sapphire': {
-        'dtb': 'rk3399-sapphire.dtb',
-        'config': 'evb-rk3399_defconfig',
-        'rockchip_legacy_boot': '1'
-      },
     },
     'RK356X': {
-      'nanopi-r5c': {
-        'config': 'nanopi-r5c-rk3568_defconfig',
-        'dtb': '',
-        'soc': 'RK3568'
-      },
-      'nanopi-r5s': {
-        'config': 'nanopi-r5s-rk3568_defconfig',
-        'dtb': '',
-        'soc': 'RK3568'
-      },
-      'odroid-m1': {
-        'config': 'odroid-m1-rk3568_defconfig',
-        'dtb': '',
-        'soc': 'RK3568'
-      },
-      'orangepi-3b': {
-        'config': 'orangepi-3b-rk3566_defconfig',
-        'dtb': '',
-        'soc': 'RK3566'
-      },
-      'quartz64-a': {
-        'config': 'quartz64-a-rk3566_defconfig',
-        'dtb': '',
-        'soc': 'RK3566'
-      },
-      'quartz64-b': {
-        'config': 'quartz64-b-rk3566_defconfig',
-        'dtb': '',
-        'soc': 'RK3566'
-      },
-      'radxa-zero-3': {
-        'config': 'radxa-zero-3-rk3566_defconfig',
-        'dtb': '',
-        'soc': 'RK3566'
-      },
-      'rock-3a': {
-        'config': 'rock-3a-rk3568_defconfig',
-        'dtb': '',
-        'soc': 'RK3568'
-      },
-      'rock-3b': {
-        'config': 'rock-3b-rk3568_defconfig',
-        'dtb': '',
-        'soc': 'RK3568'
-      },
       'rock-3c': {
         'config': 'rock-3c-rk3566_defconfig',
         'dtb': '',
@@ -433,46 +330,6 @@ devices = \
       },
     },
     'RK3588': {
-      'cm3588-nas': {
-        'config': 'cm3588-nas-rk3588_defconfig',
-        'dtb': 'rk3588-friendlyelec-cm3588-nas.dtb'
-      },
-      'khadas-edge2': {
-        'config': 'khadas-edge2-rk3588s_defconfig',
-        'dtb': ''
-      },
-      'nanopc-t6': {
-        'config': 'nanopc-t6-rk3588_defconfig',
-        'dtb': ''
-      },
-      'nanopi-r6c': {
-        'config': 'nanopi-r6c-rk3588s_defconfig',
-        'dtb': ''
-      },
-      'nanopi-r6s': {
-        'config': 'nanopi-r6s-rk3588s_defconfig',
-        'dtb': ''
-      },
-      'odroid-m2': {
-        'config': 'odroid-m2-rk3588s_defconfig',
-        'dtb': ''
-      },
-      'orangepi-5': {
-        'config': 'orangepi-5-rk3588s_defconfig',
-        'dtb': ''
-      },
-      'orangepi-5-plus': {
-        'config': 'orangepi-5-plus-rk3588_defconfig',
-        'dtb': ''
-      },
-      'quartzpro64': {
-        'config': 'quartzpro64-rk3588_defconfig',
-        'dtb': ''
-      },
-      'rock-5a': {
-        'config': 'rock5a-rk3588s_defconfig',
-        'dtb': ''
-      },
       'rock-5b': {
         'config': 'rock5b-rk3588_defconfig',
         'dtb': ''
