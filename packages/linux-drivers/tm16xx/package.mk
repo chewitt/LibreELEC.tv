@@ -12,6 +12,9 @@ PKG_IS_KERNEL_PKG="yes"
 
 pre_make_target() {
   unset LDFLAGS
+
+  sed -i '/Description=*./a\ConditionPathIsDirectory=/sys/class/leds/display' display.service
+  sed -i '/ExecStartPre/d' display.service
 }
 
 make_target() {
