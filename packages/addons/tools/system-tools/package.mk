@@ -3,7 +3,7 @@
 
 PKG_NAME="system-tools"
 PKG_VERSION="1.0"
-PKG_REV="0"
+PKG_REV="1"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://libreelec.tv"
@@ -98,6 +98,7 @@ addon() {
     # file
     cp -P $(get_install_dir file)/usr/bin/file ${ADDON_BUILD}/${PKG_ADDON_ID}/bin
     cp -P $(get_install_dir file)/usr/share/misc/magic.mgc ${ADDON_BUILD}/${PKG_ADDON_ID}/data
+    cp -P $(get_install_dir zstd)/usr/lib/libzstd.so* ${ADDON_BUILD}/${PKG_ADDON_ID}/lib.private
 
     # fuse
     cp -P $(get_install_dir fuse)/usr/bin/{fusermount,ulockmgr_server} ${ADDON_BUILD}/${PKG_ADDON_ID}/bin
