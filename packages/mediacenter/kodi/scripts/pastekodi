@@ -66,7 +66,7 @@ else
 fi
 
 (
-  echo "${LOG_TYPE} log output for: $(lsb_release)"
+  echo "${LOG_TYPE} log output for: $(lsb_release) ${LIBREELEC_ARCH} ${VERSION_ID}"
 
   if [ "${SYSTEM_ARCH}" = "x86_64" ]; then
     if [ -d "/sys/firmware/efi" ]; then
