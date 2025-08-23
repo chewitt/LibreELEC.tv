@@ -2,8 +2,8 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="rust"
-PKG_VERSION="1.82.0"
-PKG_SHA256="7c53f4509eda184e174efa6ba7d5eeb586585686ce8edefc781a2b11a7cf512a"
+PKG_VERSION="1.85.1"
+PKG_SHA256="0f2995ca083598757a8d9a293939e569b035799e070f419a686b0996fb94238a"
 PKG_LICENSE="MIT"
 PKG_SITE="https://www.rust-lang.org"
 PKG_URL="https://static.rust-lang.org/dist/rustc-${PKG_VERSION}-src.tar.gz"
@@ -32,8 +32,11 @@ configure_host() {
       ;;
   esac
 
-  cat > ${PKG_BUILD}/config.toml <<END
-change-id = 129295
+  cat >${PKG_BUILD}/config.toml  <<END
+change-id = 134650
+
+[llvm]
+download-ci-llvm = false
 
 [target.${TARGET_NAME}]
 llvm-config = "${TOOLCHAIN}/bin/llvm-config"
@@ -50,6 +53,7 @@ rpath = true
 channel = "stable"
 codegen-tests = false
 optimize = true
+download-rustc = false
 
 [build]
 submodules = false
