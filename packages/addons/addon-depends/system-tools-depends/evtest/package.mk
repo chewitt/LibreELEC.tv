@@ -2,11 +2,11 @@
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="evtest"
-PKG_VERSION="3fe3ce98d81ae8b00156933ddb86b92a874cba6a" # HEAD 07/04/2025
-PKG_SHA256="ed9eace5cde4ce8d2c5bcfd10a700d2d0bbf843c1ed9359701db0305adb897ac"
+PKG_VERSION="1.36"
+PKG_SHA256="3b9a66c92e48b0cd13b689530b5729c031bc1bcbfe9d19c258f9245e2f8d2a0f"
 PKG_LICENSE="GPL"
 PKG_SITE="https://gitlab.freedesktop.org/libevdev/evtest/"
-PKG_URL="https://gitlab.freedesktop.org/libevdev/evtest/-/archive/${PKG_VERSION}.tar.gz"
+PKG_URL="https://gitlab.freedesktop.org/libevdev/evtest/-/archive/${PKG_NAME}-${PKG_VERSION}/${PKG_NAME}-${PKG_NAME}-${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain libxml2"
 PKG_LONGDESC="A simple tool for input event debugging."
 PKG_TOOLCHAIN="autotools"
