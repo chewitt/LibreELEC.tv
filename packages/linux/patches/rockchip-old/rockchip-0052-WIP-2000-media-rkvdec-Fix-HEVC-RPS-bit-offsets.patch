@@ -1,4 +1,4 @@
-From 70843319d3ed20b0621011355f0bc2db625ffd4a Mon Sep 17 00:00:00 2001
+From 57b57ee7fbfca3ed448c15804cbdde80d3ad7bc6 Mon Sep 17 00:00:00 2001
 From: Nicolas Dufresne <nicolas.dufresne@collabora.com>
 Date: Tue, 10 May 2022 14:37:29 -0400
 Subject: [PATCH 52/59] WIP/2000: media: rkvdec: Fix HEVC RPS bit offsets

@@ -1,4 +1,4 @@
-From 3bd9c85894e889f86176850f5f31e3009b637037 Mon Sep 17 00:00:00 2001
+From f4d11b0e7f35b2cf9a5f864410e1f9e081d21329 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Sat, 27 Feb 2021 18:01:13 +0100
 Subject: [PATCH 40/59] WIP/1002: arm64: dts: rockchip: Add ir-receiver node

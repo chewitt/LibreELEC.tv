@@ -1,4 +1,4 @@
-From ed377549c4b8c1cacc4146e3b47cda38fa3df5da Mon Sep 17 00:00:00 2001
+From 7f18b13921db7e248f1734537d69fac5d93ed1a1 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Sun, 11 Oct 2020 21:24:10 +0200
 Subject: [PATCH 55/59] WIP/2001: media: rockchip: Add Rockchip IEP driver

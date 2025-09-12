@@ -1,4 +1,4 @@
-From b5d839cc33801f7d4793a8eb40c2bd3bc90e71cf Mon Sep 17 00:00:00 2001
+From 8b00b228a75382ee9fca6cb1dee0b89a8e959ed8 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Tue, 2 Feb 2021 17:22:21 +0200
 Subject: [PATCH 37/59] WIP/1002: ARM: dts: RK3288 miqi add hdmi sound nodes

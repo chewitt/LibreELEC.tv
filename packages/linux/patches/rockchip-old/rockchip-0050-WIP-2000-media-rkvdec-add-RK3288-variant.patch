@@ -1,4 +1,4 @@
-From df2c88e56a2d2e2cae8689e2fe3a60375aa1c31b Mon Sep 17 00:00:00 2001
+From 95e9a197220a9e780a957c8520effc137e3a3f70 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Sat, 30 Jan 2021 18:21:59 +0100
 Subject: [PATCH 50/59] WIP/2000: media: rkvdec: add RK3288 variant

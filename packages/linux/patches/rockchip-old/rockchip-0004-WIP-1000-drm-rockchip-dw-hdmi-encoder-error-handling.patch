@@ -1,4 +1,4 @@
-From ad4a904ac2fb081ba0e389a4c09520e7b33ee63a Mon Sep 17 00:00:00 2001
+From 2a238271293660f065c9a11d0cd31d30bb2d9b54 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 10 Oct 2020 10:16:32 +0000
 Subject: [PATCH 04/59] WIP/1000: drm/rockchip: dw-hdmi: encoder error handling

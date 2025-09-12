@@ -1,4 +1,4 @@
-From ff4a4fce9ca0066d67e4b88bd24f9e5afff16652 Mon Sep 17 00:00:00 2001
+From a85f156bdf40aecd9f308e96bd0ffeb6e06077d4 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Sun, 4 Jul 2021 15:19:44 +0200
 Subject: [PATCH 34/59] WIP/1001: media: rkvdec: disable QoS for VP9

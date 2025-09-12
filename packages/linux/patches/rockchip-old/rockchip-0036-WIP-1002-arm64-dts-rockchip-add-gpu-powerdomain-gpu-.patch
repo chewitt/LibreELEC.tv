@@ -1,4 +1,4 @@
-From bce0ff837523f2cde25f52812d09415d556b6dac Mon Sep 17 00:00:00 2001
+From a77b197930d1b8c2890c12b9d128eba23361c067 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Wed, 2 Sep 2020 19:52:02 +0200
 Subject: [PATCH 36/59] WIP/1002: arm64: dts: rockchip: add gpu powerdomain,
