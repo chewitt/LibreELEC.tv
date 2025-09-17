@@ -1,7 +1,7 @@
-From 22b83d6b31a2744d0db96ec247fad39515409d00 Mon Sep 17 00:00:00 2001
+From 633fa389780dc624fbbc998f53c10e9a2809a1df Mon Sep 17 00:00:00 2001
 From: Ulf Hansson <ulf.hansson@linaro.org>
 Date: Tue, 9 Sep 2025 13:11:21 +0200
-Subject: [PATCH 110/110] FROMLIST(v1): pmdomain: rockchip: Fix regulator
+Subject: [PATCH 110/115] FROMLIST(v1): pmdomain: rockchip: Fix regulator
  dependency with GENPD_FLAG_NO_STAY_ON
 
 The deferred regulator retrieval for Rockchip PM domains are causing some

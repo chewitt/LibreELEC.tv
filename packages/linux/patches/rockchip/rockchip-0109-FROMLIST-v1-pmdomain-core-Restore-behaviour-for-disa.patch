@@ -1,7 +1,7 @@
-From b799e395272bdbdc60c2864afe55c569fd728d9b Mon Sep 17 00:00:00 2001
+From d908ffae9530ed8b629becf7d5c091789cd988c9 Mon Sep 17 00:00:00 2001
 From: Ulf Hansson <ulf.hansson@linaro.org>
 Date: Tue, 9 Sep 2025 13:11:20 +0200
-Subject: [PATCH 109/110] FROMLIST(v1): pmdomain: core: Restore behaviour for
+Subject: [PATCH 109/115] FROMLIST(v1): pmdomain: core: Restore behaviour for
  disabling unused PM domains
 
 Recent changes to genpd prevents those PM domains being powered-on during
