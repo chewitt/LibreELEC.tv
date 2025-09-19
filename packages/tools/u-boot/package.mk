@@ -13,8 +13,8 @@ PKG_STAMP="${UBOOT_SYSTEM} ${UBOOT_TARGET}"
 
 case ${PROJECT} in
   Rockchip)
-    PKG_VERSION="2025.10-rc3" # plus Kwiboo changes for RK3576 support
-    PKG_SHA256="1224f85046da9a8687df26b7f87ce74fe3b29d40b0151b06f9add88be5c3dc9d"
+    PKG_VERSION="2025.10-rc4" # plus Kwiboo changes for RK3576 support
+    PKG_SHA256="a30574d74a4a761ed683a2b74d938ddb89e3ffacc3b2a6aabf3f40be91d03ebe"
     PKG_URL="https://ftp.denx.de/pub/u-boot/${PKG_NAME}-${PKG_VERSION}.tar.bz2"
     ;;
   *)
