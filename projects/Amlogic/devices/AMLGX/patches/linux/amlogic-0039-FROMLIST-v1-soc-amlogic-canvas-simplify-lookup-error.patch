@@ -1,7 +1,7 @@
-From c3a08d0d94df269c255f2ee7358291ac1bab7bb4 Mon Sep 17 00:00:00 2001
+From 19bd2399afb65f124d7c89aeac43c039b1b3c298 Mon Sep 17 00:00:00 2001
 From: Johan Hovold <johan@kernel.org>
 Date: Fri, 26 Sep 2025 16:24:54 +0200
-Subject: [PATCH 38/55] FROMLIST(v1): soc: amlogic: canvas: simplify lookup
+Subject: [PATCH 39/56] FROMLIST(v1): soc: amlogic: canvas: simplify lookup
  error handling
 
 Simplify the canvas lookup error handling by dropping the OF node
