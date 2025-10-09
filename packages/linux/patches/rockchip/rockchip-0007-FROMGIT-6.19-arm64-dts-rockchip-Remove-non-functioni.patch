@@ -1,0 +1,57 @@
+From 67fd6fcbdea9649912b741737daefa3ec22da3b7 Mon Sep 17 00:00:00 2001
+From: Alexey Charkov <alchark@gmail.com>
+Date: Thu, 9 Oct 2025 16:34:01 +0400
+Subject: [PATCH 007/131] FROMGIT(6.19): arm64: dts: rockchip: Remove
+ non-functioning CPU OPPs from RK3576
+
+Drop the top-frequency OPPs from both the LITTLE and big CPU clusters on
+RK3576, as neither the opensource TF-A [1] nor the recent (after v1.08)
+binary BL31 images provided by Rockchip expose those.
+
+This fixes the problem [2] when the cpufreq governor tries to jump
+directly to the highest-frequency OPP, which results in a failed SCMI call
+leaving the system stuck at the previous OPP before the attempted change.
+
+[1] https://github.com/ARM-software/arm-trusted-firmware/blob/master/plat/rockchip/rk3576/scmi/rk3576_clk.c#L264-L304
+[2] https://lore.kernel.org/linux-rockchip/CABjd4Yz4NbqzZH4Qsed3ias56gcga9K6CmYA+BLDBxtbG915Ag@mail.gmail.com/
+
+Fixes: 57b1ce903966 ("arm64: dts: rockchip: Add rk3576 SoC base DT")
+Cc: stable@vger.kernel.org
+Signed-off-by: Alexey Charkov <alchark@gmail.com>
+---
+ arch/arm64/boot/dts/rockchip/rk3576.dtsi | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3576.dtsi b/arch/arm64/boot/dts/rockchip/rk3576.dtsi
+index fc4e9e07f1cf..f0c3ab00a7f3 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3576.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3576.dtsi
+@@ -276,12 +276,6 @@ opp-2016000000 {
+ 			opp-microvolt = <900000 900000 950000>;
+ 			clock-latency-ns = <40000>;
+ 		};
+-
+-		opp-2208000000 {
+-			opp-hz = /bits/ 64 <2208000000>;
+-			opp-microvolt = <950000 950000 950000>;
+-			clock-latency-ns = <40000>;
+-		};
+ 	};
+ 
+ 	cluster1_opp_table: opp-table-cluster1 {
+@@ -348,12 +342,6 @@ opp-2208000000 {
+ 			opp-microvolt = <925000 925000 950000>;
+ 			clock-latency-ns = <40000>;
+ 		};
+-
+-		opp-2304000000 {
+-			opp-hz = /bits/ 64 <2304000000>;
+-			opp-microvolt = <950000 950000 950000>;
+-			clock-latency-ns = <40000>;
+-		};
+ 	};
+ 
+ 	gpu_opp_table: opp-table-gpu {
+-- 
+2.34.1
+

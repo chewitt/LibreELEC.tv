@@ -1,0 +1,38 @@
+From 3896a2259e8f465f7cebc02661dd01ba3cb8e9a1 Mon Sep 17 00:00:00 2001
+From: Mykola Kvach <xakep.amatop@gmail.com>
+Date: Mon, 3 Nov 2025 12:27:40 +0200
+Subject: [PATCH 083/131] FROMLIST(v1): arm64: dts: rockchip: orangepi-5: fix
+ PCIe 3.3V regulator voltage
+
+The vcc3v3_pcie20 fixed regulator powers the PCIe device-side 3.3V rail
+for pcie2x1l2 via vpcie3v3-supply. The DTS mistakenly set its
+regulator-min/max-microvolt to 1800000 (1.8 V). Correct both to 3300000
+(3.3 V) to match the rail name, the PCIe/M.2 power requirement, and the
+actual hardware wiring on Orange Pi 5.
+
+Fixes: b6bc755d806e ("arm64: dts: rockchip: Add Orange Pi 5")
+Cc: stable@vger.kernel.org
+Signed-off-by: Mykola Kvach <xakep.amatop@gmail.com>
+Reviewed-by: Michael Riesch <michael.riesch@collabora.com>
+---
+ arch/arm64/boot/dts/rockchip/rk3588s-orangepi-5.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3588s-orangepi-5.dts b/arch/arm64/boot/dts/rockchip/rk3588s-orangepi-5.dts
+index ad6d04793b0a..83b9b6645a1e 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3588s-orangepi-5.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3588s-orangepi-5.dts
+@@ -14,8 +14,8 @@ vcc3v3_pcie20: regulator-vcc3v3-pcie20 {
+ 		gpios = <&gpio0 RK_PC5 GPIO_ACTIVE_HIGH>;
+ 		regulator-name = "vcc3v3_pcie20";
+ 		regulator-boot-on;
+-		regulator-min-microvolt = <1800000>;
+-		regulator-max-microvolt = <1800000>;
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
+ 		startup-delay-us = <50000>;
+ 		vin-supply = <&vcc5v0_sys>;
+ 	};
+-- 
+2.34.1
+

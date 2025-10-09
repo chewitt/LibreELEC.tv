@@ -1,7 +1,7 @@
-From c673b0dd45854ac4d8dcfe68ae993e779bcfcc6f Mon Sep 17 00:00:00 2001
+From 48d5faf8c2fe964db45170156f69250b904e3ea1 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 16 Jul 2025 11:03:09 +0000
-Subject: [PATCH 002/115] LOCAL: arm64: dts: rockchip: rock5b: disable sdio
+Subject: [PATCH 002/131] LOCAL: arm64: dts: rockchip: rock5b: disable sdio
  node
 
 Radxa ships an M2 compatible WiFi module with PCIe wired RTL8852BE
@@ -26,7 +26,7 @@ Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3588-rock-5b.dts b/arch/arm64/boot/dts/rockchip/rk3588-rock-5b.dts
-index 9407a7c9910a..ba82c89201ea 100644
+index 8ef01010d985..2ee325d56ec3 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3588-rock-5b.dts
 +++ b/arch/arm64/boot/dts/rockchip/rk3588-rock-5b.dts
 @@ -27,7 +27,7 @@ &sdio {

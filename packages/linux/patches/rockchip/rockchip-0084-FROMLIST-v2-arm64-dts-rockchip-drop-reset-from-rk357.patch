@@ -1,0 +1,32 @@
+From 044fd2d813ebbb9fec5415849d43bbe7472b1c1b Mon Sep 17 00:00:00 2001
+From: Chukun Pan <amadeus@jmu.edu.cn>
+Date: Sat, 1 Nov 2025 22:01:01 +0800
+Subject: [PATCH 084/131] FROMLIST(v2): arm64: dts: rockchip: drop reset from
+ rk3576 i2c9 node
+
+The reset property is not part of the binding, so drop it.
+It is also not used by the driver, so it was likely copied
+from some vendor-kernel node.
+
+Fixes: 57b1ce903966 ("arm64: dts: rockchip: Add rk3576 SoC base DT")
+Signed-off-by: Chukun Pan <amadeus@jmu.edu.cn>
+---
+ arch/arm64/boot/dts/rockchip/rk3576.dtsi | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3576.dtsi b/arch/arm64/boot/dts/rockchip/rk3576.dtsi
+index 4c143fa2e9d3..3994dc8d16d1 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3576.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3576.dtsi
+@@ -2584,8 +2584,6 @@ i2c9: i2c@2ae80000 {
+ 			interrupts = <GIC_SPI 97 IRQ_TYPE_LEVEL_HIGH>;
+ 			pinctrl-names = "default";
+ 			pinctrl-0 = <&i2c9m0_xfer>;
+-			resets = <&cru SRST_I2C9>, <&cru SRST_P_I2C9>;
+-			reset-names = "i2c", "apb";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+ 			status = "disabled";
+-- 
+2.34.1
+
