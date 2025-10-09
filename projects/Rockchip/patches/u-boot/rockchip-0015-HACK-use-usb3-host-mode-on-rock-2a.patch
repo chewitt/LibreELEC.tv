@@ -1,4 +1,4 @@
-From a4df83dfc47d9a5d7d94ebf5aa42cfb4b81965ad Mon Sep 17 00:00:00 2001
+From b346541a8df93788a1987541dd55fac2102a8495 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 20 Jul 2025 13:11:09 +0000
 Subject: [PATCH 15/51] HACK: use usb3 host mode on rock-2a

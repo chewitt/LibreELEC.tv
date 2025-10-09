@@ -1,4 +1,4 @@
-From 4a98c5fe68ae303bb7d0f21a52432e016da30e2a Mon Sep 17 00:00:00 2001
+From 48ce5ef386e1f485fd19041fab4b5dfd3c94b365 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Fri, 11 Jul 2025 23:06:04 +0000
 Subject: [PATCH 19/51] rockchip: spl: Add a read_brom_bootsource_id() helper

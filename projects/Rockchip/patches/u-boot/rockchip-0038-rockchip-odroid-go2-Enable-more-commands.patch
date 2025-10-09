@@ -1,4 +1,4 @@
-From 5aa466b19506ef075494d9392101ffcd8bdb11dc Mon Sep 17 00:00:00 2001
+From e5af2bbcaccdc3891dec2ff47aa1018e3a0180d0 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:34:03 +0000
 Subject: [PATCH 38/51] rockchip: odroid-go2: Enable more commands

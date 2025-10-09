@@ -1,4 +1,4 @@
-From 37395f3e04361de2e142d242a4b00dd5cd35d54c Mon Sep 17 00:00:00 2001
+From db8bb2c96b93596b41e4b56febb0a1cea570163e Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 29 Jan 2025 22:36:29 +0000
 Subject: [PATCH 43/51] rockchip: mkimage: Print boot0 and boot1 parameters

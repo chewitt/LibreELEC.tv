@@ -1,4 +1,4 @@
-From 0b97cab93001fe399f114a09004ef6f38da22d63 Mon Sep 17 00:00:00 2001
+From 3eb13aa560288e1600305b707cf3c9a51af177ee Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:51 +0000
 Subject: [PATCH 26/51] rockchip: odroid-go2: Remove u-boot.dtsi props already

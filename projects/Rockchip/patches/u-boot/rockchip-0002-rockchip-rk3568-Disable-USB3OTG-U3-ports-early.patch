@@ -1,4 +1,4 @@
-From 2890fa911ceadb70514af483acae2a3c8e546ae3 Mon Sep 17 00:00:00 2001
+From dbb65918406995ddd297ad78236b3797b88e3e45 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 20 Jul 2025 13:10:36 +0000
 Subject: [PATCH 02/51] rockchip: rk3568: Disable USB3OTG U3 ports early

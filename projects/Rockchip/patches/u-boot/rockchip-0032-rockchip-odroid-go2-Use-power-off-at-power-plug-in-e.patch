@@ -1,4 +1,4 @@
-From 21dd4189ca39e4276a69fc2292a9858cee6f51ff Mon Sep 17 00:00:00 2001
+From 13a69ed4a854fe9aa109c846718075882e1c8d79 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:57 +0000
 Subject: [PATCH 32/51] rockchip: odroid-go2: Use power off at power plug-in

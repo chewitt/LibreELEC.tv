@@ -1,4 +1,4 @@
-From 7a1532221bff00fbc5cde72203fbd2e9bbe623ff Mon Sep 17 00:00:00 2001
+From 8f677d13ecf28fdde49fdcf7c24195667ea24908 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 20 Jul 2025 13:07:25 +0000
 Subject: [PATCH 16/51] rockchip: sdram: Add rockchip_sdram_type() helper

@@ -1,4 +1,4 @@
-From 9cfd4e04b148bb5ccf62ab0acdaef806cccc166d Mon Sep 17 00:00:00 2001
+From 3468ab40e5eba665c3f9e27fdf1892f11e2644ae Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:49 +0000
 Subject: [PATCH 24/51] clk: px30: Allow use of GPU and WIFI_PMU in

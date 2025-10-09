@@ -1,4 +1,4 @@
-From 0bb6c3cbe39776ef5327e375a7f2b6f89593aeb0 Mon Sep 17 00:00:00 2001
+From d80c604d59f26ecdbc753f02e5b780e488f3baff Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Fri, 11 Jul 2025 11:05:55 +0000
 Subject: [PATCH 49/51] WIP: board: rockchip: Add Luckfox Omni3576

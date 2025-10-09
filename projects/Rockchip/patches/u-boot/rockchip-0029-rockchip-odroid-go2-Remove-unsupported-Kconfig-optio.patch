@@ -1,4 +1,4 @@
-From d6233cc52c43a601df804cefcefd51daacd22346 Mon Sep 17 00:00:00 2001
+From 44988548b0594c9d7e8e29a2a3aa12b6444fee2d Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:54 +0000
 Subject: [PATCH 29/51] rockchip: odroid-go2: Remove unsupported Kconfig

@@ -1,4 +1,4 @@
-From 3786a7326b5a6a0c1129e09dd6afb1c73b03a5e8 Mon Sep 17 00:00:00 2001
+From dcfdf9125681ebd7f64ad27ffc90830b7693ce92 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 20 Jul 2025 10:08:16 +0000
 Subject: [PATCH 07/51] rockchip: rk3528-generic: Add basic support for USB OTG

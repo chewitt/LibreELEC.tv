@@ -1,4 +1,4 @@
-From 524a10fa7e649adc015768e958a8e1737221fd53 Mon Sep 17 00:00:00 2001
+From 3f8a9a3ad97ac781b3553dc657ac6b28ff58f6e8 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:34:05 +0000
 Subject: [PATCH 40/51] arm: dts: rockchip: Include OTP in U-Boot pre-reloc

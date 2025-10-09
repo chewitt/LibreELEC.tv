@@ -1,4 +1,4 @@
-From 761e2216beda33b15a91a1952add73ccca9a8586 Mon Sep 17 00:00:00 2001
+From 9acc15707a90e691ec29e691ce6fa19a9d814089 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Fri, 11 Jul 2025 10:13:08 +0000
 Subject: [PATCH 04/51] HACK: rockchip: dts/upstream: use

@@ -1,4 +1,4 @@
-From 853612b964d72d9e9d12b7baeea05970be71120b Mon Sep 17 00:00:00 2001
+From c5acd84ed6c4c23bb4d4b876b57c7140eafc4f9a Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 20 Jul 2025 13:09:38 +0000
 Subject: [PATCH 01/51] phy: rockchip: naneng-combphy: Enable U3 port for

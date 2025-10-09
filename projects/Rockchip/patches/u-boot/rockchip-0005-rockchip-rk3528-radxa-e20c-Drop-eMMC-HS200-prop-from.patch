@@ -1,4 +1,4 @@
-From a75fe1d67e8adf70c6f70c09a0956345069d0531 Mon Sep 17 00:00:00 2001
+From bb602404b5f7609805ff133cce8f89fdf6be9955 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 20 Jul 2025 15:23:27 +0000
 Subject: [PATCH 05/51] rockchip: rk3528-radxa-e20c: Drop eMMC HS200 prop from

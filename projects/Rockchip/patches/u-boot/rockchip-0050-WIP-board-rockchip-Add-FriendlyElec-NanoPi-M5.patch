@@ -1,4 +1,4 @@
-From 46589839cfb3f9be217dabf242dd2a121ff37856 Mon Sep 17 00:00:00 2001
+From e7d0f79c85965ec2499eb20fcd1be6617ce46356 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Fri, 11 Jul 2025 11:05:19 +0000
 Subject: [PATCH 50/51] WIP: board: rockchip: Add FriendlyElec NanoPi M5

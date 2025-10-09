@@ -1,4 +1,4 @@
-From 37b82ba73c9b8f2ae9868a8512dc5370b62d4653 Mon Sep 17 00:00:00 2001
+From d59b18b482b3d3ac736e5a7d48721e78d058b327 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:55 +0000
 Subject: [PATCH 30/51] rockchip: odroid-go2: Update Kconfig options for SPL

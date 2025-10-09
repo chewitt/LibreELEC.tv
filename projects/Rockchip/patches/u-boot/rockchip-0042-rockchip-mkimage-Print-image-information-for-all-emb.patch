@@ -1,4 +1,4 @@
-From efab191eb144a44817258ef06f584241ee583235 Mon Sep 17 00:00:00 2001
+From 2553c00c9070f5957851fdb8dddf8d21f94911d1 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 29 Jan 2025 22:36:28 +0000
 Subject: [PATCH 42/51] rockchip: mkimage: Print image information for all

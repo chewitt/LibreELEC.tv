@@ -1,4 +1,4 @@
-From 5896962c834789527d2a54eb409f8c3a18146d75 Mon Sep 17 00:00:00 2001
+From 779e0a100febcdaded1adce5c4d7945bcecdb8a1 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 14 Jul 2025 20:34:07 +0000
 Subject: [PATCH 03/51] mmc: rockchip_sdhci: Set xx_TAP_VALUE for RK3528

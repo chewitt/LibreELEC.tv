@@ -1,4 +1,4 @@
-From cccdc00c7825a3f53224a7c621398987b4a84039 Mon Sep 17 00:00:00 2001
+From 4d726301779c558539fa304b508b0deebc7b4eb7 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:34:04 +0000
 Subject: [PATCH 39/51] rockchip: odroid-go2: Add myself as a reviewer

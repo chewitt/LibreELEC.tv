@@ -1,4 +1,4 @@
-From e0fe0b326cfd4c78d3a276e599bdea42044a2aed Mon Sep 17 00:00:00 2001
+From 9b507ad5d57712563369bf585ccdde06e9af8972 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 17 Mar 2025 00:29:24 +0000
 Subject: [PATCH 13/51] WIP: board: rockchip: Add FriendlyElec NanoPi Zero2

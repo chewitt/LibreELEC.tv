@@ -1,4 +1,4 @@
-From 523a6585956c9971f4b78e28c195fe42381fb9d2 Mon Sep 17 00:00:00 2001
+From 1420ff93b7617eee8323229c824fbcd37086257b Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:56 +0000
 Subject: [PATCH 31/51] rockchip: odroid-go2: Include pinctrl for sdmmc, sfc

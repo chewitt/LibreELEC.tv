@@ -1,4 +1,4 @@
-From 32786ea5b3d187a884bcd76f0cc4c97f6fd74434 Mon Sep 17 00:00:00 2001
+From 471bc876556edc4ecc48711d9338996f714858b2 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 12 Mar 2025 00:30:54 +0000
 Subject: [PATCH 12/51] WIP: board: rockchip: Add ArmSoM Sige1

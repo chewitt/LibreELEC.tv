@@ -1,4 +1,4 @@
-From 35cab2f4625df7b30b461a0661eb0bb0c7629e7d Mon Sep 17 00:00:00 2001
+From ea07cf97ba810550a56997ac6df1a5e7de351514 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:34:02 +0000
 Subject: [PATCH 37/51] rockchip: odroid-go2: Turn on the blue LED at boot

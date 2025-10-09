@@ -1,4 +1,4 @@
-From bd1ae5092d835376db267a50f31e9dbb45ccf681 Mon Sep 17 00:00:00 2001
+From 51c85bb9afca4a4e7e67661220ecb330d27dbc2b Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 27 Jul 2025 08:46:40 +0000
 Subject: [PATCH 10/51] WIP: net: rockchip Use CRU as default TX clk source for

@@ -1,4 +1,4 @@
-From 6baa2c963767dd90a4186483422d7c83902750d1 Mon Sep 17 00:00:00 2001
+From 325c2cc392dea2fe476fcd1f986cea5f982e10dc Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 12 Mar 2025 00:32:03 +0000
 Subject: [PATCH 06/51] HACK: rockchip: dts/upstream: use work-in-progress

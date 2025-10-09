@@ -1,4 +1,4 @@
-From 91b9e02a41ae9e41fa6d05281cb79af5f58f19be Mon Sep 17 00:00:00 2001
+From 1d641e221daad995252d73c5adaef168450e3f7a Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:59 +0000
 Subject: [PATCH 34/51] rockchip: odroid-go2: Select board FDT from FIT in SPL

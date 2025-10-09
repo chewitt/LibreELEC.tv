@@ -1,4 +1,4 @@
-From e7044c65dc50e4fd005d7262af4f6c5536cce038 Mon Sep 17 00:00:00 2001
+From de76da7dcfb903e958d48a8c9ec5f51b6af4057a Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 29 Jan 2025 22:36:32 +0000
 Subject: [PATCH 46/51] rockchip: mkimage: Add option for image load address

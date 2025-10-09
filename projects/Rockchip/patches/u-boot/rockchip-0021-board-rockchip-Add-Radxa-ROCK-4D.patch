@@ -1,4 +1,4 @@
-From 871d420f2f2a0270207b42e17a7525ca8b7ac12d Mon Sep 17 00:00:00 2001
+From c82905947704f20cfc0d1b7930677ba5f19de75f Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Fri, 11 Jul 2025 23:06:06 +0000
 Subject: [PATCH 21/51] board: rockchip: Add Radxa ROCK 4D

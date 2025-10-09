@@ -1,4 +1,4 @@
-From 476c60e9347488ef2fc92dab98afd9e10be68fb4 Mon Sep 17 00:00:00 2001
+From 843b17de136c0c211af3914de2cd23273032557a Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:34:01 +0000
 Subject: [PATCH 36/51] rockchip: odroid-go2: Enable RockUSB, button, LED and

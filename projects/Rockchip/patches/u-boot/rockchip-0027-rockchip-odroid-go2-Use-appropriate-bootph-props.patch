@@ -1,4 +1,4 @@
-From ec6d1722325780fb2b7ca6a963288743f20e9a8c Mon Sep 17 00:00:00 2001
+From 076e85b79590aa8afbfe730a5120bf1332b17d2a Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:52 +0000
 Subject: [PATCH 27/51] rockchip: odroid-go2: Use appropriate bootph props

@@ -1,4 +1,4 @@
-From a2f1cfb18ca139dce0b760581f8769522a53506f Mon Sep 17 00:00:00 2001
+From 94f258ee47d603eca5f612c386399d94452a7e6b Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:58 +0000
 Subject: [PATCH 33/51] rockchip: odroid-go2: Add support for SPI flash boot

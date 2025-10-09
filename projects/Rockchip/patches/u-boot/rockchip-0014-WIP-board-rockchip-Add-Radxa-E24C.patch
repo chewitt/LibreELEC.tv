@@ -1,4 +1,4 @@
-From e9c40ab22f55543ddb519992f8ce223512ecf5ea Mon Sep 17 00:00:00 2001
+From 549934294f8c36336d0232498fa33f1f645c2d8d Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 23 Jul 2025 22:25:26 +0000
 Subject: [PATCH 14/51] WIP: board: rockchip: Add Radxa E24C

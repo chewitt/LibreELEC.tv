@@ -1,4 +1,4 @@
-From 49a0d7e854e126698b1ca9cfae94feaabd94a36d Mon Sep 17 00:00:00 2001
+From edc57c20c91de4616c54a130190165c41f359194 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 12 Jul 2025 21:27:07 +0000
 Subject: [PATCH 23/51] rockchip: Ensure env in SPI Flash can work correctly

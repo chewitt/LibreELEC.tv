@@ -1,4 +1,4 @@
-From 3421116bf43b5e04c2ef6e4fecde88ff886f03dd Mon Sep 17 00:00:00 2001
+From 07bc06a44d4920826e91490dd718f966ecf28794 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 29 Jan 2025 22:36:27 +0000
 Subject: [PATCH 41/51] rockchip: mkimage: Split size_and_off and

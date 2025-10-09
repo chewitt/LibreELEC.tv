@@ -1,4 +1,4 @@
-From 6d9a84704bb84e86f87efec0f70973b0ee3b4bed Mon Sep 17 00:00:00 2001
+From b080f770c2f05dba2f4341b3a125e7d402a7d5f8 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Fri, 11 Jul 2025 23:06:05 +0000
 Subject: [PATCH 20/51] rockchip: rk3576: Add SPI Flash boot support

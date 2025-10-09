@@ -1,4 +1,4 @@
-From e4c235bb6563aba6cc654e62c46ca980d07e0dc8 Mon Sep 17 00:00:00 2001
+From 7bce6bfa1b0796c2d9ed97539a1c0b7dfa4ba4e3 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 12 Jul 2025 21:12:29 +0000
 Subject: [PATCH 22/51] rockchip: spl-boot-order: Defer probe of boot device

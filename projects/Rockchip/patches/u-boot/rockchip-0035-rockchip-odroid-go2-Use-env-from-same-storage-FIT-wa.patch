@@ -1,4 +1,4 @@
-From 7277465cbe51e0bad8f6301625dbcac817c9e9b4 Mon Sep 17 00:00:00 2001
+From 61c35aa8f4b9718a320ee8a8d97732af29a3f39c Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:34:00 +0000
 Subject: [PATCH 35/51] rockchip: odroid-go2: Use env from same storage FIT was

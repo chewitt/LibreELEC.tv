@@ -1,4 +1,4 @@
-From fa397cbb00e6217c591243541dd7bafeec62e001 Mon Sep 17 00:00:00 2001
+From f14e5699eedebd2b726db6b36a322a1b81577f10 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 27 Jul 2025 08:45:50 +0000
 Subject: [PATCH 09/51] WIP: net: rockchip: Allow use of rx/tx delayline for

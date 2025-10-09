@@ -1,4 +1,4 @@
-From b442081dea79bfe373ea14a50ca13a8c86c67a0e Mon Sep 17 00:00:00 2001
+From f836ef75bb0e244dfae545316053a8dec9898822 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Mon, 31 Oct 2022 17:13:47 +0100
 Subject: [PATCH 51/51] KNAERZCHE: rockchip: rk3288: Pick SD card as first boot

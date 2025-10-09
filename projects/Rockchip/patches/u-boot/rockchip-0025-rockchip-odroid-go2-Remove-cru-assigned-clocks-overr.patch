@@ -1,4 +1,4 @@
-From c95439a755f9a29692591c0147e0b0091cb7bae8 Mon Sep 17 00:00:00 2001
+From 3e9d036df85e87d844b929d6903316aec2734e24 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 13 Jul 2025 23:33:50 +0000
 Subject: [PATCH 25/51] rockchip: odroid-go2: Remove cru assigned-clocks

@@ -1,4 +1,4 @@
-From 5287ab111719d5be9ca32b2419061095529de70e Mon Sep 17 00:00:00 2001
+From cf49af361091fd256bc26539051e260ee0505ed0 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 23 Jul 2025 22:22:36 +0000
 Subject: [PATCH 08/51] rockchip: rk3528: Add support for booting from SPI

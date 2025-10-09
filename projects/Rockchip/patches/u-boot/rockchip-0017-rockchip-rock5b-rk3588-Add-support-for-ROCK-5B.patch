@@ -1,4 +1,4 @@
-From 26a50f1661ef1d698ed4806a807130551fcf0a6a Mon Sep 17 00:00:00 2001
+From 32f5f17c31b2981326040d706c97dc04a0f9a567 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 14 Jul 2025 19:08:46 +0000
 Subject: [PATCH 17/51] rockchip: rock5b-rk3588: Add support for ROCK 5B+

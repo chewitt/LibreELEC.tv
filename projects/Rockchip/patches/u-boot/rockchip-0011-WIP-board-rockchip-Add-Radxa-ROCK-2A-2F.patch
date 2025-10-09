@@ -1,4 +1,4 @@
-From 9a7f27696bf3f19206d8a5cdbf921c62e18720e8 Mon Sep 17 00:00:00 2001
+From e3968f7adc7e0ab5a373be821e1fbf8a21dd6b1a Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 12 Mar 2025 00:13:48 +0000
 Subject: [PATCH 11/51] WIP: board: rockchip: Add Radxa ROCK 2A/2F

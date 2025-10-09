@@ -1,4 +1,4 @@
-From aa575e20b0ac6032b0628553638dd2c4cb54b3c6 Mon Sep 17 00:00:00 2001
+From ea1b07f77fcf012e2cdf6c0c2f468749db1fd72a Mon Sep 17 00:00:00 2001
 From: Jon Lin <jon.lin@rock-chips.com>
 Date: Fri, 11 Jul 2025 23:06:03 +0000
 Subject: [PATCH 18/51] spi: rockchip_sfc: Support sclk_x2 version
