@@ -30,7 +30,7 @@ case "${PROJECT}" in
         PKG_SHA256="1be14abca1f9174cbc8e158b3984fa102bbf2d1857d3454b577bbe9ce34903e6"
         PKG_URL="https://code.ffmpeg.org/Kwiboo/FFmpeg/archive/${PKG_VERSION}.tar.gz"
         PKG_SOURCE_NAME="ffmpeg-${PKG_VERSION}.tar.gz"
-        PKG_PATCH_DIRS+=" vf-deinterlace-v4l2m2m"
+        PKG_PATCH_DIRS+=" detlev vf-deinterlace-v4l2m2m"
         ;;
     esac
     ;;
