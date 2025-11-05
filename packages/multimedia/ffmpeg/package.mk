@@ -25,10 +25,11 @@ case "${PROJECT}" in
         PKG_PATCH_DIRS+=" v4l2-request v4l2-drmprime vf-deinterlace-v4l2m2m"
         ;;
       RK356X|RK3576|RK3588)
-        PKG_VERSION="22a798e9733c38dab6f76e717fa3c5fd2773f27a"
-        PKG_FFMPEG_BRANCH="detlev-7.1"
-        PKG_SHA256="cc0e7edc3b2eec274f9152ae832ef0b2e0a127067dc61feee075c27220a7879d"
-        PKG_URL="https://gitlab.collabora.com/detlev/ffmpeg/-/archive/${PKG_VERSION}/ffmpeg-${PKG_VERSION}.tar.bz2"
+        PKG_VERSION="9c99c585deb0b45c5a7fa9c7111b6b67fa11e3eb"
+        PKG_FFMPEG_BRANCH="kwiboo/v4l2request-2025-v3-rkvdec"
+        PKG_SHA256="1be14abca1f9174cbc8e158b3984fa102bbf2d1857d3454b577bbe9ce34903e6"
+        PKG_URL="https://code.ffmpeg.org/Kwiboo/FFmpeg/archive/${PKG_VERSION}.tar.gz"
+        PKG_SOURCE_NAME="ffmpeg-${PKG_VERSION}.tar.gz"
         PKG_PATCH_DIRS+=" vf-deinterlace-v4l2m2m"
         ;;
     esac
