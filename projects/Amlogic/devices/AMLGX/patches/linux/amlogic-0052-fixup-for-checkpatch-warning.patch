@@ -1,0 +1,66 @@
+From 19f2826dcb7b2e245f6a91b13abae82e422aa200 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 1 Dec 2025 10:26:41 +0000
+Subject: [PATCH 52/52] fixup! for checkpatch warning
+
+WARNING: char * array declaration might be better as static const
++	const char *fw_paths[] = {
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/net/wireless/mediatek/mt7601u/mcu.c | 13 +++++++------
+ drivers/net/wireless/mediatek/mt7601u/usb.h |  1 +
+ 2 files changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/net/wireless/mediatek/mt7601u/mcu.c b/drivers/net/wireless/mediatek/mt7601u/mcu.c
+index c771bbf7952c..bad6ca821400 100644
+--- a/drivers/net/wireless/mediatek/mt7601u/mcu.c
++++ b/drivers/net/wireless/mediatek/mt7601u/mcu.c
+@@ -403,16 +403,17 @@ mt7601u_upload_firmware(struct mt7601u_dev *dev, const struct mt76_fw *fw)
+ 	return ret;
+ }
+ 
++static const char * const mt7601u_fw_paths[] = {
++	"mediatek/" MT7601U_FIRMWARE,
++	MT7601U_FIRMWARE,
++};
++
+ static int mt7601u_load_firmware(struct mt7601u_dev *dev)
+ {
+ 	const struct firmware *fw;
+ 	const struct mt76_fw_header *hdr;
+ 	int len, ret;
+ 	u32 val;
+-	const char *fw_paths[] = {
+-		"mediatek/" MT7601U_FIRMWARE,
+-		MT7601U_FIRMWARE,
+-	};
+ 	int i;
+ 
+ 	mt7601u_wr(dev, MT_USB_DMA_CFG, (MT_USB_DMA_CFG_RX_BULK_EN |
+@@ -423,8 +424,8 @@ static int mt7601u_load_firmware(struct mt7601u_dev *dev)
+ 
+ 	/* Try loading firmware from multiple locations */
+ 	fw = NULL;
+-	for (i = 0; i < ARRAY_SIZE(fw_paths); i++) {
+-		ret = request_firmware(&fw, fw_paths[i], dev->dev);
++	for (i = 0; i < MT7601U_FIRMWARE_PATHS; i++) {
++		ret = request_firmware(&fw, mt7601u_fw_paths[i], dev->dev);
+ 		if (ret == 0)
+ 			break;
+ 	}
+diff --git a/drivers/net/wireless/mediatek/mt7601u/usb.h b/drivers/net/wireless/mediatek/mt7601u/usb.h
+index 9fdf35970339..723025f84483 100644
+--- a/drivers/net/wireless/mediatek/mt7601u/usb.h
++++ b/drivers/net/wireless/mediatek/mt7601u/usb.h
+@@ -9,6 +9,7 @@
+ #include "mt7601u.h"
+ 
+ #define MT7601U_FIRMWARE	"mt7601u.bin"
++#define MT7601U_FIRMWARE_PATHS	ARRAY_SIZE(mt7601u_fw_paths)
+ 
+ #define MT_VEND_REQ_MAX_RETRY	10
+ #define MT_VEND_REQ_TOUT_MS	300
+-- 
+2.34.1
+
