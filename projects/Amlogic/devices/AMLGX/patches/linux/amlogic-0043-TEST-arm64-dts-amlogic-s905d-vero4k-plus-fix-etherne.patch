@@ -1,0 +1,71 @@
+From f8443d3580520f55704b2f0857abf4ba96c57f17 Mon Sep 17 00:00:00 2001
+From: Gabor Dee <dee.gabor@gmail.com>
+Date: Sun, 4 Jan 2026 16:45:39 +0100
+Subject: [PATCH 43/43] TEST: arm64: dts: amlogic: s905d-vero4k-plus: fix
+ ethernet configuration
+
+Align the ethmac and external_mdio nodes with other S905D (Gbit)
+and S912 (Gbit) devices to fix issues with ethernet performance
+and stability.
+
+Fixes: d926a4fe2533 ("arm64: dts: meson: add support for OSMC Vero 4K+")
+Signed-off-by: Gabor Dee <dee.gabor@gmail.com>
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+Checkpatch generates the 'phy-mode "rgmii" without comment'
+warning but this dts is now using the same rgmii format as
+most other Amlogic boards, so I have omitted a comment.
+---
+ .../amlogic/meson-gxl-s905d-vero4k-plus.dts   | 20 ++++---------------
+ 1 file changed, 4 insertions(+), 16 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxl-s905d-vero4k-plus.dts b/arch/arm64/boot/dts/amlogic/meson-gxl-s905d-vero4k-plus.dts
+index 595b49085074..57807acb1871 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxl-s905d-vero4k-plus.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-gxl-s905d-vero4k-plus.dts
+@@ -42,18 +42,15 @@ &ethmac {
+ 	pinctrl-0 = <&eth_pins>;
+ 	pinctrl-names = "default";
+ 
+-	phy-mode = "rgmii-txid";
++	phy-mode = "rgmii";
+ 	phy-handle = <&external_phy>;
+ 
+-	amlogic,tx-delay-ns = <0>;
++	amlogic,tx-delay-ns = <4>;
+ };
+ 
+ &external_mdio {
+ 	external_phy: ethernet-phy@0 {
+ 		/* Realtek RTL8211F (0x001cc916) */
+-		pinctrl-0 = <&eth_phy_irq_pin>;
+-		pinctrl-names = "default";
+-
+ 		reg = <0>;
+ 		max-speed = <1000>;
+ 
+@@ -62,19 +59,10 @@ external_phy: ethernet-phy@0 {
+ 		reset-gpios = <&gpio GPIOZ_14 GPIO_ACTIVE_LOW>;
+ 
+ 		interrupt-parent = <&gpio_intc>;
++		/* MAC_INTR on GPIOZ_15 */
+ 		interrupts = <25 IRQ_TYPE_LEVEL_LOW>;
+-	};
+-};
+ 
+-&pinctrl_periphs {
+-	/* Ensure the phy irq pin is properly configured as input */
+-	eth_phy_irq_pin: eth-phy-irq {
+-		mux {
+-			groups = "GPIOZ_15";
+-			function = "gpio_periphs";
+-			bias-disable;
+-			output-disable;
+-		};
++		eee-broken-1000t;
+ 	};
+ };
+ 
+-- 
+2.43.0
+
