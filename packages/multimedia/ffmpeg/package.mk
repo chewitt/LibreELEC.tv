@@ -28,14 +28,11 @@ case "${PROJECT}" in
     PKG_FFMPEG_REQUEST_ENABLE=""
     ;;
   Rockchip)
-    case "${DEVICE}" in
-      RK3288|RK3328|RK3399)
-        PKG_PATCH_DIRS+=" v4l2-request vf-deinterlace-v4l2m2m"
-        ;;
-      RK356X|RK3576|RK3588)
-        PKG_PATCH_DIRS+=" v4l2-request detlev vf-deinterlace-v4l2m2m"
-        ;;
-    esac
+    PKG_VERSION="837d8c2f7d6b7ba3c4d098df5cc39a2e09b2cbe6"
+    PKG_FFMPEG_BRANCH="chewitt/rockchip-9.0.1"
+    PKG_SHA256="702649f94df7cfb496029124c1f86e57bf2bdde88e57a115b584ed434e1511da"
+    PKG_URL="https://github.com/chewitt/ffmpeg/archive/${PKG_VERSION}.tar.gz"
+    PKG_SOURCE_NAME="ffmpeg-${PKG_VERSION}.tar.gz"
     ;;
   RPi)
     PKG_FFMPEG_RPI="--disable-mmal --enable-sand"
@@ -132,7 +129,7 @@ if [ "${FFMPEG_TESTING}" = "yes" ]; then
     PKG_FFMPEG_TESTING+=" --enable-vout-drm --enable-outdev=vout_drm"
   fi
 else
-  PKG_FFMPEG_TESTING="--enable-encoder=wrapped_avframe --enable-muxer=null --enable-vout-drm --enable-outdev=vout_drm"
+  PKG_FFMPEG_TESTING="--enable-encoder=wrapped_avframe --enable-muxer=null --enable-encoder=rawvideo --enable-muxer=rawvideo --enable-muxer=image2 --enable-muxer=md5 --enable-muxer=framemd5"
 fi
 
 configure_target() {
