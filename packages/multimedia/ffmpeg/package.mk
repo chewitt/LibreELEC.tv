@@ -27,12 +27,17 @@ case "${PROJECT}" in
     PKG_FFMPEG_REQUEST_ENABLE=""
     ;;
   Rockchip)
+    PKG_VERSION="bc3c932075dd214b3a44016a14a80861b1e13393"
+    PKG_FFMPEG_BRANCH="kwiboo/v4l2request-n8.0.1"
+    PKG_SHA256="6067e7743cf3697ac8338837d078052abcb5a3cf5d4c4542962be1b667fad744"
+    PKG_URL="https://code.ffmpeg.org/Kwiboo/FFmpeg/archive/${PKG_VERSION}.tar.gz"
+    PKG_SOURCE_NAME="ffmpeg-${PKG_VERSION}.tar.gz"
     case "${DEVICE}" in
       RK3288|RK3328|RK3399)
-        PKG_PATCH_DIRS+=" v4l2-request v4l2-drmprime vf-deinterlace-v4l2m2m"
+        PKG_PATCH_DIRS+=" v4l2-drmprime vf-deinterlace-v4l2m2m"
         ;;
       RK356X|RK3576|RK3588)
-        PKG_PATCH_DIRS+=" v4l2-request detlev v4l2-drmprime vf-deinterlace-v4l2m2m"
+        PKG_PATCH_DIRS+=" detlev v4l2-drmprime vf-deinterlace-v4l2m2m"
         ;;
     esac
     ;;
@@ -131,7 +136,7 @@ if [ "${FFMPEG_TESTING}" = "yes" ]; then
     PKG_FFMPEG_TESTING+=" --enable-vout-drm --enable-outdev=vout_drm"
   fi
 else
-  PKG_FFMPEG_TESTING="--enable-encoder=wrapped_avframe --enable-muxer=null --enable-vout-drm --enable-outdev=vout_drm"
+  PKG_FFMPEG_TESTING="--enable-encoder=wrapped_avframe --enable-muxer=null --enable-encoder=rawvideo --enable-muxer=rawvideo --enable-muxer=image2 --enable-muxer=md5 --enable-muxer=framemd5"
 fi
 
 configure_target() {
