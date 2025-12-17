@@ -1,0 +1,35 @@
+From f95a7922e86d95eb18594d6401de50e67f7f1b22 Mon Sep 17 00:00:00 2001
+From: "YAN Chao (BCSC/EPA2, Smart Home)" <chao.yan2@bosch.com>
+Date: Mon, 15 Dec 2025 18:04:31 +0800
+Subject: [PATCH] wifi: Detect invalid key with auth challenge failed
+
+Signed-off-by: YAN Chao (BCSC/EPA2, Smart Home) <chao.yan2@bosch.com>
+---
+ plugins/wifi.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/plugins/wifi.c b/plugins/wifi.c
+index 12389fa6..551a5fcd 100644
+--- a/plugins/wifi.c
++++ b/plugins/wifi.c
+@@ -74,6 +74,7 @@
+ #define P2P_LISTEN_PERIOD 500
+ #define P2P_LISTEN_INTERVAL 2000
+ 
++#define ASSOC_STATUS_AUTH_CHALLENGE_FAILED 15
+ #define ASSOC_STATUS_AUTH_TIMEOUT 16
+ #define ASSOC_STATUS_NO_CLIENT 17
+ #define LOAD_SHAPING_MAX_RETRIES 3
+@@ -2505,7 +2506,8 @@ static bool handle_4way_handshake_failure(GSupplicantInterface *interface,
+ 
+ 	if ((wifi->state != G_SUPPLICANT_STATE_4WAY_HANDSHAKE) &&
+ 			!((wifi->state == G_SUPPLICANT_STATE_ASSOCIATING) &&
+-				(wifi->assoc_code == ASSOC_STATUS_AUTH_TIMEOUT)))
++				(wifi->assoc_code == ASSOC_STATUS_AUTH_TIMEOUT || 
++			     wifi->assoc_code == ASSOC_STATUS_AUTH_CHALLENGE_FAILED)))
+ 		return false;
+ 
+ 	if (wifi->connected)
+-- 
+2.34.1
+
