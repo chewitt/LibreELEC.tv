@@ -12,6 +12,11 @@ PKG_LONGDESC="Das U-Boot is a cross-platform bootloader for embedded systems."
 PKG_STAMP="${UBOOT_SYSTEM} ${UBOOT_TARGET}"
 
 case ${PROJECT} in
+  Amlogic)
+    PKG_VERSION="939ae72aace5d7f6ad381ee51635c7bc83f89207"
+    PKG_SHA256=""
+    PKG_URL="https://github.com/chewitt/u-boot/archive/${PKG_VERSION}.tar.gz"
+    ;;
   Rockchip)
     PKG_VERSION="2025.10-rc4" # plus Kwiboo changes for RK3576 support
     PKG_SHA256="a30574d74a4a761ed683a2b74d938ddb89e3ffacc3b2a6aabf3f40be91d03ebe"
