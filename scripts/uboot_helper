@@ -204,6 +204,10 @@ devices = \
         'dtb': 'meson-gxl-s905x-libretech-cc.dtb',
         'config': 'libretech-cc_defconfig'
       },
+      'minix-u9h': {
+        'dtb': 'meson-gxm-minix-neo-u9h.dtb',
+        'config': 'minix-u9h_defconfig'
+      },
       'nanopi-k2': {
         'dtb': 'meson-gxbb-nanopi-k2.dtb',
         'config': 'nanopi-k2_defconfig'
