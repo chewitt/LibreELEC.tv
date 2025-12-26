@@ -1,0 +1,46 @@
+From 51eeefe14196ebf71cca00081eaec86d007e314e Mon Sep 17 00:00:00 2001
+From: Andy Yan <andy.yan@rock-chips.com>
+Date: Fri, 9 Jan 2026 08:58:07 +0800
+Subject: [PATCH 065/142] FROMLIST(v1): drm/rockchip: vop2: Add mode valid
+ callback for crtc
+
+Filter the mode that can't output by the crtc.
+
+Signed-off-by: Andy Yan <andy.yan@rock-chips.com>
+---
+ drivers/gpu/drm/rockchip/rockchip_drm_vop2.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
+index 392a9655fc12..c81a633b7599 100644
+--- a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
++++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
+@@ -1448,6 +1448,17 @@ static void vop2_crtc_disable_vblank(struct drm_crtc *crtc)
+ 	vop2_crtc_disable_irq(vp, VP_INT_FS_FIELD);
+ }
+ 
++static enum drm_mode_status vop2_crtc_mode_valid(struct drm_crtc *crtc,
++						 const struct drm_display_mode *mode)
++{
++	struct vop2_video_port *vp = to_vop2_video_port(crtc);
++
++	if (mode->hdisplay > vp->data->max_output.width)
++		return MODE_BAD_HVALUE;
++
++	return MODE_OK;
++}
++
+ static bool vop2_crtc_mode_fixup(struct drm_crtc *crtc,
+ 				 const struct drm_display_mode *mode,
+ 				 struct drm_display_mode *adj_mode)
+@@ -1914,6 +1925,7 @@ static void vop2_crtc_atomic_flush(struct drm_crtc *crtc,
+ 
+ static const struct drm_crtc_helper_funcs vop2_crtc_helper_funcs = {
+ 	.mode_fixup = vop2_crtc_mode_fixup,
++	.mode_valid = vop2_crtc_mode_valid,
+ 	.atomic_check = vop2_crtc_atomic_check,
+ 	.atomic_begin = vop2_crtc_atomic_begin,
+ 	.atomic_flush = vop2_crtc_atomic_flush,
+-- 
+2.43.0
+

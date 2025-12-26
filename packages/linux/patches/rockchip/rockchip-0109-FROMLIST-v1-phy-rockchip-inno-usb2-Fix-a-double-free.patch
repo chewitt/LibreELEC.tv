@@ -1,0 +1,45 @@
+From f2057e9a62a99e1023916328f9c75cb027ffc8d7 Mon Sep 17 00:00:00 2001
+From: Wentao Liang <vulab@iscas.ac.cn>
+Date: Fri, 26 Dec 2025 04:17:11 +0000
+Subject: [PATCH 109/142] FROMLIST(v1): phy: rockchip: inno-usb2: Fix a double
+ free bug in rockchip_usb2phy_probe()
+
+The for_each_available_child_of_node() calls of_node_put() to
+release child_np in each success loop. After breaking from the
+loop with the child_np has been released, the code will jump to
+the put_child label and will call the of_node_put() again if the
+devm_request_threaded_irq() fails. These cause a double free bug.
+
+Fix by using a separate label to avoid the duplicate of_node_put().
+
+Fixes: ed2b5a8e6b98 ("phy: phy-rockchip-inno-usb2: support muxed interrupts")
+Cc: stable@vger.kernel.org
+Signed-off-by: Wentao Liang <vulab@iscas.ac.cn>
+---
+ drivers/phy/rockchip/phy-rockchip-inno-usb2.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/phy/rockchip/phy-rockchip-inno-usb2.c b/drivers/phy/rockchip/phy-rockchip-inno-usb2.c
+index e5efae7b0135..f04fa6caa4cb 100644
+--- a/drivers/phy/rockchip/phy-rockchip-inno-usb2.c
++++ b/drivers/phy/rockchip/phy-rockchip-inno-usb2.c
+@@ -1495,7 +1495,7 @@ static int rockchip_usb2phy_probe(struct platform_device *pdev)
+ 						rphy);
+ 		if (ret) {
+ 			dev_err_probe(rphy->dev, ret, "failed to request usb2phy irq handle\n");
+-			goto put_child;
++			goto ret_error;
+ 		}
+ 	}
+ 
+@@ -1503,6 +1503,7 @@ static int rockchip_usb2phy_probe(struct platform_device *pdev)
+ 
+ put_child:
+ 	of_node_put(child_np);
++ret_error:
+ 	return ret;
+ }
+ 
+-- 
+2.43.0
+

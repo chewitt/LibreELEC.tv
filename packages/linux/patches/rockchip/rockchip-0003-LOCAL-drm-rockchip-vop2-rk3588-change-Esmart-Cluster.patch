@@ -1,7 +1,7 @@
-From 6d592e47f89ec2f950e8489960af088f8cc582cd Mon Sep 17 00:00:00 2001
+From 5252db1331f008aaedf3cad82279c7c358c83b7d Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 16 Jul 2025 05:09:07 +0000
-Subject: [PATCH 003/157] LOCAL: drm/rockchip: vop2: rk3588: change
+Subject: [PATCH 003/142] LOCAL: drm/rockchip: vop2: rk3588: change
  Esmart/Cluster ordering
 
 Order Esmart planes before Cluster planes so Kodi (which currently
@@ -15,7 +15,7 @@ Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
  1 file changed, 68 insertions(+), 68 deletions(-)
 
 diff --git a/drivers/gpu/drm/rockchip/rockchip_vop2_reg.c b/drivers/gpu/drm/rockchip/rockchip_vop2_reg.c
-index 38c49030c7ab..577cd23f9b64 100644
+index cd8380f0eddc..e8a743832406 100644
 --- a/drivers/gpu/drm/rockchip/rockchip_vop2_reg.c
 +++ b/drivers/gpu/drm/rockchip/rockchip_vop2_reg.c
 @@ -1120,6 +1120,74 @@ static const struct vop2_video_port_data rk3588_vop_video_ports[] = {
@@ -169,5 +169,5 @@ index 38c49030c7ab..577cd23f9b64 100644
  };
  
 -- 
-2.34.1
+2.43.0
 

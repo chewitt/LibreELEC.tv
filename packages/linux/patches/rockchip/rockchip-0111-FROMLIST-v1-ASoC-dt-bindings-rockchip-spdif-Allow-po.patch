@@ -1,0 +1,31 @@
+From a8ec5990a6d75340f4aa81e6a5e27c1bc3a1f839 Mon Sep 17 00:00:00 2001
+From: "Rob Herring (Arm)" <robh@kernel.org>
+Date: Thu, 8 Jan 2026 16:49:36 -0600
+Subject: [PATCH 111/142] FROMLIST(v1): ASoC: dt-bindings: rockchip-spdif:
+ Allow "port" node
+
+Add a "port" node entry for Rockchip S/PDIF binding. It's already in use
+and a common property for DAIs.
+
+Signed-off-by: Rob Herring (Arm) <robh@kernel.org>
+---
+ Documentation/devicetree/bindings/sound/rockchip-spdif.yaml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/sound/rockchip-spdif.yaml b/Documentation/devicetree/bindings/sound/rockchip-spdif.yaml
+index 32dea7392e8d..56c755c22945 100644
+--- a/Documentation/devicetree/bindings/sound/rockchip-spdif.yaml
++++ b/Documentation/devicetree/bindings/sound/rockchip-spdif.yaml
+@@ -70,6 +70,9 @@ properties:
+   "#sound-dai-cells":
+     const: 0
+ 
++  port:
++    $ref: /schemas/graph.yaml#/properties/port
++
+ required:
+   - compatible
+   - reg
+-- 
+2.43.0
+

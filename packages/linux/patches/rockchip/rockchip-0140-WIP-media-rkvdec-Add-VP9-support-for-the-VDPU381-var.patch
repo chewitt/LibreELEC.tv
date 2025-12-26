@@ -1,0 +1,83 @@
+From c9b21bb1a8eb0e6a03b7fd3f175871e9dc81f844 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 10 Jan 2026 06:20:27 +0000
+Subject: [PATCH 140/142] WIP: media: rkvdec: Add VP9 support for the VDPU381
+ variant - detlev-v8
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ .../rockchip/rkvdec/rkvdec-vdpu381-vp9.c      | 29 +++++++++----------
+ 1 file changed, 14 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/media/platform/rockchip/rkvdec/rkvdec-vdpu381-vp9.c b/drivers/media/platform/rockchip/rkvdec/rkvdec-vdpu381-vp9.c
+index 2778de79e75b..feef74439bbd 100644
+--- a/drivers/media/platform/rockchip/rkvdec/rkvdec-vdpu381-vp9.c
++++ b/drivers/media/platform/rockchip/rkvdec/rkvdec-vdpu381-vp9.c
+@@ -531,14 +531,14 @@ static void config_registers(struct rkvdec_ctx *ctx,
+ 	intra_only = !!(dec_params->flags & (V4L2_VP9_FRAME_FLAG_KEY_FRAME |
+ 					     V4L2_VP9_FRAME_FLAG_INTRA_ONLY));
+ 
+-	regs->common.reg009.dec_mode = VDPU381_MODE_VP9;
++	regs->common.reg009_dec_mode.dec_mode = VDPU381_MODE_VP9;
+ 
+ 	regs->vp9_param.reg103.vp9_intra_only_flag = intra_only;
+ 
+ 	/* Set config */
+-	regs->common.reg011.buf_empty_en = 1;
+-	regs->common.reg011.dec_clkgate_e = 1;
+-	regs->common.reg011.dec_timeout_e = 1;
++	regs->common.reg011_important_en.buf_empty_en = 1;
++	regs->common.reg011_important_en.dec_clkgate_e = 1;
++	regs->common.reg011_important_en.dec_timeout_e = 1;
+ 
+ 	bit_depth = dec_params->bit_depth;
+ 	aligned_height = round_up(ctx->decoded_fmt.fmt.pix_mp.height, 64);
+@@ -553,27 +553,26 @@ static void config_registers(struct rkvdec_ctx *ctx,
+ 	pixels = ctx->decoded_fmt.fmt.pix_mp.height *
+ 		 ctx->decoded_fmt.fmt.pix_mp.width;
+ 
+-	regs->common.reg018.y_hor_virstride = aligned_pitch / 16;
+-	regs->common.reg019.uv_hor_virstride = aligned_pitch / 16;
+-	regs->common.reg020.y_virstride = y_len / 16;
++	regs->common.reg018_y_hor_stride.y_hor_virstride = aligned_pitch / 16;
++	regs->common.reg019_uv_hor_stride.uv_hor_virstride = aligned_pitch / 16;
++	regs->common.reg020_y_stride.y_virstride = y_len / 16;
+ 
+ 	stream_len = vb2_get_plane_payload(&run->base.bufs.src->vb2_buf, 0);
+ 
+-	regs->common.stream_len = stream_len;
++	regs->common.reg016_stream_len = stream_len;
+ 
+ 	/* Activate block gating */
+-	regs->common.reg026.swreg_block_gating_e = 0xfffef;
+-	regs->common.reg026.reg_cfg_gating_en = 1;
++	regs->common.reg026_block_gating_en.reg_cfg_gating_en = 1;
+ 
+ 	/* Set timeout threshold */
+ 	if (pixels < RKVDEC_1080P_PIXELS)
+-		regs->common.timeout_threshold = RKVDEC_TIMEOUT_1080p;
++		regs->common.reg032_timeout_threshold = RKVDEC_TIMEOUT_1080p;
+ 	else if (pixels < RKVDEC_4K_PIXELS)
+-		regs->common.timeout_threshold = RKVDEC_TIMEOUT_4K;
++		regs->common.reg032_timeout_threshold = RKVDEC_TIMEOUT_4K;
+ 	else if (pixels < RKVDEC_8K_PIXELS)
+-		regs->common.timeout_threshold = RKVDEC_TIMEOUT_8K;
++		regs->common.reg032_timeout_threshold = RKVDEC_TIMEOUT_8K;
+ 	else
+-		regs->common.timeout_threshold = RKVDEC_TIMEOUT_MAX;
++		regs->common.reg032_timeout_threshold = RKVDEC_TIMEOUT_MAX;
+ 
+ 	/*
+ 	 * Reset count buffer, because decoder only output intra related syntax
+@@ -841,7 +840,7 @@ static int rkvdec_vp9_run(struct rkvdec_ctx *ctx)
+ 
+ 	rkvdec_run_postamble(ctx, &run.base);
+ 
+-	u64 timeout_threshold = vp9_ctx->regs.common.timeout_threshold;
++	u64 timeout_threshold = vp9_ctx->regs.common.reg032_timeout_threshold;
+ 	unsigned long axi_rate = clk_get_rate(rkvdec->axi_clk);
+ 
+ 	if (axi_rate) {
+-- 
+2.43.0
+

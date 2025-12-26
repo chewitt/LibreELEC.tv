@@ -1,0 +1,50 @@
+From 90d511be3df8e3a438326cf6daca7e7e89399d97 Mon Sep 17 00:00:00 2001
+From: "Rob Herring (Arm)" <robh@kernel.org>
+Date: Thu, 8 Jan 2026 17:06:23 -0600
+Subject: [PATCH 097/142] FROMLIST(v1): arm64: dts: rockchip: Fix gpio pinctrl
+ node names
+
+The pinctrl node names "gpios" or with "-gpio" suffix collide with GPIO
+property names creating false warnings. Add a "-pins?" suffix to avoid
+the issue.
+
+Signed-off-by: Rob Herring (Arm) <robh@kernel.org>
+---
+ arch/arm64/boot/dts/rockchip/rk3399-puma.dtsi        | 2 +-
+ arch/arm64/boot/dts/rockchip/rk3399-rock-4c-plus.dts | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3399-puma.dtsi b/arch/arm64/boot/dts/rockchip/rk3399-puma.dtsi
+index 587e89d7fc5e..8299e9d10c7c 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3399-puma.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3399-puma.dtsi
+@@ -483,7 +483,7 @@ &pinctrl {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&q7_thermal_pin &bios_disable_override_hog_pin>;
+ 
+-	gpios {
++	gpio-pins {
+ 		bios_disable_override_hog_pin: bios-disable-override-hog-pin {
+ 			rockchip,pins =
+ 				<3 RK_PD5 RK_FUNC_GPIO &pcfg_pull_down>;
+diff --git a/arch/arm64/boot/dts/rockchip/rk3399-rock-4c-plus.dts b/arch/arm64/boot/dts/rockchip/rk3399-rock-4c-plus.dts
+index 74160cf89188..6d52e3723a4e 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3399-rock-4c-plus.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3399-rock-4c-plus.dts
+@@ -529,11 +529,11 @@ pmic_int_l: pmic-int-l {
+ 			rockchip,pins = <1 RK_PC5 RK_FUNC_GPIO &pcfg_pull_up>;
+ 		};
+ 
+-		vsel1_gpio: vsel1-gpio {
++		vsel1_gpio: vsel1-gpio-pin {
+ 			rockchip,pins = <1 RK_PC1 RK_FUNC_GPIO &pcfg_pull_down>;
+ 		};
+ 
+-		vsel2_gpio: vsel2-gpio {
++		vsel2_gpio: vsel2-gpio-pin {
+ 			rockchip,pins = <1 RK_PB6 RK_FUNC_GPIO &pcfg_pull_down>;
+ 		};
+ 	};
+-- 
+2.43.0
+

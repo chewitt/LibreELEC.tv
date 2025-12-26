@@ -1,0 +1,61 @@
+From be7203b992eed1d658fb6d897b6201b29512bf4a Mon Sep 17 00:00:00 2001
+From: Marius Vlad <marius.vlad@collabora.com>
+Date: Fri, 28 Nov 2025 22:05:39 +0100
+Subject: [PATCH 050/142] FROMLIST(v5): drm: Add enum conversion from
+ DRM_COLOR_FORMAT to HDMI_COLORSPACE
+
+While the two enums have similar values, they're not identical, and
+HDMI's enum is defined as per the HDMI standard.
+
+Add a simple conversion function. Unexpected inputs aren't handled in
+any clever way, DRM_COLOR_FORMAT_AUTO and any other value that doesn't
+cleanly map to HDMI just gets returned as HDMI_COLORSPACE_RGB.
+
+Signed-off-by: Marius Vlad <marius.vlad@collabora.com>
+Signed-off-by: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+Reviewed-by: Maxime Ripard <mripard@kernel.org>
+---
+ include/drm/drm_connector.h | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/include/drm/drm_connector.h b/include/drm/drm_connector.h
+index 38968a557b82..cf556f0e5731 100644
+--- a/include/drm/drm_connector.h
++++ b/include/drm/drm_connector.h
+@@ -2567,6 +2567,33 @@ int drm_connector_attach_color_format_property(struct drm_connector *connector);
+ 
+ const char *drm_get_color_format_name(enum drm_color_format color_fmt);
+ 
++/**
++ * drm_color_format_to_hdmi_colorspace - convert DRM color format to HDMI
++ * @fmt: the &enum drm_color_format to convert
++ *
++ * Convert a given &enum drm_color_format to an equivalent
++ * &enum hdmi_colorspace. For non-representable values and
++ * %DRM_COLOR_FORMAT_AUTO, the value %HDMI_COLORSPACE_RGB is returned.
++ *
++ * Returns: the corresponding &enum hdmi_colorspace value
++ */
++static inline enum hdmi_colorspace __pure
++drm_color_format_to_hdmi_colorspace(enum drm_color_format fmt)
++{
++	switch (fmt) {
++	default:
++	case DRM_COLOR_FORMAT_AUTO:
++	case DRM_COLOR_FORMAT_RGB444:
++		return HDMI_COLORSPACE_RGB;
++	case DRM_COLOR_FORMAT_YCBCR444:
++		return HDMI_COLORSPACE_YUV444;
++	case DRM_COLOR_FORMAT_YCBCR422:
++		return HDMI_COLORSPACE_YUV422;
++	case DRM_COLOR_FORMAT_YCBCR420:
++		return HDMI_COLORSPACE_YUV420;
++	}
++}
++
+ /**
+  * drm_for_each_connector_iter - connector_list iterator macro
+  * @connector: &struct drm_connector pointer used as cursor
+-- 
+2.43.0
+
