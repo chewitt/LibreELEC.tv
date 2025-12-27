@@ -1,0 +1,768 @@
+From c8ca8d70dc7480f6af56a1d6339db932367dc28e Mon Sep 17 00:00:00 2001
+From: "Dmitry V. Levin" <ldv@strace.io>
+Date: Sun, 14 Dec 2025 08:00:00 +0000
+Subject: [PATCH 4/8] bundled: update linux UAPI headers to v6.19-rc1
+
+The update of linux/io_uring.h is delayed because the change
+in enum io_uring_op requires a synchronous update of the header,
+the parser and the test.
+
+Likewise, the update of linux/perf_event.h is delayed because the change
+in struct perf_event_attr requires a synchronous update of the header,
+the parser and the test.
+
+* bundled/linux/include/uapi/linux/blktrace_api.h: Update
+to headers_install'ed Linux kernel v6.19-rc1.
+* bundled/linux/include/uapi/linux/blkzoned.h: Likewise.
+* bundled/linux/include/uapi/linux/btrfs.h: Likewise.
+* bundled/linux/include/uapi/linux/devlink.h: Likewise.
+* bundled/linux/include/uapi/linux/ethtool.h: Likewise.
+* bundled/linux/include/uapi/linux/ethtool_netlink_generated.h: Likewise.
+* bundled/linux/include/uapi/linux/fcntl.h: Likewise.
+* bundled/linux/include/uapi/linux/fs.h: Likewise.
+* bundled/linux/include/uapi/linux/if_ether.h: Likewise.
+* bundled/linux/include/uapi/linux/mptcp.h: Likewise.
+* bundled/linux/include/uapi/linux/mptcp_pm.h: Likewise.
+* bundled/linux/include/uapi/linux/netdev.h: Likewise.
+* bundled/linux/include/uapi/linux/netfilter/nf_tables.h: Likewise.
+* bundled/linux/include/uapi/linux/nsfs.h: Likewise.
+* bundled/linux/include/uapi/linux/tee.h: Likewise.
+* bundled/linux/include/uapi/linux/tls.h: Likewise.
+* bundled/linux/include/uapi/linux/v4l2-controls.h: Likewise.
+* bundled/linux/include/uapi/linux/version.h: Likewise.
+* bundled/linux/include/uapi/linux/videodev2.h: Likewise.
+---
+ .../linux/include/uapi/linux/blktrace_api.h   | 55 ++++++++++++++++++-
+ bundled/linux/include/uapi/linux/blkzoned.h   | 46 ++++++++++++++--
+ bundled/linux/include/uapi/linux/btrfs.h      |  9 +++
+ bundled/linux/include/uapi/linux/devlink.h    |  4 ++
+ bundled/linux/include/uapi/linux/ethtool.h    |  5 ++
+ .../uapi/linux/ethtool_netlink_generated.h    | 36 ++++++++++++
+ bundled/linux/include/uapi/linux/fcntl.h      | 12 ++++
+ bundled/linux/include/uapi/linux/fs.h         |  3 +-
+ bundled/linux/include/uapi/linux/if_ether.h   |  4 ++
+ bundled/linux/include/uapi/linux/mptcp.h      |  3 +-
+ bundled/linux/include/uapi/linux/mptcp_pm.h   |  1 +
+ bundled/linux/include/uapi/linux/netdev.h     |  2 +
+ .../include/uapi/linux/netfilter/nf_tables.h  | 14 ++---
+ bundled/linux/include/uapi/linux/nsfs.h       | 55 +++++++++++++++++++
+ bundled/linux/include/uapi/linux/tee.h        | 23 +++++---
+ bundled/linux/include/uapi/linux/tls.h        |  2 +
+ .../linux/include/uapi/linux/v4l2-controls.h  |  6 ++
+ bundled/linux/include/uapi/linux/version.h    |  4 +-
+ bundled/linux/include/uapi/linux/videodev2.h  |  4 ++
+ 19 files changed, 261 insertions(+), 27 deletions(-)
+
+diff --git a/bundled/linux/include/uapi/linux/blktrace_api.h b/bundled/linux/include/uapi/linux/blktrace_api.h
+index 28938a6bc..e67b3c95d 100644
+--- a/bundled/linux/include/uapi/linux/blktrace_api.h
++++ b/bundled/linux/include/uapi/linux/blktrace_api.h
+@@ -26,11 +26,22 @@ enum blktrace_cat {
+ 	BLK_TC_DRV_DATA	= 1 << 14,	/* binary per-driver data */
+ 	BLK_TC_FUA	= 1 << 15,	/* fua requests */
+ 
+-	BLK_TC_END	= 1 << 15,	/* we've run out of bits! */
++	BLK_TC_END_V1	= 1 << 15,	/* we've run out of bits! */
++
++	BLK_TC_ZONE_APPEND	= 1ull << 16,  	/* zone append */
++	BLK_TC_ZONE_RESET	= 1ull << 17,	/* zone reset */
++	BLK_TC_ZONE_RESET_ALL	= 1ull << 18,	/* zone reset all */
++	BLK_TC_ZONE_FINISH	= 1ull << 19,	/* zone finish */
++	BLK_TC_ZONE_OPEN	= 1ull << 20,	/* zone open */
++	BLK_TC_ZONE_CLOSE	= 1ull << 21,	/* zone close */
++
++	BLK_TC_WRITE_ZEROES	= 1ull << 22,	/* write-zeroes */
++
++	BLK_TC_END_V2		= 1ull << 22,
+ };
+ 
+ #define BLK_TC_SHIFT		(16)
+-#define BLK_TC_ACT(act)		((act) << BLK_TC_SHIFT)
++#define BLK_TC_ACT(act)		((u64)(act) << BLK_TC_SHIFT)
+ 
+ /*
+  * Basic trace actions
+@@ -53,6 +64,8 @@ enum blktrace_act {
+ 	__BLK_TA_REMAP,			/* bio was remapped */
+ 	__BLK_TA_ABORT,			/* request aborted */
+ 	__BLK_TA_DRV_DATA,		/* driver-specific binary data */
++	__BLK_TA_ZONE_PLUG,		/* zone write plug was plugged */
++	__BLK_TA_ZONE_UNPLUG,		/* zone write plug was unplugged */
+ 	__BLK_TA_CGROUP = 1 << 8,	/* from a cgroup*/
+ };
+ 
+@@ -88,12 +101,19 @@ enum blktrace_notify {
+ #define BLK_TA_ABORT		(__BLK_TA_ABORT | BLK_TC_ACT(BLK_TC_QUEUE))
+ #define BLK_TA_DRV_DATA	(__BLK_TA_DRV_DATA | BLK_TC_ACT(BLK_TC_DRV_DATA))
+ 
++#define BLK_TA_ZONE_APPEND	(__BLK_TA_COMPLETE |\
++				 BLK_TC_ACT(BLK_TC_ZONE_APPEND))
++#define BLK_TA_ZONE_PLUG	(__BLK_TA_ZONE_PLUG | BLK_TC_ACT(BLK_TC_QUEUE))
++#define BLK_TA_ZONE_UNPLUG	(__BLK_TA_ZONE_UNPLUG |\
++				 BLK_TC_ACT(BLK_TC_QUEUE))
++
+ #define BLK_TN_PROCESS		(__BLK_TN_PROCESS | BLK_TC_ACT(BLK_TC_NOTIFY))
+ #define BLK_TN_TIMESTAMP	(__BLK_TN_TIMESTAMP | BLK_TC_ACT(BLK_TC_NOTIFY))
+ #define BLK_TN_MESSAGE		(__BLK_TN_MESSAGE | BLK_TC_ACT(BLK_TC_NOTIFY))
+ 
+ #define BLK_IO_TRACE_MAGIC	0x65617400
+ #define BLK_IO_TRACE_VERSION	0x07
++#define BLK_IO_TRACE2_VERSION	0x08
+ 
+ /*
+  * The trace itself
+@@ -113,6 +133,21 @@ struct blk_io_trace {
+ 	/* cgroup id will be stored here if exists */
+ };
+ 
++struct blk_io_trace2 {
++	__u32 magic;		/* MAGIC << 8 | BLK_IO_TRACE2_VERSION */
++	__u32 sequence;		/* event number */
++	__u64 time;		/* in nanoseconds */
++	__u64 sector;		/* disk offset */
++	__u32 bytes;		/* transfer length */
++	__u32 pid;		/* who did it */
++	__u64 action;		/* what happened */
++	__u32 device;		/* device number */
++	__u32 cpu;		/* on what cpu did it happen */
++	__u16 error;		/* completion error */
++	__u16 pdu_len;		/* length of data after this trace */
++	__u8 pad[12];
++	/* cgroup id will be stored here if it exists */
++};
+ /*
+  * The remap event
+  */
+@@ -129,6 +164,7 @@ enum {
+ };
+ 
+ #define BLKTRACE_BDEV_SIZE	32
++#define BLKTRACE_BDEV_SIZE2	64
+ 
+ /*
+  * User setup structure passed with BLKTRACESETUP
+@@ -143,4 +179,19 @@ struct blk_user_trace_setup {
+ 	__u32 pid;
+ };
+ 
++/*
++ * User setup structure passed with BLKTRACESETUP2
++ */
++struct blk_user_trace_setup2 {
++	char name[BLKTRACE_BDEV_SIZE2];		/* output */
++	__u64 act_mask;				/* input */
++	__u32 buf_size;				/* input */
++	__u32 buf_nr;				/* input */
++	__u64 start_lba;
++	__u64 end_lba;
++	__u32 pid;
++	__u32 flags;		/* currently unused */
++	__u64 reserved[11];
++};
++
+ #endif /* BLKTRACE_H */
+diff --git a/bundled/linux/include/uapi/linux/blkzoned.h b/bundled/linux/include/uapi/linux/blkzoned.h
+index 5347e40d2..44d5cbe5c 100644
+--- a/bundled/linux/include/uapi/linux/blkzoned.h
++++ b/bundled/linux/include/uapi/linux/blkzoned.h
+@@ -48,6 +48,8 @@ enum blk_zone_type {
+  *                      FINISH ZONE command.
+  * @BLK_ZONE_COND_READONLY: The zone is read-only.
+  * @BLK_ZONE_COND_OFFLINE: The zone is offline (sectors cannot be read/written).
++ * @BLK_ZONE_COND_ACTIVE: The zone is either implicitly open, explicitly open,
++ *			  or closed.
+  *
+  * The Zone Condition state machine in the ZBC/ZAC standards maps the above
+  * deinitions as:
+@@ -61,6 +63,13 @@ enum blk_zone_type {
+  *
+  * Conditions 0x5 to 0xC are reserved by the current ZBC/ZAC spec and should
+  * be considered invalid.
++ *
++ * The condition BLK_ZONE_COND_ACTIVE is used only with cached zone reports.
++ * It is used to report any of the BLK_ZONE_COND_IMP_OPEN,
++ * BLK_ZONE_COND_EXP_OPEN and BLK_ZONE_COND_CLOSED conditions. Conversely, a
++ * regular zone report will never report a zone condition using
++ * BLK_ZONE_COND_ACTIVE and instead use the conditions BLK_ZONE_COND_IMP_OPEN,
++ * BLK_ZONE_COND_EXP_OPEN or BLK_ZONE_COND_CLOSED as reported by the device.
+  */
+ enum blk_zone_cond {
+ 	BLK_ZONE_COND_NOT_WP	= 0x0,
+@@ -71,15 +80,27 @@ enum blk_zone_cond {
+ 	BLK_ZONE_COND_READONLY	= 0xD,
+ 	BLK_ZONE_COND_FULL	= 0xE,
+ 	BLK_ZONE_COND_OFFLINE	= 0xF,
++
++	BLK_ZONE_COND_ACTIVE	= 0xFF,
+ };
+ 
+ /**
+  * enum blk_zone_report_flags - Feature flags of reported zone descriptors.
+  *
+- * @BLK_ZONE_REP_CAPACITY: Zone descriptor has capacity field.
++ * @BLK_ZONE_REP_CAPACITY: Output only. Indicates that zone descriptors in a
++ *			   zone report have a valid capacity field.
++ * @BLK_ZONE_REP_CACHED: Input only. Indicates that the zone report should be
++ *			 generated using cached zone information. In this case,
++ *			 the implicit open, explicit open and closed zone
++ *			 conditions are all reported with the
++ *			 BLK_ZONE_COND_ACTIVE condition.
+  */
+ enum blk_zone_report_flags {
+-	BLK_ZONE_REP_CAPACITY	= (1 << 0),
++	/* Output flags */
++	BLK_ZONE_REP_CAPACITY	= (1U << 0),
++
++	/* Input flags */
++	BLK_ZONE_REP_CACHED	= (1U << 31),
+ };
+ 
+ /**
+@@ -122,6 +143,10 @@ struct blk_zone {
+  * @sector: starting sector of report
+  * @nr_zones: IN maximum / OUT actual
+  * @flags: one or more flags as defined by enum blk_zone_report_flags.
++ * @flags: one or more flags as defined by enum blk_zone_report_flags.
++ *	   With BLKREPORTZONE, this field is ignored as an input and is valid
++ *	   only as an output. Using BLKREPORTZONEV2, this field is used as both
++ *	   input and output.
+  * @zones: Space to hold @nr_zones @zones entries on reply.
+  *
+  * The array of at most @nr_zones must follow this structure in memory.
+@@ -148,9 +173,19 @@ struct blk_zone_range {
+ /**
+  * Zoned block device ioctl's:
+  *
+- * @BLKREPORTZONE: Get zone information. Takes a zone report as argument.
+- *                 The zone report will start from the zone containing the
+- *                 sector specified in the report request structure.
++ * @BLKREPORTZONE: Get zone information from a zoned device. Takes a zone report
++ *		   as argument. The zone report will start from the zone
++ *		   containing the sector specified in struct blk_zone_report.
++ *		   The flags field of struct blk_zone_report is used as an
++ *		   output only and ignored as an input.
++ *		   DEPRECATED, use BLKREPORTZONEV2 instead.
++ * @BLKREPORTZONEV2: Same as @BLKREPORTZONE but uses the flags field of
++ *		     struct blk_zone_report as an input, allowing to get a zone
++ *		     report using cached zone information if the flag
++ *		     BLK_ZONE_REP_CACHED is set. In such case, the zone report
++ *		     may include zones with the condition @BLK_ZONE_COND_ACTIVE
++ *		     (c.f. the description of this condition above for more
++ *		     details).
+  * @BLKRESETZONE: Reset the write pointer of the zones in the specified
+  *                sector range. The sector range must be zone aligned.
+  * @BLKGETZONESZ: Get the device zone size in number of 512 B sectors.
+@@ -169,5 +204,6 @@ struct blk_zone_range {
+ #define BLKOPENZONE	_IOW(0x12, 134, struct blk_zone_range)
+ #define BLKCLOSEZONE	_IOW(0x12, 135, struct blk_zone_range)
+ #define BLKFINISHZONE	_IOW(0x12, 136, struct blk_zone_range)
++#define BLKREPORTZONEV2	_IOWR(0x12, 142, struct blk_zone_report)
+ 
+ #endif /* _BLKZONED_H */
+diff --git a/bundled/linux/include/uapi/linux/btrfs.h b/bundled/linux/include/uapi/linux/btrfs.h
+index cb6d6e4de..df4b2f88f 100644
+--- a/bundled/linux/include/uapi/linux/btrfs.h
++++ b/bundled/linux/include/uapi/linux/btrfs.h
+@@ -1097,6 +1097,12 @@ enum btrfs_err_code {
+ 	BTRFS_ERROR_DEV_RAID1C4_MIN_NOT_MET,
+ };
+ 
++/* Flags for IOC_SHUTDOWN, must match XFS_FSOP_GOING_FLAGS_* flags. */
++#define BTRFS_SHUTDOWN_FLAGS_DEFAULT			0x0
++#define BTRFS_SHUTDOWN_FLAGS_LOGFLUSH			0x1
++#define BTRFS_SHUTDOWN_FLAGS_NOLOGFLUSH			0x2
++#define BTRFS_SHUTDOWN_FLAGS_LAST			0x3
++
+ #define BTRFS_IOC_SNAP_CREATE _IOW(BTRFS_IOCTL_MAGIC, 1, \
+ 				   struct btrfs_ioctl_vol_args)
+ #define BTRFS_IOC_DEFRAG _IOW(BTRFS_IOCTL_MAGIC, 2, \
+@@ -1218,6 +1224,9 @@ enum btrfs_err_code {
+ #define BTRFS_IOC_SUBVOL_SYNC_WAIT _IOW(BTRFS_IOCTL_MAGIC, 65, \
+ 					struct btrfs_ioctl_subvol_wait)
+ 
++/* Shutdown ioctl should follow XFS's interfaces, thus not using btrfs magic. */
++#define BTRFS_IOC_SHUTDOWN	_IOR('X', 125, __u32)
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/bundled/linux/include/uapi/linux/devlink.h b/bundled/linux/include/uapi/linux/devlink.h
+index bcd5fde1c..3a8f8a3cc 100644
+--- a/bundled/linux/include/uapi/linux/devlink.h
++++ b/bundled/linux/include/uapi/linux/devlink.h
+@@ -181,6 +181,7 @@ enum devlink_sb_threshold_type {
+ enum devlink_eswitch_mode {
+ 	DEVLINK_ESWITCH_MODE_LEGACY,
+ 	DEVLINK_ESWITCH_MODE_SWITCHDEV,
++	DEVLINK_ESWITCH_MODE_SWITCHDEV_INACTIVE,
+ };
+ 
+ enum devlink_eswitch_inline_mode {
+@@ -638,6 +639,9 @@ enum devlink_attr {
+ 
+ 	DEVLINK_ATTR_HEALTH_REPORTER_BURST_PERIOD,	/* u64 */
+ 
++	DEVLINK_ATTR_PARAM_VALUE_DEFAULT,	/* dynamic */
++	DEVLINK_ATTR_PARAM_RESET_DEFAULT,	/* flag */
++
+ 	/* Add new attributes above here, update the spec in
+ 	 * Documentation/netlink/specs/devlink.yaml and re-generate
+ 	 * net/devlink/netlink_gen.c.
+diff --git a/bundled/linux/include/uapi/linux/ethtool.h b/bundled/linux/include/uapi/linux/ethtool.h
+index d515565bb..046eb223f 100644
+--- a/bundled/linux/include/uapi/linux/ethtool.h
++++ b/bundled/linux/include/uapi/linux/ethtool.h
+@@ -2075,6 +2075,10 @@ enum ethtool_link_mode_bit_indices {
+ 	ETHTOOL_LINK_MODE_800000baseDR4_2_Full_BIT	 = 118,
+ 	ETHTOOL_LINK_MODE_800000baseSR4_Full_BIT	 = 119,
+ 	ETHTOOL_LINK_MODE_800000baseVR4_Full_BIT	 = 120,
++	ETHTOOL_LINK_MODE_1600000baseCR8_Full_BIT	 = 121,
++	ETHTOOL_LINK_MODE_1600000baseKR8_Full_BIT	 = 122,
++	ETHTOOL_LINK_MODE_1600000baseDR8_Full_BIT	 = 123,
++	ETHTOOL_LINK_MODE_1600000baseDR8_2_Full_BIT	 = 124,
+ 
+ 	/* must be last entry */
+ 	__ETHTOOL_LINK_MODE_MASK_NBITS
+@@ -2188,6 +2192,7 @@ enum ethtool_link_mode_bit_indices {
+ #define SPEED_200000		200000
+ #define SPEED_400000		400000
+ #define SPEED_800000		800000
++#define SPEED_1600000		1600000
+ 
+ #define SPEED_UNKNOWN		-1
+ 
+diff --git a/bundled/linux/include/uapi/linux/ethtool_netlink_generated.h b/bundled/linux/include/uapi/linux/ethtool_netlink_generated.h
+index 3d1fbfbce..7c8d7b0a6 100644
+--- a/bundled/linux/include/uapi/linux/ethtool_netlink_generated.h
++++ b/bundled/linux/include/uapi/linux/ethtool_netlink_generated.h
+@@ -2,6 +2,7 @@
+ /* Do not edit directly, auto-generated from: */
+ /*	Documentation/netlink/specs/ethtool.yaml */
+ /* YNL-GEN uapi header */
++/* To regenerate run: tools/net/ynl/ynl-regen.sh */
+ 
+ #ifndef _LINUX_ETHTOOL_NETLINK_GENERATED_H
+ #define _LINUX_ETHTOOL_NETLINK_GENERATED_H
+@@ -803,6 +804,39 @@ enum {
+ 	ETHTOOL_A_PSE_NTF_MAX = (__ETHTOOL_A_PSE_NTF_CNT - 1)
+ };
+ 
++enum {
++	ETHTOOL_A_MSE_CAPABILITIES_MAX_AVERAGE_MSE = 1,
++	ETHTOOL_A_MSE_CAPABILITIES_MAX_PEAK_MSE,
++	ETHTOOL_A_MSE_CAPABILITIES_REFRESH_RATE_PS,
++	ETHTOOL_A_MSE_CAPABILITIES_NUM_SYMBOLS,
++
++	__ETHTOOL_A_MSE_CAPABILITIES_CNT,
++	ETHTOOL_A_MSE_CAPABILITIES_MAX = (__ETHTOOL_A_MSE_CAPABILITIES_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_MSE_SNAPSHOT_AVERAGE_MSE = 1,
++	ETHTOOL_A_MSE_SNAPSHOT_PEAK_MSE,
++	ETHTOOL_A_MSE_SNAPSHOT_WORST_PEAK_MSE,
++
++	__ETHTOOL_A_MSE_SNAPSHOT_CNT,
++	ETHTOOL_A_MSE_SNAPSHOT_MAX = (__ETHTOOL_A_MSE_SNAPSHOT_CNT - 1)
++};
++
++enum {
++	ETHTOOL_A_MSE_HEADER = 1,
++	ETHTOOL_A_MSE_CAPABILITIES,
++	ETHTOOL_A_MSE_CHANNEL_A,
++	ETHTOOL_A_MSE_CHANNEL_B,
++	ETHTOOL_A_MSE_CHANNEL_C,
++	ETHTOOL_A_MSE_CHANNEL_D,
++	ETHTOOL_A_MSE_WORST_CHANNEL,
++	ETHTOOL_A_MSE_LINK,
++
++	__ETHTOOL_A_MSE_CNT,
++	ETHTOOL_A_MSE_MAX = (__ETHTOOL_A_MSE_CNT - 1)
++};
++
+ enum {
+ 	ETHTOOL_MSG_USER_NONE = 0,
+ 	ETHTOOL_MSG_STRSET_GET = 1,
+@@ -855,6 +889,7 @@ enum {
+ 	ETHTOOL_MSG_RSS_SET,
+ 	ETHTOOL_MSG_RSS_CREATE_ACT,
+ 	ETHTOOL_MSG_RSS_DELETE_ACT,
++	ETHTOOL_MSG_MSE_GET,
+ 
+ 	__ETHTOOL_MSG_USER_CNT,
+ 	ETHTOOL_MSG_USER_MAX = (__ETHTOOL_MSG_USER_CNT - 1)
+@@ -915,6 +950,7 @@ enum {
+ 	ETHTOOL_MSG_RSS_CREATE_ACT_REPLY,
+ 	ETHTOOL_MSG_RSS_CREATE_NTF,
+ 	ETHTOOL_MSG_RSS_DELETE_NTF,
++	ETHTOOL_MSG_MSE_GET_REPLY,
+ 
+ 	__ETHTOOL_MSG_KERNEL_CNT,
+ 	ETHTOOL_MSG_KERNEL_MAX = (__ETHTOOL_MSG_KERNEL_CNT - 1)
+diff --git a/bundled/linux/include/uapi/linux/fcntl.h b/bundled/linux/include/uapi/linux/fcntl.h
+index 3b401f206..033ad4bb6 100644
+--- a/bundled/linux/include/uapi/linux/fcntl.h
++++ b/bundled/linux/include/uapi/linux/fcntl.h
+@@ -4,6 +4,7 @@
+ 
+ #include <asm/fcntl.h>
+ #include <linux/openat2.h>
++#include <linux/types.h>
+ 
+ #define F_SETLEASE	(F_LINUX_SPECIFIC_BASE + 0)
+ #define F_GETLEASE	(F_LINUX_SPECIFIC_BASE + 1)
+@@ -79,6 +80,17 @@
+  */
+ #define RWF_WRITE_LIFE_NOT_SET	RWH_WRITE_LIFE_NOT_SET
+ 
++/* Set/Get delegations */
++#define F_GETDELEG		(F_LINUX_SPECIFIC_BASE + 15)
++#define F_SETDELEG		(F_LINUX_SPECIFIC_BASE + 16)
++
++/* Argument structure for F_GETDELEG and F_SETDELEG */
++struct delegation {
++	__u32	d_flags;	/* Must be 0 */
++	__u16	d_type;		/* F_RDLCK, F_WRLCK, F_UNLCK */
++	__u16	__pad;		/* Must be 0 */
++};
++
+ /*
+  * Types of directory notifications that may be requested.
+  */
+diff --git a/bundled/linux/include/uapi/linux/fs.h b/bundled/linux/include/uapi/linux/fs.h
+index 3ed9c0de6..59af514fe 100644
+--- a/bundled/linux/include/uapi/linux/fs.h
++++ b/bundled/linux/include/uapi/linux/fs.h
+@@ -294,8 +294,9 @@ struct file_attr {
+ #define BLKROTATIONAL _IO(0x12,126)
+ #define BLKZEROOUT _IO(0x12,127)
+ #define BLKGETDISKSEQ _IOR(0x12,128,__u64)
+-/* 130-136 are used by zoned block device ioctls (uapi/linux/blkzoned.h) */
++/* 130-136 and 142 are used by zoned block device ioctls (uapi/linux/blkzoned.h) */
+ /* 137-141 are used by blk-crypto ioctls (uapi/linux/blk-crypto.h) */
++#define BLKTRACESETUP2 _IOWR(0x12, 142, struct blk_user_trace_setup2)
+ 
+ #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
+ #define FIBMAP	   _IO(0x00,1)	/* bmap access */
+diff --git a/bundled/linux/include/uapi/linux/if_ether.h b/bundled/linux/include/uapi/linux/if_ether.h
+index a1aff8e33..7867b630d 100644
+--- a/bundled/linux/include/uapi/linux/if_ether.h
++++ b/bundled/linux/include/uapi/linux/if_ether.h
+@@ -92,6 +92,9 @@
+ #define ETH_P_ETHERCAT	0x88A4		/* EtherCAT			*/
+ #define ETH_P_8021AD	0x88A8          /* 802.1ad Service VLAN		*/
+ #define ETH_P_802_EX1	0x88B5		/* 802.1 Local Experimental 1.  */
++#define ETH_P_MXLGSW	0x88C3		/* Infineon Technologies Corporate Research ST
++					 * Used by MaxLinear GSW DSA
++					 */
+ #define ETH_P_PREAUTH	0x88C7		/* 802.11 Preauthentication */
+ #define ETH_P_TIPC	0x88CA		/* TIPC 			*/
+ #define ETH_P_LLDP	0x88CC		/* Link Layer Discovery Protocol */
+@@ -114,6 +117,7 @@
+ #define ETH_P_QINQ1	0x9100		/* deprecated QinQ VLAN [ NOT AN OFFICIALLY REGISTERED ID ] */
+ #define ETH_P_QINQ2	0x9200		/* deprecated QinQ VLAN [ NOT AN OFFICIALLY REGISTERED ID ] */
+ #define ETH_P_QINQ3	0x9300		/* deprecated QinQ VLAN [ NOT AN OFFICIALLY REGISTERED ID ] */
++#define ETH_P_YT921X	0x9988		/* Motorcomm YT921x DSA [ NOT AN OFFICIALLY REGISTERED ID ] */
+ #define ETH_P_EDSA	0xDADA		/* Ethertype DSA [ NOT AN OFFICIALLY REGISTERED ID ] */
+ #define ETH_P_DSA_8021Q	0xDADB		/* Fake VLAN Header for DSA [ NOT AN OFFICIALLY REGISTERED ID ] */
+ #define ETH_P_DSA_A5PSW	0xE001		/* A5PSW Tag Value [ NOT AN OFFICIALLY REGISTERED ID ] */
+diff --git a/bundled/linux/include/uapi/linux/mptcp.h b/bundled/linux/include/uapi/linux/mptcp.h
+index ac193ef70..9f214ab91 100644
+--- a/bundled/linux/include/uapi/linux/mptcp.h
++++ b/bundled/linux/include/uapi/linux/mptcp.h
+@@ -68,7 +68,8 @@ struct mptcp_info {
+ 	__u64	mptcpi_bytes_acked;
+ 	__u8	mptcpi_subflows_total;
+ 	__u8	mptcpi_endp_laminar_max;
+-	__u8	reserved[2];
++	__u8	mptcpi_endp_fullmesh_max;
++	__u8	reserved;
+ 	__u32	mptcpi_last_data_sent;
+ 	__u32	mptcpi_last_data_recv;
+ 	__u32	mptcpi_last_ack_recv;
+diff --git a/bundled/linux/include/uapi/linux/mptcp_pm.h b/bundled/linux/include/uapi/linux/mptcp_pm.h
+index 4a4e5d38b..593be618b 100644
+--- a/bundled/linux/include/uapi/linux/mptcp_pm.h
++++ b/bundled/linux/include/uapi/linux/mptcp_pm.h
+@@ -2,6 +2,7 @@
+ /* Do not edit directly, auto-generated from: */
+ /*	Documentation/netlink/specs/mptcp_pm.yaml */
+ /* YNL-GEN uapi header */
++/* To regenerate run: tools/net/ynl/ynl-regen.sh */
+ 
+ #ifndef _LINUX_MPTCP_PM_H
+ #define _LINUX_MPTCP_PM_H
+diff --git a/bundled/linux/include/uapi/linux/netdev.h b/bundled/linux/include/uapi/linux/netdev.h
+index b02b8ab09..5605de5f0 100644
+--- a/bundled/linux/include/uapi/linux/netdev.h
++++ b/bundled/linux/include/uapi/linux/netdev.h
+@@ -2,6 +2,7 @@
+ /* Do not edit directly, auto-generated from: */
+ /*	Documentation/netlink/specs/netdev.yaml */
+ /* YNL-GEN uapi header */
++/* To regenerate run: tools/net/ynl/ynl-regen.sh */
+ 
+ #ifndef _LINUX_NETDEV_H
+ #define _LINUX_NETDEV_H
+@@ -80,6 +81,7 @@ enum netdev_qstats_scope {
+ enum netdev_napi_threaded {
+ 	NETDEV_NAPI_THREADED_DISABLED,
+ 	NETDEV_NAPI_THREADED_ENABLED,
++	NETDEV_NAPI_THREADED_BUSY_POLL,
+ };
+ 
+ enum {
+diff --git a/bundled/linux/include/uapi/linux/netfilter/nf_tables.h b/bundled/linux/include/uapi/linux/netfilter/nf_tables.h
+index 7c0c915f0..45c71f7d2 100644
+--- a/bundled/linux/include/uapi/linux/netfilter/nf_tables.h
++++ b/bundled/linux/include/uapi/linux/netfilter/nf_tables.h
+@@ -881,7 +881,7 @@ enum nft_exthdr_flags {
+  * enum nft_exthdr_op - nf_tables match options
+  *
+  * @NFT_EXTHDR_OP_IPV6: match against ipv6 extension headers
+- * @NFT_EXTHDR_OP_TCP: match against tcp options
++ * @NFT_EXTHDR_OP_TCPOPT: match against tcp options
+  * @NFT_EXTHDR_OP_IPV4: match against ipv4 options
+  * @NFT_EXTHDR_OP_SCTP: match against sctp chunks
+  * @NFT_EXTHDR_OP_DCCP: match against dccp otions
+@@ -1200,7 +1200,7 @@ enum nft_ct_attributes {
+ #define NFTA_CT_MAX		(__NFTA_CT_MAX - 1)
+ 
+ /**
+- * enum nft_flow_attributes - ct offload expression attributes
++ * enum nft_offload_attributes - ct offload expression attributes
+  * @NFTA_FLOW_TABLE_NAME: flow table name (NLA_STRING)
+  */
+ enum nft_offload_attributes {
+@@ -1410,7 +1410,7 @@ enum nft_reject_types {
+ };
+ 
+ /**
+- * enum nft_reject_code - Generic reject codes for IPv4/IPv6
++ * enum nft_reject_inet_code - Generic reject codes for IPv4/IPv6
+  *
+  * @NFT_REJECT_ICMPX_NO_ROUTE: no route to host / network unreachable
+  * @NFT_REJECT_ICMPX_PORT_UNREACH: port unreachable
+@@ -1480,9 +1480,9 @@ enum nft_nat_attributes {
+ /**
+  * enum nft_tproxy_attributes - nf_tables tproxy expression netlink attributes
+  *
+- * NFTA_TPROXY_FAMILY: Target address family (NLA_U32: nft_registers)
+- * NFTA_TPROXY_REG_ADDR: Target address register (NLA_U32: nft_registers)
+- * NFTA_TPROXY_REG_PORT: Target port register (NLA_U32: nft_registers)
++ * @NFTA_TPROXY_FAMILY: Target address family (NLA_U32: nft_registers)
++ * @NFTA_TPROXY_REG_ADDR: Target address register (NLA_U32: nft_registers)
++ * @NFTA_TPROXY_REG_PORT: Target port register (NLA_U32: nft_registers)
+  */
+ enum nft_tproxy_attributes {
+ 	NFTA_TPROXY_UNSPEC,
+@@ -1783,7 +1783,7 @@ enum nft_synproxy_attributes {
+ #define NFTA_SYNPROXY_MAX (__NFTA_SYNPROXY_MAX - 1)
+ 
+ /**
+- * enum nft_device_attributes - nf_tables device netlink attributes
++ * enum nft_devices_attributes - nf_tables device netlink attributes
+  *
+  * @NFTA_DEVICE_NAME: name of this device (NLA_STRING)
+  * @NFTA_DEVICE_PREFIX: device name prefix, a simple wildcard (NLA_STRING)
+diff --git a/bundled/linux/include/uapi/linux/nsfs.h b/bundled/linux/include/uapi/linux/nsfs.h
+index 878e8a692..06385b084 100644
+--- a/bundled/linux/include/uapi/linux/nsfs.h
++++ b/bundled/linux/include/uapi/linux/nsfs.h
+@@ -65,4 +65,59 @@ struct nsfs_file_handle {
+ #define NSFS_FILE_HANDLE_SIZE_VER0 16 /* sizeof first published struct */
+ #define NSFS_FILE_HANDLE_SIZE_LATEST sizeof(struct nsfs_file_handle) /* sizeof latest published struct */
+ 
++enum init_ns_id {
++	IPC_NS_INIT_ID		= 1ULL,
++	UTS_NS_INIT_ID		= 2ULL,
++	USER_NS_INIT_ID		= 3ULL,
++	PID_NS_INIT_ID		= 4ULL,
++	CGROUP_NS_INIT_ID	= 5ULL,
++	TIME_NS_INIT_ID		= 6ULL,
++	NET_NS_INIT_ID		= 7ULL,
++	MNT_NS_INIT_ID		= 8ULL,
++};
++
++enum ns_type {
++	TIME_NS    = (1ULL << 7),  /* CLONE_NEWTIME */
++	MNT_NS     = (1ULL << 17), /* CLONE_NEWNS */
++	CGROUP_NS  = (1ULL << 25), /* CLONE_NEWCGROUP */
++	UTS_NS     = (1ULL << 26), /* CLONE_NEWUTS */
++	IPC_NS     = (1ULL << 27), /* CLONE_NEWIPC */
++	USER_NS    = (1ULL << 28), /* CLONE_NEWUSER */
++	PID_NS     = (1ULL << 29), /* CLONE_NEWPID */
++	NET_NS     = (1ULL << 30), /* CLONE_NEWNET */
++};
++
++/**
++ * struct ns_id_req - namespace ID request structure
++ * @size: size of this structure
++ * @spare: reserved for future use
++ * @filter: filter mask
++ * @ns_id: last namespace id
++ * @user_ns_id: owning user namespace ID
++ *
++ * Structure for passing namespace ID and miscellaneous parameters to
++ * statns(2) and listns(2).
++ *
++ * For statns(2) @param represents the request mask.
++ * For listns(2) @param represents the last listed mount id (or zero).
++ */
++struct ns_id_req {
++	__u32 size;
++	__u32 spare;
++	__u64 ns_id;
++	struct /* listns */ {
++		__u32 ns_type;
++		__u32 spare2;
++		__u64 user_ns_id;
++	};
++};
++
++/*
++ * Special @user_ns_id value that can be passed to listns()
++ */
++#define LISTNS_CURRENT_USER 0xffffffffffffffff /* Caller's userns */
++
++/* List of all ns_id_req versions. */
++#define NS_ID_REQ_SIZE_VER0 32 /* sizeof first published struct */
++
+ #endif /* __LINUX_NSFS_H */
+diff --git a/bundled/linux/include/uapi/linux/tee.h b/bundled/linux/include/uapi/linux/tee.h
+index ab050ea90..c038e11f7 100644
+--- a/bundled/linux/include/uapi/linux/tee.h
++++ b/bundled/linux/include/uapi/linux/tee.h
+@@ -249,8 +249,9 @@ struct tee_ioctl_param {
+  * @cancel_id:	[in] Cancellation id, a unique value to identify this request
+  * @session:	[out] Session id
+  * @ret:	[out] return value
+- * @ret_origin	[out] origin of the return value
+- * @num_params	[in] number of parameters following this struct
++ * @ret_origin:	[out] origin of the return value
++ * @num_params:	[in] number of &struct tee_ioctl_param entries in @params
++ * @params:	array of ioctl parameters
+  */
+ struct tee_ioctl_open_session_arg {
+ 	__u8 uuid[TEE_IOCTL_UUID_LEN];
+@@ -276,14 +277,14 @@ struct tee_ioctl_open_session_arg {
+ 				     struct tee_ioctl_buf_data)
+ 
+ /**
+- * struct tee_ioctl_invoke_func_arg - Invokes a function in a Trusted
+- * Application
++ * struct tee_ioctl_invoke_arg - Invokes a function in a Trusted Application
+  * @func:	[in] Trusted Application function, specific to the TA
+  * @session:	[in] Session id
+  * @cancel_id:	[in] Cancellation id, a unique value to identify this request
+  * @ret:	[out] return value
+- * @ret_origin	[out] origin of the return value
+- * @num_params	[in] number of parameters following this struct
++ * @ret_origin:	[out] origin of the return value
++ * @num_params:	[in] number of parameters following this struct
++ * @params:	array of ioctl parameters
+  */
+ struct tee_ioctl_invoke_arg {
+ 	__u32 func;
+@@ -338,7 +339,8 @@ struct tee_ioctl_close_session_arg {
+ /**
+  * struct tee_iocl_supp_recv_arg - Receive a request for a supplicant function
+  * @func:	[in] supplicant function
+- * @num_params	[in/out] number of parameters following this struct
++ * @num_params:	[in/out] number of &struct tee_ioctl_param entries in @params
++ * @params:	array of ioctl parameters
+  *
+  * @num_params is the number of params that tee-supplicant has room to
+  * receive when input, @num_params is the number of actual params
+@@ -363,7 +365,8 @@ struct tee_iocl_supp_recv_arg {
+ /**
+  * struct tee_iocl_supp_send_arg - Send a response to a received request
+  * @ret:	[out] return value
+- * @num_params	[in] number of parameters following this struct
++ * @num_params:	[in] number of &struct tee_ioctl_param entries in @params
++ * @params:	array of ioctl parameters
+  */
+ struct tee_iocl_supp_send_arg {
+ 	__u32 ret;
+@@ -454,11 +457,13 @@ struct tee_ioctl_shm_register_fd_data {
+  */
+ 
+ /**
+- * struct tee_ioctl_invoke_func_arg - Invokes an object in a Trusted Application
++ * struct tee_ioctl_object_invoke_arg - Invokes an object in a
++ *   Trusted Application
+  * @id:		[in] Object id
+  * @op:		[in] Object operation, specific to the object
+  * @ret:	[out] return value
+  * @num_params:	[in] number of parameters following this struct
++ * @params:	array of ioctl parameters
+  */
+ struct tee_ioctl_object_invoke_arg {
+ 	__u64 id;
+diff --git a/bundled/linux/include/uapi/linux/tls.h b/bundled/linux/include/uapi/linux/tls.h
+index dd7dea898..59ae50be8 100644
+--- a/bundled/linux/include/uapi/linux/tls.h
++++ b/bundled/linux/include/uapi/linux/tls.h
+@@ -41,6 +41,7 @@
+ #define TLS_RX			2	/* Set receive parameters */
+ #define TLS_TX_ZEROCOPY_RO	3	/* TX zerocopy (only sendfile now) */
+ #define TLS_RX_EXPECT_NO_PAD	4	/* Attempt opportunistic zero-copy */
++#define TLS_TX_MAX_PAYLOAD_LEN	5	/* Maximum plaintext size */
+ 
+ /* Supported versions */
+ #define TLS_VERSION_MINOR(ver)	((ver) & 0xFF)
+@@ -194,6 +195,7 @@ enum {
+ 	TLS_INFO_RXCONF,
+ 	TLS_INFO_ZC_RO_TX,
+ 	TLS_INFO_RX_NO_PAD,
++	TLS_INFO_TX_MAX_PAYLOAD_LEN,
+ 	__TLS_INFO_MAX,
+ };
+ #define TLS_INFO_MAX (__TLS_INFO_MAX - 1)
+diff --git a/bundled/linux/include/uapi/linux/v4l2-controls.h b/bundled/linux/include/uapi/linux/v4l2-controls.h
+index 61d122c2f..26c9e3255 100644
+--- a/bundled/linux/include/uapi/linux/v4l2-controls.h
++++ b/bundled/linux/include/uapi/linux/v4l2-controls.h
+@@ -226,6 +226,12 @@ enum v4l2_colorfx {
+  */
+ #define V4L2_CID_USER_RKISP1_BASE		(V4L2_CID_USER_BASE + 0x1220)
+ 
++/*
++ * The base for the Arm Mali-C55 ISP driver controls.
++ * We reserve 16 controls for this driver
++ */
++#define V4L2_CID_USER_MALI_C55_BASE		(V4L2_CID_USER_BASE + 0x1230)
++
+ /* MPEG-class control IDs */
+ /* The MPEG controls are applicable to all codec controls
+  * and the 'MPEG' part of the define is historical */
+diff --git a/bundled/linux/include/uapi/linux/version.h b/bundled/linux/include/uapi/linux/version.h
+index 9a8ea9c6c..28ccfa734 100644
+--- a/bundled/linux/include/uapi/linux/version.h
++++ b/bundled/linux/include/uapi/linux/version.h
+@@ -1,5 +1,5 @@
+-#define LINUX_VERSION_CODE 397824
++#define LINUX_VERSION_CODE 398080
+ #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + ((c) > 255 ? 255 : (c)))
+ #define LINUX_VERSION_MAJOR 6
+-#define LINUX_VERSION_PATCHLEVEL 18
++#define LINUX_VERSION_PATCHLEVEL 19
+ #define LINUX_VERSION_SUBLEVEL 0
+diff --git a/bundled/linux/include/uapi/linux/videodev2.h b/bundled/linux/include/uapi/linux/videodev2.h
+index a1f30e038..0708d6683 100644
+--- a/bundled/linux/include/uapi/linux/videodev2.h
++++ b/bundled/linux/include/uapi/linux/videodev2.h
+@@ -857,6 +857,10 @@ struct v4l2_pix_format {
+ #define V4L2_META_FMT_RPI_FE_CFG	v4l2_fourcc('R', 'P', 'F', 'C') /* PiSP FE configuration */
+ #define V4L2_META_FMT_RPI_FE_STATS	v4l2_fourcc('R', 'P', 'F', 'S') /* PiSP FE stats */
+ 
++/* Vendor specific - used for Arm Mali-C55 ISP */
++#define V4L2_META_FMT_MALI_C55_PARAMS	v4l2_fourcc('C', '5', '5', 'P') /* ARM Mali-C55 Parameters */
++#define V4L2_META_FMT_MALI_C55_STATS	v4l2_fourcc('C', '5', '5', 'S') /* ARM Mali-C55 3A Statistics */
++
+ 
+ /* priv field value to indicates that subsequent fields are valid. */
+ #define V4L2_PIX_FMT_PRIV_MAGIC		0xfeedcafe
+-- 
+2.34.1
+

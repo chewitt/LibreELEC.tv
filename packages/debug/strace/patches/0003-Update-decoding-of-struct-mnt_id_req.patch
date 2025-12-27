@@ -1,0 +1,235 @@
+From 822b5e840dbf4a80262eaea455d9bc7b6a00d245 Mon Sep 17 00:00:00 2001
+From: "Dmitry V. Levin" <ldv@strace.io>
+Date: Wed, 10 Dec 2025 08:00:00 +0000
+Subject: [PATCH 3/8] Update decoding of struct mnt_id_req
+
+* bundled/linux/include/uapi/linux/mount.h: Update to headers_install'ed
+Linux kernel v6.18.
+* src/listmount.c (print_mnt_id_req): Print struct mnt_id_req.mnt_ns_fd
+field introduced by Linux kernel commit v6.18-rc7~32^2~2.
+* src/statmount.c (print_mnt_id_req): Likewise.
+* tests/listmount.c (main): Check it.
+* tests/statmount.c (test_req): Likewise.
+* NEWS: Mention this change.
+---
+ NEWS                                     |  1 +
+ bundled/linux/include/uapi/linux/mount.h |  2 +-
+ src/listmount.c                          |  6 ++--
+ src/statmount.c                          |  6 ++--
+ tests/listmount.c                        | 42 +++++++++++++-----------
+ tests/statmount.c                        | 38 +++++++++++----------
+ 6 files changed, 49 insertions(+), 46 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index 0a59a733d..916c288f6 100644
+--- a/NEWS
++++ b/NEWS
+@@ -2,6 +2,7 @@ Noteworthy changes in release ?.?? (????-??-??)
+ ===============================================
+ 
+ * Improvements
++  * Updated decoding of struct mnt_id_req.
+ 
+ Noteworthy changes in release 6.18 (2025-12-07)
+ ===============================================
+diff --git a/bundled/linux/include/uapi/linux/mount.h b/bundled/linux/include/uapi/linux/mount.h
+index 4d16593fc..534dc2f1d 100644
+--- a/bundled/linux/include/uapi/linux/mount.h
++++ b/bundled/linux/include/uapi/linux/mount.h
+@@ -197,7 +197,7 @@ struct statmount {
+  */
+ struct mnt_id_req {
+ 	__u32 size;
+-	__u32 spare;
++	__u32 mnt_ns_fd;
+ 	__u64 mnt_id;
+ 	__u64 param;
+ 	__u64 mnt_ns_id;
+diff --git a/src/listmount.c b/src/listmount.c
+index 55bd6aa8e..70a375661 100644
+--- a/src/listmount.c
++++ b/src/listmount.c
+@@ -36,10 +36,8 @@ print_mnt_id_req(struct tcb *const tcp, const kernel_ulong_t addr)
+ 		return;
+ 	}
+ 
+-	if (req.spare) {
+-		tprint_struct_next();
+-		PRINT_FIELD_X(req, spare);
+-	}
++	tprint_struct_next();
++	PRINT_FIELD_FD(req, mnt_ns_fd, tcp);
+ 
+ 	tprint_struct_next();
+ 	PRINT_FIELD_XVAL(req, mnt_id, listmount_mnt_id, NULL);
+diff --git a/src/statmount.c b/src/statmount.c
+index 30d969e49..e8f83883e 100644
+--- a/src/statmount.c
++++ b/src/statmount.c
+@@ -94,10 +94,8 @@ print_mnt_id_req(struct tcb *const tcp, const kernel_ulong_t addr)
+ 		return;
+ 	}
+ 
+-	if (req.spare) {
+-		tprint_struct_next();
+-		PRINT_FIELD_X(req, spare);
+-	}
++	tprint_struct_next();
++	PRINT_FIELD_FD(req, mnt_ns_fd, tcp);
+ 
+ 	tprint_struct_next();
+ 	PRINT_FIELD_X(req, mnt_id);
+diff --git a/tests/listmount.c b/tests/listmount.c
+index 01d7f731c..c69a1c12c 100644
+--- a/tests/listmount.c
++++ b/tests/listmount.c
+@@ -75,41 +75,44 @@ main(void)
+ 
+ 	req->size = MNT_ID_REQ_SIZE_VER0;
+ 	k_listmount(req, 0, 0, 0);
+-	printf("listmount({size=%u, spare=%#x, mnt_id=%#jx, param=%#jx}"
+-	       ", NULL, 0, 0) = %s" INJ_STR, req->size, req->spare,
++	printf("listmount({size=%u, mnt_ns_fd=%d, mnt_id=%#jx, param=%#jx}"
++	       ", NULL, 0, 0) = %s" INJ_STR, req->size, req->mnt_ns_fd,
+ 	       (uintmax_t) req->mnt_id, (uintmax_t) req->param, errstr);
+ 
+ 	req->size = MNT_ID_REQ_SIZE_VER1;
+ 	k_listmount(req, 0, 0, 0);
+-	printf("listmount({size=%u, spare=%#x, mnt_id=%#jx, param=%#jx"
++	printf("listmount({size=%u, mnt_ns_fd=%d, mnt_id=%#jx, param=%#jx"
+ 	       ", mnt_ns_id=%#jx}, NULL, 0, 0) = %s" INJ_STR, req->size,
+-	       req->spare, (uintmax_t) req->mnt_id, (uintmax_t) req->param,
++	       req->mnt_ns_fd, (uintmax_t) req->mnt_id, (uintmax_t) req->param,
+ 	       (uintmax_t) req->mnt_ns_id, errstr);
+ 
+ 	req->size = sizeof(*req);
+ 	k_listmount(req, 0, 0, 0);
+-	printf("listmount({size=%u, spare=%#x, mnt_id=%#jx, param=%#jx"
++	printf("listmount({size=%u, mnt_ns_fd=%d, mnt_id=%#jx, param=%#jx"
+ 	       ", mnt_ns_id=%#jx}, NULL, 0, 0) = %s" INJ_STR, req->size,
+-	       req->spare, (uintmax_t) req->mnt_id, (uintmax_t) req->param,
++	       req->mnt_ns_fd, (uintmax_t) req->mnt_id, (uintmax_t) req->param,
+ 	       (uintmax_t) req->mnt_ns_id, errstr);
+ 
+-	req->spare = 0;
++	req->mnt_ns_fd = 0;
+ 	k_listmount(req, 0, 0, 0);
+-	printf("listmount({size=%u, mnt_id=%#jx, param=%#jx, mnt_ns_id=%#jx}"
+-	       ", NULL, 0, 0) = %s" INJ_STR, req->size, (uintmax_t) req->mnt_id,
+-	       (uintmax_t) req->param, (uintmax_t) req->mnt_ns_id, errstr);
++	printf("listmount({size=%u, mnt_ns_fd=%d, mnt_id=%#jx, param=%#jx"
++	       ", mnt_ns_id=%#jx}, NULL, 0, 0) = %s" INJ_STR, req->size,
++	       req->mnt_ns_fd, (uintmax_t) req->mnt_id, (uintmax_t) req->param,
++	       (uintmax_t) req->mnt_ns_id, errstr);
+ 
+ 	req->mnt_id = LSMT_ROOT;
+ 	k_listmount(req, 0, 0, 0);
+-	printf("listmount({size=%u, mnt_id=%s, param=%#jx, mnt_ns_id=%#jx}"
+-	       ", NULL, 0, 0) = %s" INJ_STR, req->size, "LSMT_ROOT",
+-	       (uintmax_t) req->param, (uintmax_t) req->mnt_ns_id, errstr);
++	printf("listmount({size=%u, mnt_ns_fd=%d, mnt_id=%s, param=%#jx"
++	       ", mnt_ns_id=%#jx}, NULL, 0, 0) = %s" INJ_STR, req->size,
++	       req->mnt_ns_fd, "LSMT_ROOT", (uintmax_t) req->param,
++	       (uintmax_t) req->mnt_ns_id, errstr);
+ 
+ 	++req->size;
+ 	k_listmount(req, 0, 0, 0);
+-	printf("listmount({size=%u, mnt_id=%s, param=%#jx, mnt_ns_id=%#jx, ???}"
+-	       ", NULL, 0, 0) = %s" INJ_STR, req->size, "LSMT_ROOT",
+-	       (uintmax_t) req->param, (uintmax_t) req->mnt_ns_id, errstr);
++	printf("listmount({size=%u, mnt_ns_fd=%d, mnt_id=%s, param=%#jx"
++	       ", mnt_ns_id=%#jx, ???}, NULL, 0, 0) = %s" INJ_STR, req->size,
++	       req->mnt_ns_fd, "LSMT_ROOT", (uintmax_t) req->param,
++	       (uintmax_t) req->mnt_ns_id, errstr);
+ 
+ 	req->size = sizeof(*req) + 8;
+ 	char *p = (char *) req - 8;
+@@ -117,9 +120,10 @@ main(void)
+ 	fill_memory(p + sizeof(*req), 8);
+ 	k_listmount(p, 0, 0, 0);
+ 	memmove(req, p, sizeof(*req));
+-	printf("listmount({size=%u, mnt_id=%s, param=%#jx, mnt_ns_id=%#jx"
+-	       ", /* bytes %zu..%zu */ \"%s\"}, NULL, 0, 0) = %s" INJ_STR,
+-	       req->size, "LSMT_ROOT", (uintmax_t) req->param,
++	printf("listmount({size=%u, mnt_ns_fd=%d, mnt_id=%s, param=%#jx"
++	       ", mnt_ns_id=%#jx, /* bytes %zu..%zu */ \"%s\"}, NULL, 0, 0)"
++	       " = %s" INJ_STR,
++	       req->size, req->mnt_ns_fd, "LSMT_ROOT", (uintmax_t) req->param,
+ 	       (uintmax_t) req->mnt_ns_id, sizeof(*req), sizeof(*req) + 7,
+ 	       "\\x80\\x81\\x82\\x83\\x84\\x85\\x86\\x87", errstr);
+ 
+diff --git a/tests/statmount.c b/tests/statmount.c
+index 5d0ec99da..383b2af32 100644
+--- a/tests/statmount.c
++++ b/tests/statmount.c
+@@ -116,37 +116,38 @@ test_req(void)
+ 	req->param = INVALID_STATMOUNT;
+ 
+ 	k_statmount(req, 0, 0, 0);
+-	printf("statmount({size=%u, spare=%#x, mnt_id=%#jx, param=%#jx"
+-	       " /* STATMOUNT_??? */}, NULL, 0, 0) = %s" INJ_STR,
+-	       req->size, req->spare,
++	printf("statmount({size=%u, mnt_ns_fd=%d, mnt_id=%#jx"
++	       ", param=%#jx /* STATMOUNT_??? */}, NULL, 0, 0) = %s" INJ_STR,
++	       req->size, req->mnt_ns_fd,
+ 	       (uintmax_t) req->mnt_id, (uintmax_t) req->param, errstr);
+ 
+ 	req->size = MNT_ID_REQ_SIZE_VER1;
+-	req->spare = 0;
++	req->mnt_ns_fd = 0;
+ 	req->param = VALID_STATMOUNT;
+ 
+ 	k_statmount(req, 0, 0, 0);
+-	printf("statmount({size=%u, mnt_id=%#jx, param=%s, mnt_ns_id=%#jx}"
+-	       ", NULL, 0, 0) = %s" INJ_STR,
+-	       req->size, (uintmax_t) req->mnt_id, VALID_STATMOUNT_STR,
+-	       (uintmax_t) req->mnt_ns_id, errstr);
++	printf("statmount({size=%u, mnt_ns_fd=%d, mnt_id=%#jx, param=%s"
++	       ", mnt_ns_id=%#jx}, NULL, 0, 0) = %s" INJ_STR,
++	       req->size, req->mnt_ns_fd, (uintmax_t) req->mnt_id,
++	       VALID_STATMOUNT_STR, (uintmax_t) req->mnt_ns_id, errstr);
+ 
+ 	req->size = sizeof(*req);
+ 	req->param = ALL_STATMOUNT;
+ 
+ 	k_statmount(req, 0, 0, 0);
+-	printf("statmount({size=%u, mnt_id=%#jx, param=%s, mnt_ns_id=%#jx}"
+-	       ", NULL, 0, 0) = %s" INJ_STR,
+-	       req->size, (uintmax_t) req->mnt_id, ALL_STATMOUNT_STR,
+-	       (uintmax_t) req->mnt_ns_id, errstr);
++	printf("statmount({size=%u, mnt_ns_fd=%d, mnt_id=%#jx, param=%s"
++	       ", mnt_ns_id=%#jx}, NULL, 0, 0) = %s" INJ_STR,
++	       req->size, req->mnt_ns_fd, (uintmax_t) req->mnt_id,
++	       ALL_STATMOUNT_STR, (uintmax_t) req->mnt_ns_id, errstr);
+ 
+ 	++req->size;
+ 	req->param = 0;
+ 
+ 	k_statmount(req, 0, 0, 0);
+-	printf("statmount({size=%u, mnt_id=%#jx, param=0, mnt_ns_id=%#jx, ???}"
+-	       ", NULL, 0, 0) = %s" INJ_STR, req->size,
+-	       (uintmax_t) req->mnt_id, (uintmax_t) req->mnt_ns_id, errstr);
++	printf("statmount({size=%u, mnt_ns_fd=%d, mnt_id=%#jx, param=0"
++	       ", mnt_ns_id=%#jx, ???}, NULL, 0, 0) = %s" INJ_STR, req->size,
++	       req->mnt_ns_fd, (uintmax_t) req->mnt_id,
++	       (uintmax_t) req->mnt_ns_id, errstr);
+ 
+ 	req->size = sizeof(*req) + 8;
+ 	char *p = (char *) req - 8;
+@@ -155,9 +156,10 @@ test_req(void)
+ 
+ 	k_statmount(p, 0, 0, 0);
+ 	memmove(req, p, sizeof(*req));
+-	printf("statmount({size=%u, mnt_id=%#jx, param=0, mnt_ns_id=%#jx"
+-	       ", /* bytes %zu..%zu */ \"%s\"}, NULL, 0, 0) = %s" INJ_STR,
+-	       req->size, (uintmax_t) req->mnt_id, (uintmax_t) req->mnt_ns_id,
++	printf("statmount({size=%u, mnt_ns_fd=%d, mnt_id=%#jx, param=0"
++	       ", mnt_ns_id=%#jx, /* bytes %zu..%zu */ \"%s\"}, NULL, 0, 0)"
++	       " = %s" INJ_STR, req->size, req->mnt_ns_fd,
++	       (uintmax_t) req->mnt_id, (uintmax_t) req->mnt_ns_id,
+ 	       sizeof(*req), sizeof(*req) + 7,
+ 	       "\\x80\\x81\\x82\\x83\\x84\\x85\\x86\\x87", errstr);
+ }
+-- 
+2.34.1
+

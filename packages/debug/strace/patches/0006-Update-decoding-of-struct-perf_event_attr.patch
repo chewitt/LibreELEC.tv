@@ -1,0 +1,154 @@
+From 5c1047a142d812c4c2eb397224d55c08cc595be9 Mon Sep 17 00:00:00 2001
+From: "Dmitry V. Levin" <ldv@strace.io>
+Date: Tue, 16 Dec 2025 08:00:00 +0000
+Subject: [PATCH 6/8] Update decoding of struct perf_event_attr
+
+* bundled/linux/include/uapi/linux/perf_event.h: Update to
+headers_install'ed Linux kernel v6.19-rc1.
+* src/perf_event_struct.h (struct perf_event_attr): Add config4 field
+introduced by Linux kernel commit v6.19-rc1~205^2~4.
+* src/perf.c (print_perf_event_attr): Print it.
+* tests/perf_event_open.c (print_event_attr): Check it.
+* NEWS: Mention this change.
+---
+ NEWS                                          |  2 +-
+ bundled/linux/include/uapi/linux/perf_event.h | 23 ++++++++++++++++++-
+ src/perf.c                                    |  4 ++++
+ src/perf_event_struct.h                       |  2 ++
+ tests/perf_event_open.c                       | 10 +++++++-
+ 5 files changed, 38 insertions(+), 3 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index 4dbbf9c80..9ea8a48ad 100644
+--- a/NEWS
++++ b/NEWS
+@@ -2,7 +2,7 @@ Noteworthy changes in release ?.?? (????-??-??)
+ ===============================================
+ 
+ * Improvements
+-  * Updated decoding of struct mnt_id_req.
++  * Updated decoding of struct mnt_id_req and struct perf_event_attr.
+   * Updated the list of IORING_OP_* constants.
+ 
+ Noteworthy changes in release 6.18 (2025-12-07)
+diff --git a/bundled/linux/include/uapi/linux/perf_event.h b/bundled/linux/include/uapi/linux/perf_event.h
+index 4e66e7e14..210138d0f 100644
+--- a/bundled/linux/include/uapi/linux/perf_event.h
++++ b/bundled/linux/include/uapi/linux/perf_event.h
+@@ -382,6 +382,7 @@ enum perf_event_read_format {
+ #define PERF_ATTR_SIZE_VER6			120	/* Add: aux_sample_size */
+ #define PERF_ATTR_SIZE_VER7			128	/* Add: sig_data */
+ #define PERF_ATTR_SIZE_VER8			136	/* Add: config3 */
++#define PERF_ATTR_SIZE_VER9			144	/* add: config4 */
+ 
+ /*
+  * 'struct perf_event_attr' contains various attributes that define
+@@ -463,7 +464,9 @@ struct perf_event_attr {
+ 				inherit_thread :  1, /* children only inherit if cloned with CLONE_THREAD */
+ 				remove_on_exec :  1, /* event is removed from task on exec */
+ 				sigtrap        :  1, /* send synchronous SIGTRAP on event */
+-				__reserved_1   : 26;
++				defer_callchain:  1, /* request PERF_RECORD_CALLCHAIN_DEFERRED records */
++				defer_output   :  1, /* output PERF_RECORD_CALLCHAIN_DEFERRED records */
++				__reserved_1   : 24;
+ 
+ 	union {
+ 		__u32		wakeup_events;	  /* wake up every n events */
+@@ -543,6 +546,7 @@ struct perf_event_attr {
+ 	__u64	sig_data;
+ 
+ 	__u64	config3; /* extension of config2 */
++	__u64	config4; /* extension of config3 */
+ };
+ 
+ /*
+@@ -1239,6 +1243,22 @@ enum perf_event_type {
+ 	 */
+ 	PERF_RECORD_AUX_OUTPUT_HW_ID		= 21,
+ 
++	/*
++	 * This user callchain capture was deferred until shortly before
++	 * returning to user space.  Previous samples would have kernel
++	 * callchains only and they need to be stitched with this to make full
++	 * callchains.
++	 *
++	 * struct {
++	 *	struct perf_event_header	header;
++	 *	u64				cookie;
++	 *	u64				nr;
++	 *	u64				ips[nr];
++	 *	struct sample_id		sample_id;
++	 * };
++	 */
++	PERF_RECORD_CALLCHAIN_DEFERRED		= 22,
++
+ 	PERF_RECORD_MAX,			/* non-ABI */
+ };
+ 
+@@ -1269,6 +1289,7 @@ enum perf_callchain_context {
+ 	PERF_CONTEXT_HV				= (__u64)-32,
+ 	PERF_CONTEXT_KERNEL			= (__u64)-128,
+ 	PERF_CONTEXT_USER			= (__u64)-512,
++	PERF_CONTEXT_USER_DEFERRED		= (__u64)-640,
+ 
+ 	PERF_CONTEXT_GUEST			= (__u64)-2048,
+ 	PERF_CONTEXT_GUEST_KERNEL		= (__u64)-2176,
+diff --git a/src/perf.c b/src/perf.c
+index 80a85571f..383320e35 100644
+--- a/src/perf.c
++++ b/src/perf.c
+@@ -448,6 +448,10 @@ print_perf_event_attr(struct tcb *const tcp, const kernel_ulong_t addr)
+ 	tprint_struct_next();
+ 	PRINT_FIELD_X(*attr, config3);
+ 
++	STRACE_PERF_CHECK_FIELD(config4);
++	tprint_struct_next();
++	PRINT_FIELD_X(*attr, config4);
++
+ print_perf_event_attr_out:
+ 	if ((attr->size && (attr->size > size)) ||
+ 	    (!attr->size && (size < PERF_ATTR_SIZE_VER0))) {
+diff --git a/src/perf_event_struct.h b/src/perf_event_struct.h
+index b4c649917..3c0ff33e3 100644
+--- a/src/perf_event_struct.h
++++ b/src/perf_event_struct.h
+@@ -104,6 +104,8 @@ struct perf_event_attr {
+ 	/* End of ver 7 - 128 bytes */
+ 	uint64_t config3;
+ 	/* End of ver 8 - 136 bytes */
++	uint64_t config4;
++	/* End of ver 9 - 144 bytes */
+ };
+ 
+ struct perf_event_query_bpf {
+diff --git a/tests/perf_event_open.c b/tests/perf_event_open.c
+index 3fb376a8c..49282cc47 100644
+--- a/tests/perf_event_open.c
++++ b/tests/perf_event_open.c
+@@ -124,7 +124,7 @@ print_event_attr(struct perf_event_attr *attr_ptr, size_t size,
+ 	enum {
+ 		STRACE_PEA_ABBREV_SIZE =
+ 			offsetof(struct perf_event_attr, wakeup_events),
+-		STRACE_PEA_SIZE = 136,
++		STRACE_PEA_SIZE = 144,
+ 	};
+ 
+ 	uint32_t read_size;
+@@ -382,6 +382,14 @@ print_event_attr(struct perf_event_attr *attr_ptr, size_t size,
+ 	val = attr->config3;
+ 	printf(", config3=%#" PRIx64, (uint64_t) val);
+ 
++	if (size <= 136) {
++		cutoff = 136;
++		goto end;
++	}
++
++	val = attr->config4;
++	printf(", config4=%#" PRIx64, (uint64_t) val);
++
+ 	cutoff = STRACE_PEA_SIZE;
+ 
+ end:
+-- 
+2.34.1
+

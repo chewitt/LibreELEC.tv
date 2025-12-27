@@ -1,0 +1,37 @@
+From ed3115628f02db710b3b06d6a8c849b7ba4f84cb Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 27 Dec 2025 13:44:08 +0000
+Subject: [PATCH] Revert "bundled: update linux/input-event-codes.h to v6.18"
+
+This reverts commit bf9384561f295340f85c69deb307740fc9dc28f0.
+---
+ bundled/linux/include/uapi/linux/input-event-codes.h | 2 +-
+ src/xlat/evdev_prop.in                               | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/bundled/linux/include/uapi/linux/input-event-codes.h b/bundled/linux/include/uapi/linux/input-event-codes.h
+index 94db4e485..04fbb49a6 100644
+--- a/bundled/linux/include/uapi/linux/input-event-codes.h
++++ b/bundled/linux/include/uapi/linux/input-event-codes.h
+@@ -27,7 +27,7 @@
+ #define INPUT_PROP_TOPBUTTONPAD		0x04	/* softbuttons at top of pad */
+ #define INPUT_PROP_POINTING_STICK	0x05	/* is a pointing stick */
+ #define INPUT_PROP_ACCELEROMETER	0x06	/* has accelerometer */
+-#define INPUT_PROP_PRESSUREPAD		0x07	/* pressure triggers clicks */
++#define INPUT_PROP_HAPTIC_TOUCHPAD	0x07	/* is a haptic touchpad */
+ 
+ #define INPUT_PROP_MAX			0x1f
+ #define INPUT_PROP_CNT			(INPUT_PROP_MAX + 1)
+diff --git a/src/xlat/evdev_prop.in b/src/xlat/evdev_prop.in
+index 18d660494..8b84b5ebf 100644
+--- a/src/xlat/evdev_prop.in
++++ b/src/xlat/evdev_prop.in
+@@ -9,4 +9,4 @@ INPUT_PROP_SEMI_MT
+ INPUT_PROP_TOPBUTTONPAD
+ INPUT_PROP_POINTING_STICK
+ INPUT_PROP_ACCELEROMETER
+-INPUT_PROP_PRESSUREPAD
++INPUT_PROP_HAPTIC_TOUCHPAD
+-- 
+2.34.1
+

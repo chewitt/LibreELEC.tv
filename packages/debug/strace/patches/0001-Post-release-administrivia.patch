@@ -1,0 +1,61 @@
+From 5c3a367e2715675757eb816b1bd91c152c9f23c0 Mon Sep 17 00:00:00 2001
+From: "Dmitry V. Levin" <ldv@strace.io>
+Date: Mon, 8 Dec 2025 08:00:00 +0000
+Subject: [PATCH 1/8] Post-release administrivia
+
+* NEWS: Add a header line for the next release.
+* debian/changelog.in: Add a changelog entry for 6.18-1.
+* strace.spec.in: Likewise.
+---
+ NEWS                | 5 +++++
+ debian/changelog.in | 6 ++++++
+ strace.spec.in      | 3 +++
+ 3 files changed, 14 insertions(+)
+
+diff --git a/NEWS b/NEWS
+index 61b170ebd..0a59a733d 100644
+--- a/NEWS
++++ b/NEWS
+@@ -1,3 +1,8 @@
++Noteworthy changes in release ?.?? (????-??-??)
++===============================================
++
++* Improvements
++
+ Noteworthy changes in release 6.18 (2025-12-07)
+ ===============================================
+ 
+diff --git a/debian/changelog.in b/debian/changelog.in
+index be6306317..2cd177f8e 100644
+--- a/debian/changelog.in
++++ b/debian/changelog.in
+@@ -4,6 +4,12 @@ strace (@PACKAGE_VERSION@-1) experimental; urgency=low
+ 
+  -- Strace <@PACKAGE_BUGREPORT@>  @DEB_CHANGELOGTIME@
+ 
++strace (6.18-1) unstable; urgency=low
++
++  * New upstream version.
++
++ -- Dmitry V. Levin <ldv@strace.io>  Sun, 07 Dec 2025 15:16:17 +0000
++
+ strace (6.17-1) unstable; urgency=low
+ 
+   * New upstream version.
+diff --git a/strace.spec.in b/strace.spec.in
+index b991abcfb..4b097cf74 100644
+--- a/strace.spec.in
++++ b/strace.spec.in
+@@ -208,6 +208,9 @@ fi
+ * @RPM_CHANGELOGTIME@ @PACKAGE_BUGREPORT@ - @PACKAGE_VERSION@-1
+ - @PACKAGE_STRING@ snapshot.
+ 
++* Sun Dec 07 2025 Dmitry V. Levin <ldv@strace.io> - 6.18-1
++- v6.17 -> v6.18 (resolves: #2341392).
++
+ * Mon Sep 29 2025 Dmitry V. Levin <ldv@strace.io> - 6.17-1
+ - v6.16 -> v6.17.
+ 
+-- 
+2.34.1
+
