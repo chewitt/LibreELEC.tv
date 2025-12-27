@@ -1,0 +1,31 @@
+From 05a6b475e3e7abc58dcfb8a6128af4bbfbecc365 Mon Sep 17 00:00:00 2001
+From: "Dmitry V. Levin" <ldv@strace.io>
+Date: Sat, 13 Dec 2025 08:00:00 +0000
+Subject: [PATCH 8/8] mount_setattr: fix return value type
+
+The mount_setattr syscall has a regular return value semantics.
+
+* src/mount_setattr.c (SYS_FUNC(mount_setattr)): Do not add RVAL_FD flag
+to the return value.
+
+Resolves: https://github.com/strace/strace/issues/368
+---
+ src/mount_setattr.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/mount_setattr.c b/src/mount_setattr.c
+index 09bb3ea88..fd8e94567 100644
+--- a/src/mount_setattr.c
++++ b/src/mount_setattr.c
+@@ -104,7 +104,7 @@ SYS_FUNC(mount_setattr)
+ 				   tcp->u_arg[3],
+ 				   tcp->u_arg[4]);
+ 
+-	return RVAL_DECODED | RVAL_FD;
++	return RVAL_DECODED;
+ }
+ 
+ SYS_FUNC(open_tree)
+-- 
+2.34.1
+

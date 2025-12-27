@@ -1,0 +1,40 @@
+From bf9384561f295340f85c69deb307740fc9dc28f0 Mon Sep 17 00:00:00 2001
+From: "Dmitry V. Levin" <ldv@strace.io>
+Date: Tue, 9 Dec 2025 08:00:00 +0000
+Subject: [PATCH 2/8] bundled: update linux/input-event-codes.h to v6.18
+
+* bundled/linux/include/uapi/linux/input-event-codes.h: Update
+to headers_install'ed Linux kernel v6.18.
+* src/xlat/evdev_prop.in (INPUT_PROP_HAPTIC_TOUCHPAD): Rename
+to INPUT_PROP_PRESSUREPAD.
+---
+ bundled/linux/include/uapi/linux/input-event-codes.h | 2 +-
+ src/xlat/evdev_prop.in                               | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/bundled/linux/include/uapi/linux/input-event-codes.h b/bundled/linux/include/uapi/linux/input-event-codes.h
+index 04fbb49a6..94db4e485 100644
+--- a/bundled/linux/include/uapi/linux/input-event-codes.h
++++ b/bundled/linux/include/uapi/linux/input-event-codes.h
+@@ -27,7 +27,7 @@
+ #define INPUT_PROP_TOPBUTTONPAD		0x04	/* softbuttons at top of pad */
+ #define INPUT_PROP_POINTING_STICK	0x05	/* is a pointing stick */
+ #define INPUT_PROP_ACCELEROMETER	0x06	/* has accelerometer */
+-#define INPUT_PROP_HAPTIC_TOUCHPAD	0x07	/* is a haptic touchpad */
++#define INPUT_PROP_PRESSUREPAD		0x07	/* pressure triggers clicks */
+ 
+ #define INPUT_PROP_MAX			0x1f
+ #define INPUT_PROP_CNT			(INPUT_PROP_MAX + 1)
+diff --git a/src/xlat/evdev_prop.in b/src/xlat/evdev_prop.in
+index 8b84b5ebf..18d660494 100644
+--- a/src/xlat/evdev_prop.in
++++ b/src/xlat/evdev_prop.in
+@@ -9,4 +9,4 @@ INPUT_PROP_SEMI_MT
+ INPUT_PROP_TOPBUTTONPAD
+ INPUT_PROP_POINTING_STICK
+ INPUT_PROP_ACCELEROMETER
+-INPUT_PROP_HAPTIC_TOUCHPAD
++INPUT_PROP_PRESSUREPAD
+-- 
+2.34.1
+
