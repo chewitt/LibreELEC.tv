@@ -289,6 +289,18 @@ devices = \
     },
   },
   'Rockchip': {
+    'ARMv7': {
+      'miqi': {
+        'config': 'miqi-rk3288_defconfig',
+        'dtb': 'rk3288-miqi.dtb',
+        'soc': 'RK3288'
+      },
+      'tinker': {
+        'config': 'tinker-s-rk3288_defconfig',
+        'dtb': 'rk3288-tinker-s.dtb',
+        'soc': 'RK3288'
+      },
+    },
     'ARMv8': {
       'roc-cc': {
         'config': 'roc-cc-rk3328_defconfig',
