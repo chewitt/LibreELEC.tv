@@ -289,6 +289,224 @@ devices = \
     },
   },
   'Rockchip': {
+    'ARMv8': {
+      'roc-cc': {
+        'config': 'roc-cc-rk3328_defconfig',
+        'dtb': 'rk3328-roc-cc.dtb',
+        'soc': 'RK3328'
+      },
+      'rock64': {
+        'config': 'rock64-rk3328_defconfig',
+        'dtb': 'rk3328-rock64.dtb',
+        'soc': 'RK3328'
+      },
+      'khadas-edge': {
+        'config': 'khadas-edge-rk3399_defconfig',
+        'dtb': 'rk3399-khadas-edge.dtb',
+        'soc': 'RK3399'
+      },
+      'nanopc-t4': {
+        'config': 'nanopc-t4-rk3399_defconfig',
+        'dtb': 'rk3399-nanopc-t4.dtb',
+        'soc': 'RK3399'
+      },
+      'nanopi-m4': {
+        'config': 'nanopi-m4-rk3399_defconfig',
+        'dtb': 'rk3399-nanopi-m4.dtb',
+        'soc': 'RK3399'
+      },
+      'orangepi': {
+        'config': 'orangepi-rk3399_defconfig',
+        'dtb': 'rk3399-orangepi.dtb',
+        'soc': 'RK3399'
+      },
+      'rock960': {
+        'config': 'rock960-rk3399_defconfig',
+        'dtb': 'rk3399-rock960.dtb',
+        'soc': 'RK3399'
+      },
+      'rock-pi-4': {
+        'config': 'rock-pi-4-rk3399_defconfig',
+        'dtb': 'rk3399-rock-pi-4b.dtb',
+        'soc': 'RK3399'
+      },
+      'rock-pi-4-plus': {
+        'config': 'rock-pi-4-rk3399_defconfig',
+        'dtb': 'rk3399-rock-pi-4b-plus.dtb',
+        'soc': 'RK3399'
+      },
+      'rock-4c-plus': {
+        'config': 'rock-4c-plus-rk3399_defconfig',
+        'dtb': 'rk3399-rock-4c-plus.dtb',
+        'soc': 'RK3399'
+      },
+      'rock-4se': {
+       'config': 'rock-4se-rk3399_defconfig',
+       'dtb': 'rk3399-rock-4se.dtb',
+       'soc': 'RK3399'
+      },
+      'rock-pi-n10': {
+        'config': 'rock-pi-n10-rk3399pro_defconfig',
+        'dtb': 'rk3399pro-rock-pi-n10.dtb',
+        'soc': 'RK3399'
+      },
+      'rockpro64': {
+        'config': 'rockpro64-rk3399_defconfig',
+        'dtb': 'rk3399-rockpro64.dtb',
+        'soc': 'RK3399'
+      },
+      'roc-pc': {
+        'config': 'roc-pc-mezzanine-rk3399_defconfig',
+        'dtb': 'rk3399-roc-pc-mezzanine.dtb',
+        'soc': 'RK3399'
+      },
+      'roc-pc-plus': {
+        'config': 'roc-pc-rk3399_defconfig',
+        'dtb': 'rk3399-roc-pc-plus.dtb',
+        'soc': 'RK3399'
+      },
+      'sapphire': {
+        'config': 'evb-rk3399_defconfig',
+        'dtb': 'rk3399-sapphire.dtb',
+        'rockchip_legacy_boot': '1',
+        'soc': 'RK3399'
+      },
+      'nanopi-r5c': {
+        'config': 'nanopi-r5c-rk3568_defconfig',
+        'dtb': '',
+        'soc': 'RK3568'
+      },
+      'nanopi-r5s': {
+        'config': 'nanopi-r5s-rk3568_defconfig',
+        'dtb': '',
+        'soc': 'RK3568'
+      },
+      'odroid-m1': {
+        'config': 'odroid-m1-rk3568_defconfig',
+        'dtb': '',
+        'soc': 'RK3568'
+      },
+      'odroid-m1s': {
+        'config': 'odroid-m1s-rk3566_defconfig',
+        'dtb': '',
+        'soc': 'RK3566'
+      },
+      'orangepi-3b': {
+        'config': 'orangepi-3b-rk3566_defconfig',
+        'dtb': '',
+        'soc': 'RK3566'
+      },
+      'quartz64-a': {
+        'config': 'quartz64-a-rk3566_defconfig',
+        'dtb': '',
+        'soc': 'RK3566'
+      },
+      'quartz64-b': {
+        'config': 'quartz64-b-rk3566_defconfig',
+        'dtb': '',
+        'soc': 'RK3566'
+      },
+      'radxa-zero-3': {
+        'config': 'radxa-zero-3-rk3566_defconfig',
+        'dtb': '',
+        'soc': 'RK3566'
+      },
+      'rock-3a': {
+        'config': 'rock-3a-rk3568_defconfig',
+        'dtb': '',
+        'soc': 'RK3568'
+      },
+      'rock-3b': {
+        'config': 'rock-3b-rk3568_defconfig',
+        'dtb': '',
+        'soc': 'RK3568'
+      },
+      'rock-3c': {
+        'config': 'rock-3c-rk3566_defconfig',
+        'dtb': '',
+        'soc': 'RK3566'
+      },
+      'roc-pc': {
+        'config': 'roc-pc-rk3576_defconfig',
+        'dtb': '',
+        'soc': 'RK3576'
+      },
+      'rock-4d': {
+        'config': 'rock-4d-rk3576_defconfig',
+        'dtb': '',
+        'soc': 'RK3576'
+      },
+      'armsom-sige7': {
+        'config': 'sige7-rk3588_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'cm3588-nas': {
+        'config': 'cm3588-nas-rk3588_defconfig',
+        'dtb': 'rk3588-friendlyelec-cm3588-nas.dtb',
+        'soc': 'RK3588'
+      },
+      'khadas-edge2': {
+        'config': 'khadas-edge2-rk3588s_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'nanopc-t6': {
+        'config': 'nanopc-t6-rk3588_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'nanopi-r6c': {
+        'config': 'nanopi-r6c-rk3588s_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'nanopi-r6s': {
+        'config': 'nanopi-r6s-rk3588s_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'odroid-m2': {
+        'config': 'odroid-m2-rk3588s_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'orangepi-5': {
+        'config': 'orangepi-5-rk3588s_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'orangepi-5-max': {
+        'config': 'orangepi-5-max-rk3588_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'orangepi-5-plus': {
+        'config': 'orangepi-5-plus-rk3588_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'quartzpro64': {
+        'config': 'quartzpro64-rk3588_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'rock-5a': {
+        'config': 'rock5a-rk3588s_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'rock-5b': {
+        'config': 'rock5b-rk3588_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+      'rock-5c': {
+        'config': 'rock-5c-rk3588s_defconfig',
+        'dtb': '',
+        'soc': 'RK3588'
+      },
+    },
     'RK3288': {
       'miqi': {
         'dtb': 'rk3288-miqi.dtb',
