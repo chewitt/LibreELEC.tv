@@ -5,8 +5,10 @@
   - jammy     (Ubuntu 22.04)
   - noble     (Ubuntu 24.04)
   - questing  (Ubuntu 25.10)
+  - resolute  (Ubuntu 26.04)
 - Debian
   - bookworm  (Debian 12)
+  - trixie    (Debian 13)
 
 **Build docker image**
 
@@ -44,4 +46,4 @@ See https://docs.docker.com/engine/reference/commandline/run/ for details on `do
 Note: `dockerd` is set to send all its logs to journald using the setting `--log-driver=journald` (so if you don't set the `--log-driver none` for your `docker run` these logs will be sent through to your log.
 Refer:
 
-https://github.com/LibreELEC/LibreELEC.tv/blob/140ad28a258167e0e87daf1e474db37215b2caf3/packages/addons/service/docker/source/system.d/service.system.docker.service#L12 
+https://github.com/LibreELEC/LibreELEC.tv/blob/1810c97fb2839486e63f6694dd093428ba24c39a/packages/addons/service/docker/source/system.d/service.system.docker.service#L12
