@@ -11,6 +11,9 @@ set -e
 command -v curl >/dev/null 2>&1 || die "please install curl"
 command -v jq >/dev/null 2>&1 || die "please install jq"
 
+# check for autoupdate argument
+[[ "${AUTO_UPDATE}" == "yes" ]] && echo "running as auto update" >&2
+
 # global vars
 PACKAGES_CURRENT=""
 PACKAGES_IGNORED=""
@@ -147,7 +150,9 @@ check_for_update() {
   fi
 
   # print version output line
-  if [ ! -z "${API}" ]; then
+  if [[ "${AUTO_UPDATE}" == "yes" ]] && [ "${PKG_VERSION}" != "${upstream_version}" ]; then
+    echo "${PKG_NAME} ${PKG_VERSION} ${upstream_version}"
+  elif [ ! -z "${API}" ]; then
     printf "%s %s %s" "${PKG_NAME}" "${PKG_VERSION}" "${upstream_version}"
     printf '\n'
   elif [ "${PKG_VERSION}" != "${upstream_version}" ]; then
@@ -181,7 +186,11 @@ else
   )"
 fi
 
-if [ -z "${API}" ]; then
+if [[ "${AUTO_UPDATE}" == "yes" ]]; then
+  for check_version in ${PACKAGE_LIST}; do
+    check_for_update "${check_version}"
+  done
+elif [ -z "${API}" ]; then
   # test github api availability
   test_github_api
 
