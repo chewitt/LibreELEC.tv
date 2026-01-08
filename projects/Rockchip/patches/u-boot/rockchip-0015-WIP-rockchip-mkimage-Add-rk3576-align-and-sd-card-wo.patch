@@ -1,7 +1,7 @@
-From 573972ed1fc32baa3f965501abdf71870e076303 Mon Sep 17 00:00:00 2001
+From 15b30451314913ab63f04790b270fa42c96069f5 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Tue, 28 Jan 2025 01:30:12 +0000
-Subject: [PATCH 47/51] WIP: rockchip: mkimage: Add rk3576 align and sd-card
+Subject: [PATCH 15/15] WIP: rockchip: mkimage: Add rk3576 align and sd-card
  workaround
 
 The BootROM on RK3576 has an issue loading boot images from an SD-card.
@@ -90,10 +90,10 @@ index 00000000000..73ba22f8aa5
 +	.section	.note.GNU-stack,"",@progbits
 +*/
 diff --git a/tools/rkcommon.c b/tools/rkcommon.c
-index 8b57ba69cde..7125b1de9fe 100644
+index 301b7757281..81a5e8134a7 100644
 --- a/tools/rkcommon.c
 +++ b/tools/rkcommon.c
-@@ -143,7 +143,7 @@ static struct spl_info spl_infos[] = {
+@@ -159,7 +159,7 @@ static struct spl_info spl_infos[] = {
  	{ "rv1126", "110B", 0x10000 - 0x1000, false, RK_HEADER_V1 },
  	{ "rk3528", "RK35", 0x10000 - 0x1000, false, RK_HEADER_V2 },
  	{ "rk3568", "RK35", 0x10000 - 0x1000, false, RK_HEADER_V2 },
@@ -102,7 +102,7 @@ index 8b57ba69cde..7125b1de9fe 100644
  	{ "rk3588", "RK35", 0x100000 - 0x1000, false, RK_HEADER_V2 },
  };
  
-@@ -271,6 +271,22 @@ int rkcommon_check_params(struct image_tool_params *params)
+@@ -287,6 +287,22 @@ int rkcommon_check_params(struct image_tool_params *params)
  		return EXIT_FAILURE;
  	}
  
@@ -126,5 +126,5 @@ index 8b57ba69cde..7125b1de9fe 100644
  
  err_spl_info:
 -- 
-2.34.1
+2.43.0
 

@@ -1,7 +1,7 @@
-From eb407d61bc50ddd50aecf0834407152725038ec5 Mon Sep 17 00:00:00 2001
+From 07f1237aa1d6997ebd553b8c59de143a11a8d559 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 29 Jan 2025 22:36:30 +0000
-Subject: [PATCH 44/51] rockchip: mkimage: Add option to change image offset
+Subject: [PATCH 12/15] rockchip: mkimage: Add option to change image offset
  alignment
 
 The vendor boot_merger tool support a ALIGN parameter that is used to
@@ -21,10 +21,10 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  2 files changed, 49 insertions(+), 28 deletions(-)
 
 diff --git a/tools/rkcommon.c b/tools/rkcommon.c
-index ff00e57a5f5..0a32cc7ae49 100644
+index a870a15e574..1d60637f4d0 100644
 --- a/tools/rkcommon.c
 +++ b/tools/rkcommon.c
-@@ -124,6 +124,7 @@ struct spl_info {
+@@ -140,6 +140,7 @@ struct spl_info {
  	const uint32_t spl_size;
  	const bool spl_rc4;
  	const uint32_t header_ver;
@@ -32,7 +32,7 @@ index ff00e57a5f5..0a32cc7ae49 100644
  };
  
  static struct spl_info spl_infos[] = {
-@@ -183,14 +184,19 @@ static struct spl_info *rkcommon_get_spl_info(char *imagename)
+@@ -199,14 +200,19 @@ static struct spl_info *rkcommon_get_spl_info(char *imagename)
  	return NULL;
  }
  
@@ -58,7 +58,7 @@ index ff00e57a5f5..0a32cc7ae49 100644
  
  	/*
  	 * Pad to a 2KB alignment, as required for init/boot size by the ROM
-@@ -199,6 +205,27 @@ static int rkcommon_get_aligned_size(struct image_tool_params *params,
+@@ -215,6 +221,27 @@ static int rkcommon_get_aligned_size(struct image_tool_params *params,
  	return ROUND(size, RK_SIZE_ALIGN);
  }
  
@@ -86,7 +86,7 @@ index ff00e57a5f5..0a32cc7ae49 100644
  int rkcommon_check_params(struct image_tool_params *params)
  {
  	int i, size;
-@@ -221,14 +248,14 @@ int rkcommon_check_params(struct image_tool_params *params)
+@@ -237,14 +264,14 @@ int rkcommon_check_params(struct image_tool_params *params)
  		spl_params.boot_file += 1;
  	}
  
@@ -103,11 +103,11 @@ index ff00e57a5f5..0a32cc7ae49 100644
  		if (size < 0)
  			return EXIT_FAILURE;
  		spl_params.boot_size = size;
-@@ -285,13 +312,6 @@ bool rkcommon_need_rc4_spl(struct image_tool_params *params)
+@@ -301,13 +328,6 @@ bool rkcommon_need_rc4_spl(struct image_tool_params *params)
  	return info->spl_rc4;
  }
  
--bool rkcommon_is_header_v2(struct image_tool_params *params)
+-static bool rkcommon_is_header_v2(struct image_tool_params *params)
 -{
 -	struct spl_info *info = rkcommon_get_spl_info(params->imagename);
 -
@@ -117,7 +117,7 @@ index ff00e57a5f5..0a32cc7ae49 100644
  static void do_sha256_hash(uint8_t *buf, uint32_t size, uint8_t *out)
  {
  	sha256_context ctx;
-@@ -304,12 +324,13 @@ static void do_sha256_hash(uint8_t *buf, uint32_t size, uint8_t *out)
+@@ -320,12 +340,13 @@ static void do_sha256_hash(uint8_t *buf, uint32_t size, uint8_t *out)
  static void rkcommon_set_header0(void *buf, struct image_tool_params *params)
  {
  	struct header0_info *hdr = buf;
@@ -134,7 +134,7 @@ index ff00e57a5f5..0a32cc7ae49 100644
  	hdr->init_size   = cpu_to_le16(spl_params.init_size / RK_BLK_SIZE);
  
  	/*
-@@ -337,10 +358,10 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
+@@ -353,10 +374,10 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
  	uint8_t *image_ptr = NULL;
  	int i;
  
@@ -147,7 +147,7 @@ index ff00e57a5f5..0a32cc7ae49 100644
  	image_size_array[0] = spl_params.init_size;
  	image_size_array[1] = spl_params.boot_size;
  
-@@ -366,11 +387,12 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
+@@ -382,11 +403,12 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
  void rkcommon_set_header(void *buf,  struct stat *sbuf,  int ifd,
  			 struct image_tool_params *params)
  {
@@ -162,7 +162,7 @@ index ff00e57a5f5..0a32cc7ae49 100644
  		rkcommon_set_header0(buf, params);
  
  		/* Set up the SPL name (i.e. copy spl_hdr over) */
-@@ -378,12 +400,12 @@ void rkcommon_set_header(void *buf,  struct stat *sbuf,  int ifd,
+@@ -394,12 +416,12 @@ void rkcommon_set_header(void *buf,  struct stat *sbuf,  int ifd,
  			memcpy(&hdr->magic, rkcommon_get_spl_hdr(params), RK_SPL_HDR_SIZE);
  
  		if (rkcommon_need_rc4_spl(params))
@@ -177,7 +177,7 @@ index ff00e57a5f5..0a32cc7ae49 100644
  							spl_params.init_size,
  							spl_params.boot_size);
  		}
-@@ -608,7 +630,7 @@ int rkcommon_vrec_header(struct image_tool_params *params,
+@@ -624,7 +646,7 @@ int rkcommon_vrec_header(struct image_tool_params *params,
  	 * 4 bytes of these images can safely be overwritten using the
  	 * boot magic.
  	 */
@@ -186,7 +186,7 @@ index ff00e57a5f5..0a32cc7ae49 100644
  
  	/* Allocate, clear and install the header */
  	tparams->hdr = malloc(tparams->header_size);
-@@ -626,7 +648,8 @@ int rkcommon_vrec_header(struct image_tool_params *params,
+@@ -642,7 +664,8 @@ int rkcommon_vrec_header(struct image_tool_params *params,
  	params->orig_file_size = tparams->header_size +
  		spl_params.init_size + spl_params.boot_size;
  
@@ -211,5 +211,5 @@ index 5d2770a80f1..c887a659a95 100644
  };
  
 -- 
-2.34.1
+2.43.0
 

@@ -1,7 +1,7 @@
-From 07bc06a44d4920826e91490dd718f966ecf28794 Mon Sep 17 00:00:00 2001
+From af4c1ac4045c488934645010138cee178342e648 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 29 Jan 2025 22:36:27 +0000
-Subject: [PATCH 41/51] rockchip: mkimage: Split size_and_off and
+Subject: [PATCH 09/15] rockchip: mkimage: Split size_and_off and
  size_and_nimage
 
 Split 32-bit size_and_off and size_and_nimage fields of the v2 image
@@ -17,7 +17,7 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  1 file changed, 24 insertions(+), 20 deletions(-)
 
 diff --git a/tools/rkcommon.c b/tools/rkcommon.c
-index a0caa029cc0..e77f3979d12 100644
+index e7e78ef7e5b..39e8364ccef 100644
 --- a/tools/rkcommon.c
 +++ b/tools/rkcommon.c
 @@ -34,15 +34,16 @@ enum hash_type {
@@ -65,7 +65,7 @@ index a0caa029cc0..e77f3979d12 100644
  	uint32_t boot_flag;
  	uint8_t reserved1[104];
  	struct image_entry images[4];
-@@ -334,17 +336,18 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
+@@ -350,17 +352,18 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
  	printf("Image Type:   Rockchip %s boot image\n",
  		rkcommon_get_spl_hdr(params));
  	memset(buf, '\0', RK_INIT_OFFSET * RK_BLK_SIZE);
@@ -88,7 +88,7 @@ index a0caa029cc0..e77f3979d12 100644
  		hdr->images[i].address = 0xFFFFFFFF;
  		hdr->images[i].counter = cpu_to_le32(i + 1);
  		image_ptr = buf + sector_offset * RK_BLK_SIZE;
-@@ -353,6 +356,8 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
+@@ -369,6 +372,8 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
  		sector_offset = sector_offset + image_sector_count;
  	}
  
@@ -97,7 +97,7 @@ index a0caa029cc0..e77f3979d12 100644
  	do_sha256_hash(buf, (void *)hdr->hash - buf, hdr->hash);
  }
  
-@@ -499,10 +504,8 @@ void rkcommon_print_header(const void *buf, struct image_tool_params *params)
+@@ -515,10 +520,8 @@ void rkcommon_print_header(const void *buf, struct image_tool_params *params)
  			return;
  		}
  
@@ -110,7 +110,7 @@ index a0caa029cc0..e77f3979d12 100644
  	} else {
  		ret = rkcommon_parse_header(buf, &header0, &spl_info);
  
-@@ -516,8 +519,9 @@ void rkcommon_print_header(const void *buf, struct image_tool_params *params)
+@@ -532,8 +535,9 @@ void rkcommon_print_header(const void *buf, struct image_tool_params *params)
  		}
  
  		image_type = ret;
@@ -123,5 +123,5 @@ index a0caa029cc0..e77f3979d12 100644
  		printf("Image Type:   Rockchip %s (%s) boot image\n",
  		       spl_info->spl_hdr,
 -- 
-2.34.1
+2.43.0
 

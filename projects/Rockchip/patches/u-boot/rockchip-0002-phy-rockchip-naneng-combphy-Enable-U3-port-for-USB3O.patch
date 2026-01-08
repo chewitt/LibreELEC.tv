@@ -1,11 +1,14 @@
-From c5acd84ed6c4c23bb4d4b876b57c7140eafc4f9a Mon Sep 17 00:00:00 2001
+From 78b82989630aada65967e70e1839111fd3b193d8 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
-Date: Sun, 20 Jul 2025 13:09:38 +0000
-Subject: [PATCH 01/51] phy: rockchip: naneng-combphy: Enable U3 port for
+Date: Sun, 19 Oct 2025 15:09:40 +0000
+Subject: [PATCH 02/15] phy: rockchip: naneng-combphy: Enable U3 port for
  USB3OTG on RK3568
 
 The USB OTG U3 port may have been disabled early, add support to the
 COMBPHY driver to re-enable the U3 port.
+
+This matches changes made in the Linux commit 7bb14b61b7d0 ("phy:
+rockchip: naneng-combphy: Enable U3 OTG port for RK3568").
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 ---
@@ -32,5 +35,5 @@ index d602f965d6a..82353ae7678 100644
  	case PHY_TYPE_SATA:
  		writel(0x41, priv->mmio + 0x38);
 -- 
-2.34.1
+2.43.0
 

@@ -1,7 +1,7 @@
-From 0ea4d3abd160fad1f7e246385d0220bf58c963fa Mon Sep 17 00:00:00 2001
+From c839efb83f8b98d84dc6fe30a4de2ed2f4e08aba Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Wed, 29 Jan 2025 22:36:31 +0000
-Subject: [PATCH 45/51] rockchip: mkimage: Add support for up to 4 input files
+Subject: [PATCH 13/15] rockchip: mkimage: Add support for up to 4 input files
 
 The v2 image format can support up to 4 embedded images that can be
 loaded by the BootROM using the back-to-bootrom method.
@@ -18,10 +18,10 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  1 file changed, 44 insertions(+), 49 deletions(-)
 
 diff --git a/tools/rkcommon.c b/tools/rkcommon.c
-index 0a32cc7ae49..8f0616375c1 100644
+index 1d60637f4d0..d99916c571e 100644
 --- a/tools/rkcommon.c
 +++ b/tools/rkcommon.c
-@@ -150,17 +150,15 @@ static struct spl_info spl_infos[] = {
+@@ -166,17 +166,15 @@ static struct spl_info spl_infos[] = {
  /**
   * struct spl_params - spl params parsed in check_params()
   *
@@ -45,7 +45,7 @@ index 0a32cc7ae49..8f0616375c1 100644
  };
  
  static struct spl_params spl_params = { 0 };
-@@ -240,31 +238,32 @@ int rkcommon_check_params(struct image_tool_params *params)
+@@ -256,31 +254,32 @@ int rkcommon_check_params(struct image_tool_params *params)
  	if (!rkcommon_get_spl_info(params->imagename))
  		goto err_spl_info;
  
@@ -93,7 +93,7 @@ index 0a32cc7ae49..8f0616375c1 100644
  		return EXIT_FAILURE;
  	}
  
-@@ -331,7 +330,7 @@ static void rkcommon_set_header0(void *buf, struct image_tool_params *params)
+@@ -347,7 +346,7 @@ static void rkcommon_set_header0(void *buf, struct image_tool_params *params)
  	hdr->magic = cpu_to_le32(RK_MAGIC);
  	hdr->disable_rc4 = cpu_to_le32(!rkcommon_need_rc4_spl(params));
  	hdr->init_offset = cpu_to_le16(init_offset);
@@ -102,7 +102,7 @@ index 0a32cc7ae49..8f0616375c1 100644
  
  	/*
  	 * init_boot_size needs to be set, as it is read by the BootROM
-@@ -341,10 +340,11 @@ static void rkcommon_set_header0(void *buf, struct image_tool_params *params)
+@@ -357,10 +356,11 @@ static void rkcommon_set_header0(void *buf, struct image_tool_params *params)
  	 * see https://lists.denx.de/pipermail/u-boot/2017-May/293267.html
  	 * for a more detailed explanation by Andy Yan
  	 */
@@ -117,7 +117,7 @@ index 0a32cc7ae49..8f0616375c1 100644
  	hdr->init_boot_size = cpu_to_le16(init_boot_size / RK_BLK_SIZE);
  
  	rc4_encode(buf, RK_BLK_SIZE, rc4_key);
-@@ -354,7 +354,6 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
+@@ -370,7 +370,6 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
  {
  	struct header0_info_v2 *hdr = buf;
  	uint32_t sector_offset, image_sector_count;
@@ -125,7 +125,7 @@ index 0a32cc7ae49..8f0616375c1 100644
  	uint8_t *image_ptr = NULL;
  	int i;
  
-@@ -362,19 +361,17 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
+@@ -378,19 +377,17 @@ static void rkcommon_set_header0_v2(void *buf, struct image_tool_params *params)
  	memset(buf, '\0', sector_offset * RK_BLK_SIZE);
  	hdr->magic = cpu_to_le32(RK_MAGIC_V2);
  	hdr->boot_flag = cpu_to_le32(HASH_SHA256);
@@ -149,7 +149,7 @@ index 0a32cc7ae49..8f0616375c1 100644
  			       hdr->images[i].hash);
  		sector_offset = sector_offset + image_sector_count;
  	}
-@@ -401,13 +398,13 @@ void rkcommon_set_header(void *buf,  struct stat *sbuf,  int ifd,
+@@ -417,13 +414,13 @@ void rkcommon_set_header(void *buf,  struct stat *sbuf,  int ifd,
  
  		if (rkcommon_need_rc4_spl(params))
  			rkcommon_rc4_encode_spl(buf, header_size,
@@ -167,7 +167,7 @@ index 0a32cc7ae49..8f0616375c1 100644
  		}
  	}
  }
-@@ -645,8 +642,9 @@ int rkcommon_vrec_header(struct image_tool_params *params,
+@@ -661,8 +658,9 @@ int rkcommon_vrec_header(struct image_tool_params *params,
  	 * We need to store the original file-size (i.e. before padding), as
  	 * imagetool does not set this during its adjustment of file_size.
  	 */
@@ -179,7 +179,7 @@ index 0a32cc7ae49..8f0616375c1 100644
  
  	params->file_size = rkcommon_get_aligned_size(params,
  						      params->orig_file_size);
-@@ -733,16 +731,13 @@ err_close:
+@@ -749,16 +747,13 @@ err_close:
  
  int rockchip_copy_image(int ifd, struct image_tool_params *params)
  {
@@ -203,5 +203,5 @@ index 0a32cc7ae49..8f0616375c1 100644
  			return ret;
  	}
 -- 
-2.34.1
+2.43.0
 
