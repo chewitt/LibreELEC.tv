@@ -1,0 +1,92 @@
+From 6c610be93419758b18dca15ac1948e4f5bec1edc Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Fri, 13 Feb 2026 18:38:52 +0000
+Subject: [PATCH 3/5] avcodec/v4l2_m2m_dec: reject MPEG2 4:2:2 chroma in V4L2
+ M2M decoder
+
+MPEG2 streams with 4:2:2 chroma subsampling (e.g. broadcast 1080i
+422 profile) produce a blank green screen when decoded via V4L2 M2M
+on hardware that only supports 4:2:0 output formats (NV12M/YUV420M).
+
+The Amlogic meson-vdec driver (and most other V4L2 stateful decoders)
+only advertise 4:2:0 capture formats for MPEG2. When a 4:2:2 stream
+is sent to such a decoder, the firmware cannot properly decode the
+extra chroma data into the 4:2:0 buffer layout, resulting in empty
+or corrupt capture buffers that render as a green screen.
+
+Parse the MPEG2 sequence extension from extradata during decoder init
+to detect the chroma_format field. If the stream uses 4:2:2 or 4:4:4
+chroma, reject the stream early so the caller (e.g. Kodi) can fall
+back to software decoding.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+---
+ libavcodec/v4l2_m2m_dec.c | 45 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 45 insertions(+)
+
+diff --git a/libavcodec/v4l2_m2m_dec.c b/libavcodec/v4l2_m2m_dec.c
+index 3fc829a54c..bbe0ced686 100644
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -1056,6 +1056,47 @@ static uint32_t max_coded_size(const AVCodecContext * const avctx)
+     return size + (1 << 16);
+ }
+ 
++// Check if MPEG2 extradata indicates a chroma format incompatible with 4:2:0
++// capture buffers. Returns 0 if OK (4:2:0 or indeterminate), negative if the
++// chroma format (4:2:2 / 4:4:4) cannot be decoded to 4:2:0 output.
++static int check_mpeg2_chroma(AVCodecContext *avctx)
++{
++    const uint8_t *p, *end;
++
++    if (avctx->codec_id != AV_CODEC_ID_MPEG2VIDEO)
++        return 0;
++    if (!avctx->extradata || avctx->extradata_size < 6)
++        return 0;
++
++    p = avctx->extradata;
++    end = p + avctx->extradata_size - 5;
++
++    // Scan for sequence_extension_start_code (0x000001B5 with ext_id == 1)
++    while (p < end) {
++        if (p[0] == 0x00 && p[1] == 0x00 && p[2] == 0x01 && p[3] == 0xB5) {
++            unsigned int ext_id = (p[4] >> 4) & 0xf;
++            if (ext_id == 1) {
++                // Sequence extension: p[5] bits [2:1] = chroma_format
++                // 1 = 4:2:0, 2 = 4:2:2, 3 = 4:4:4
++                unsigned int chroma_format = (p[5] >> 1) & 0x3;
++                if (chroma_format != 1) {
++                    av_log(avctx, AV_LOG_INFO,
++                           "MPEG2 chroma_format %u (%s) not supported by V4L2 M2M decoder\n",
++                           chroma_format,
++                           chroma_format == 2 ? "4:2:2" :
++                           chroma_format == 3 ? "4:4:4" : "reserved");
++                    return AVERROR(EINVAL);
++                }
++                return 0;
++            }
++        }
++        p++;
++    }
++
++    // No sequence extension found - assume 4:2:0
++    return 0;
++}
++
+ static void
+ parse_extradata(AVCodecContext * const avctx, V4L2m2mContext * const s)
+ {
+@@ -1240,6 +1281,10 @@ static av_cold int v4l2_decode_init(AVCodecContext *avctx)
+ 
+     parse_extradata(avctx, s);
+ 
++    // Reject MPEG2 4:2:2/4:4:4 streams that cannot be decoded to 4:2:0 output
++    if ((ret = check_mpeg2_chroma(avctx)) != 0)
++        return ret;
++
+     xlat_init(&s->xlat);
+     pts_stats_init(&s->pts_stat, avctx, "decoder");
+ 
+-- 
+2.43.0
+
