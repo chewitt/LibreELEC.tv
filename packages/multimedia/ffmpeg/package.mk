@@ -22,6 +22,7 @@ case "${PROJECT}" in
     PKG_FFMPEG_BRANCH="test/9.0/main"
     PKG_SHA256="8837c510614ab5e2eb3045eb3bb3da41bb0a1e16f206f5c32c6eda2c1333af9d"
     PKG_URL="https://github.com/jc-kynesim/rpi-ffmpeg/archive/${PKG_VERSION}.tar.gz"
+    PKG_PATCH_DIRS+=" amlogic"
     ;;
   Generic)
     PKG_FFMPEG_REQUEST_DISABLE=""

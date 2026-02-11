@@ -1,0 +1,54 @@
+From 624ab927c49266f316ded88c3ee53f3ef6041e38 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 14 Feb 2026 00:36:41 +0000
+Subject: [PATCH 4/5] avcodec/v4l2_m2m_dec: pass coded dimensions to V4L2
+ output format
+
+The V4L2 M2M decoder was sending 0x0 as the initial resolution hint to
+the kernel driver. For meson-vdec's MPEG1/2 codec, the driver clamps
+this to its minimum (256x144) and configures firmware canvas buffers at
+that size. When the actual stream is larger (e.g. 720x576), the firmware
+cannot decode into the undersized canvases, never produces output, and
+never fires the SOURCE_CHANGE event needed to trigger proper buffer
+allocation -- stalling the decoder permanently.
+
+Fix by passing avctx->coded_width/coded_height so the driver receives a
+correct resolution hint from the start. The QUIRK_REINIT_ALWAYS path
+continues to handle runtime resolution changes via SOURCE_CHANGE events.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+---
+ libavcodec/v4l2_m2m_dec.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/libavcodec/v4l2_m2m_dec.c b/libavcodec/v4l2_m2m_dec.c
+index bbe0ced686..f5b97fe40d 100644
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -1291,14 +1291,16 @@ static av_cold int v4l2_decode_init(AVCodecContext *avctx)
+     capture = &s->capture;
+     output = &s->output;
+ 
+-    /* if these dimensions are invalid (ie, 0 or too small) an event will be raised
+-     * by the v4l2 driver; this event will trigger a full pipeline reconfig and
+-     * the proper values will be retrieved from the kernel driver.
++    /* Pass coded dimensions to the driver so it can set up initial canvas
++     * buffers at the correct size.  Some drivers (e.g. meson-vdec MPEG1/2)
++     * need a valid resolution hint to decode the first frames and generate
++     * a SOURCE_CHANGE event; sending 0x0 causes them to use a minimum size
++     * that is too small for the actual stream, stalling the decoder.
++     * The QUIRK_REINIT_ALWAYS path still handles any runtime resolution
++     * changes via the SOURCE_CHANGE event.
+      */
+-//    output->height = capture->height = avctx->coded_height;
+-//    output->width = capture->width = avctx->coded_width;
+-    output->height = capture->height = 0;
+-    output->width = capture->width = 0;
++    output->height = capture->height = avctx->coded_height;
++    output->width = capture->width = avctx->coded_width;
+ 
+     output->av_codec_id = avctx->codec_id;
+     output->av_pix_fmt  = AV_PIX_FMT_NONE;
+-- 
+2.43.0
+

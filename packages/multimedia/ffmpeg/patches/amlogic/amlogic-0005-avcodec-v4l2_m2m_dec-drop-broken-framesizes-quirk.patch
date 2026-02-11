@@ -1,0 +1,26 @@
+From c93877c9e3c2b0ab722215b5c59dac9eb27aed15 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Wed, 1 Apr 2026 11:50:00 +0000
+Subject: [PATCH 5/5] avcodec/v4l2_m2m_dec: drop broken framesizes quirk
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ libavcodec/v4l2_m2m_dec.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libavcodec/v4l2_m2m_dec.c b/libavcodec/v4l2_m2m_dec.c
+index f5b97fe40d..5e95dcef1d 100644
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -1029,7 +1029,7 @@ get_quirks(AVCodecContext * const avctx, V4L2m2mContext * const s)
+     // capture to clear the event even if the capture buffers were the right
+     // size in the first place.
+     if (strcmp(cap.driver, "meson-vdec") == 0)
+-        s->quirks |= FF_V4L2_QUIRK_REINIT_ALWAYS | FF_V4L2_QUIRK_ENUM_FRAMESIZES_BROKEN;
++        s->quirks |= FF_V4L2_QUIRK_REINIT_ALWAYS;
+     // RPI has a max 8192 macroblock limit but no way of signaling it
+     if (strcmp(cap.driver, "bcm2835-codec") == 0)
+         s->quirks |= FF_V4L2_QUIRK_8192_MACRO_MAX;
+-- 
+2.43.0
+

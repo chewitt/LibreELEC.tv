@@ -1,0 +1,32 @@
+From 26bc4a522f80faa4117f65422b8c7e35f32e0915 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Thu, 12 Feb 2026 19:22:26 +0000
+Subject: [PATCH 2/5] avcodec/v4l2_m2m_dec: fix HEVC extradata parsing return
+ value check
+
+ff_hevc_decode_extradata() returns 0 on success, not the data size.
+The check 'if (ret > 0)' never evaluates true for successful parses,
+so avctx->profile, avctx->level, and reorder_size are never set from
+the HEVC SPS extradata. Change to 'if (ret >= 0)'.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+---
+ libavcodec/v4l2_m2m_dec.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libavcodec/v4l2_m2m_dec.c b/libavcodec/v4l2_m2m_dec.c
+index 41db79ccd7..3fc829a54c 100644
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -1112,7 +1112,7 @@ parse_extradata(AVCodecContext * const avctx, V4L2m2mContext * const s)
+             ret = ff_hevc_decode_extradata(avctx->extradata, avctx->extradata_size,
+                                            &ps, &sei, &is_nalff, &nal_length_size,
+                                            avctx->err_recognition, 0, avctx);
+-            if (ret > 0) {
++            if (ret >= 0) {
+                 const HEVCSPS * sps = NULL;
+                 unsigned int i;
+                 for (i = 0; i != HEVC_MAX_SPS_COUNT; ++i) {
+-- 
+2.43.0
+
