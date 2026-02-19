@@ -41,11 +41,6 @@ case "${LINUX}" in
     PKG_SHA256="87363c24f10e06321eb362765521094e94471f6bff8bce2d6b3e40f39f004953"
     PKG_URL="https://www.kernel.org/pub/linux/kernel/v${PKG_VERSION/.*/}.x/${PKG_NAME}-${PKG_VERSION}.tar.xz"
     PKG_PATCH_DIRS="default"
-    case ${DEVICE} in
-      RK3288|RK3328|RK3399)
-        PKG_PATCH_DIRS+=" rockchip-old"
-        ;;
-    esac
     ;;
 esac
 
