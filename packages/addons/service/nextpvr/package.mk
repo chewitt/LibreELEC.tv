@@ -10,7 +10,7 @@ PKG_SITE="https://nextpvr.com"
 PKG_DEPENDS_TARGET="toolchain libhdhomerun libmediainfo comskip"
 PKG_SECTION="service"
 PKG_SHORTDESC="NextPVR Server"
-PKG_LONGDESC="NextPVR ${PKG_VERSION} is an advanced personal video recorder server for Windows, macOS and Linux that allows watching live TV and recordings, and advanced scheduling recordings from client devices and browsers"
+PKG_LONGDESC="NextPVR ${PKG_VERSION} is an advanced Personal Video Recorder server for scheduling and watching Live TV and recordings from NextPVR client devices and Web browsers."
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"

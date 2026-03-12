@@ -11,7 +11,7 @@ PKG_URL="https://github.com/prometheus/node_exporter/archive/refs/tags/v${PKG_VE
 PKG_DEPENDS_TARGET="toolchain go:host systemd"
 PKG_SECTION="service"
 PKG_SHORTDESC="Prometheus exporter for machine metrics."
-PKG_LONGDESC="Prometheus exporter for hardware and OS metrics exposed by the kernel."
+PKG_LONGDESC="Prometheus (${PKG_VERSION}} node exporter for hardware and OS metrics exposed by the kernel."
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"

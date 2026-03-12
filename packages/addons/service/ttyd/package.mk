@@ -12,7 +12,7 @@ PKG_URL="https://github.com/tsl0922/ttyd/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain libwebsockets zlib"
 PKG_SECTION="service"
 PKG_SHORTDESC="ttyd: a tool for accessing the terminal over a browser"
-PKG_LONGDESC="ttyd (${PKG_VERSION}): is a simple command-line tool for sharing terminal over the web"
+PKG_LONGDESC="ttyd (${PKG_VERSION}) is a simple tool for accessing the local terminal in a Web browser."
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_NAME="Web SSH Terminal"

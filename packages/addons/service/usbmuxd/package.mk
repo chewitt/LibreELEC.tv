@@ -13,7 +13,7 @@ PKG_DEPENDS_TARGET="toolchain libusb libimobiledevice libimobiledevice-glue libu
 PKG_TOOLCHAIN="autotools"
 PKG_SECTION="service"
 PKG_SHORTDESC="USB Multiplex Daemon"
-PKG_LONGDESC="USB Multiplex Daemon"
+PKG_LONGDESC="iTether uses usbmuxd (${PKG_VERSION:0:7}) to communicate with Apple iOS devices over USB."
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_NAME="iPhone Tether"

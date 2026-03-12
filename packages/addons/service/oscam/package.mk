@@ -12,7 +12,7 @@ PKG_URL="https://git.streamboard.tv/common/oscam/-/archive/${PKG_VERSION}/oscam-
 PKG_DEPENDS_TARGET="toolchain openssl pcsc-lite"
 PKG_SECTION="service.softcam"
 PKG_SHORTDESC="OSCam: an Open Source Conditional Access Modul"
-PKG_LONGDESC="OSCam is a software to be used to decrypt digital television channels, as an alternative for a conditional access module."
+PKG_LONGDESC="OSCam (${PKG_VERSION}) is used for decrypting digital television channels and provides a software alternative to hardware Conditional Access Module(s)."
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_NAME="OSCam"

@@ -9,7 +9,7 @@ PKG_SITE="https://filebrowser.org"
 PKG_DEPENDS_TARGET="toolchain:host"
 PKG_SECTION="service"
 PKG_SHORTDESC="Filebrowser: a web based filemanger"
-PKG_LONGDESC="Filebrowser (${PKG_VERSION}): is a web based file managing interface and it can be used to upload, delete, preview, rename and edit your files."
+PKG_LONGDESC="Filebrowser (${PKG_VERSION}) is a web based file management interface that can be used to upload, delete, preview, rename, and edit your files."
 PKG_TAR_STRIP_COMPONENTS="no"
 PKG_TOOLCHAIN="manual"
 

@@ -12,7 +12,7 @@ PKG_URL="https://github.com/catalinii/minisatip/archive/refs/tags/v${PKG_VERSION
 PKG_DEPENDS_TARGET="toolchain libdvbcsa libxml2 openssl"
 PKG_SECTION="service"
 PKG_SHORTDESC="minisatip: a Sat>IP streaming server for Linux"
-PKG_LONGDESC="minisatip(${PKG_VERSION_NUMBER}): is a Sat>IP streaming server for Linux supporting DVB-C, DVB-S/S2, DVB-T/T2, ATSC and ISDB-T"
+PKG_LONGDESC="minisatip (${PKG_VERSION}) is a Sat>IP streaming server for Linux supporting DVB-C, DVB-S/S2, DVB-T/T2, ATSC and ISDB-T"
 PKG_BUILD_FLAGS="-sysroot -cfg-libs"
 
 PKG_IS_ADDON="yes"

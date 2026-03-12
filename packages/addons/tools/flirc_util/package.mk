@@ -11,7 +11,7 @@ PKG_URL="https://github.com/flirc/sdk/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain hidapi libusb"
 PKG_SECTION="tools"
 PKG_SHORTDESC="CLI utility for flirc IR receivers"
-PKG_LONGDESC="Command-Line utility for configuring flirc IR receivers"
+PKG_LONGDESC="flirc_util ($PKG_VERSION:0:7}) is a command-Line utility for configuring flirc IR receivers"
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"

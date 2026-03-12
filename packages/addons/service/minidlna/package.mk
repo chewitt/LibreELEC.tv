@@ -12,7 +12,7 @@ PKG_URL="https://downloads.sourceforge.net/project/minidlna/minidlna/${PKG_VERSI
 PKG_DEPENDS_TARGET="toolchain ffmpeg flac libexif libiconv libid3tag libjpeg-turbo libogg libvorbis sqlite"
 PKG_SECTION="service"
 PKG_SHORTDESC="MiniDLNA (ReadyMedia): a fully compliant DLNA/UPnP-AV server"
-PKG_LONGDESC="MiniDLNA (${PKG_VERSION_DATE}) (ReadyMedia) is a media server, with the aim of being fully compliant with DLNA/UPnP-AV clients."
+PKG_LONGDESC="MiniDLNA (${PKG_VERSION}) (ReadyMedia) is a media server that aims to be fully compliant with DLNA/UPnP-AV clients."
 PKG_TOOLCHAIN="autotools"
 PKG_BUILD_FLAGS="-sysroot -cfg-libs"
 

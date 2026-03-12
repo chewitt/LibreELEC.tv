@@ -13,7 +13,7 @@ PKG_DEPENDS_TARGET="toolchain protobuf-c:host curl libestr libfastjson libgcrypt
 PKG_DEPENDS_CONFIG="protobuf-c snappy libyaml"
 PKG_SECTION="service"
 PKG_SHORTDESC="Rsyslog: a rocket-fast system for log processing."
-PKG_LONGDESC="Rsyslog (${PKG_VERSION}) offers high-performance, great security features and a modular design."
+PKG_LONGDESC="Rsyslog (${PKG_VERSION}) offers log processing and exporting with high-performance, great security features, and a modular design."
 PKG_BUILD_FLAGS="-sysroot"
 
 PKG_IS_ADDON="yes"

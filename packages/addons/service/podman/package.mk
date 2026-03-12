@@ -9,7 +9,7 @@ PKG_SITE="https://podman.io"
 PKG_DEPENDS_TARGET="conmon gpgme podman-bin libseccomp netavark runc"
 PKG_SECTION="service/system"
 PKG_SHORTDESC="Daemonless container engine for OCI Containers"
-PKG_LONGDESC="Podman is a daemonless container engine for developing, managing, and running OCI Containers."
+PKG_LONGDESC="Podman ($(get_pkg_version podman-bin)) is a daemonless engine for developing, managing, and running OCI containers."
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"

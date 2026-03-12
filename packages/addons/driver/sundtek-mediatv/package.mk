@@ -12,7 +12,7 @@ PKG_URL=""
 PKG_DEPENDS_TARGET="xmlstarlet:host 7-zip:host"
 PKG_SECTION="driver/dvb"
 PKG_SHORTDESC="Sundtek MediaTV: a Linux driver to add support for SUNDTEK USB DVB devices"
-PKG_LONGDESC="Install this to add support for Sundtek USB DVB devices."
+PKG_LONGDESC="Sundtek MediaTV (${PKG_VERSION}) adds driver support for Sundtek USB DVB devices."
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"
