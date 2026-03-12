@@ -14,7 +14,7 @@ PKG_URL="https://github.com/librespot-org/librespot/archive/v${PKG_VERSION}.tar.
 PKG_DEPENDS_TARGET="toolchain alsa-lib avahi pulseaudio bindgen-cli:host cargo:host cmake:host"
 PKG_SECTION="service"
 PKG_SHORTDESC="Librespot: play Spotify through Kodi using a Spotify app as a remote"
-PKG_LONGDESC="Librespot (${PKG_VERSION_DATE}) lets you play Spotify through Kodi using a Spotify app as a remote."
+PKG_LONGDESC="Librespot (${PKG_VERSION_DATE}) lets you play Spotify audio through Kodi using the Spotify app as a remote."
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"

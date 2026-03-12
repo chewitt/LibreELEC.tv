@@ -10,7 +10,7 @@ PKG_SITE="http://emby.media"
 PKG_DEPENDS_TARGET="toolchain"
 PKG_SECTION="service"
 PKG_SHORTDESC="Emby Server: a personal media server"
-PKG_LONGDESC="Emby Server brings your home videos, music, and photos together, automatically converting and streaming your media on-the-fly to any device."
+PKG_LONGDESC="Emby Server brings your home videos, music, and photos together, converting and streaming your media on-the-fly to any device."
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"

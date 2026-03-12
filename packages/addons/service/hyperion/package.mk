@@ -14,7 +14,7 @@ PKG_DEPENDS_TARGET="toolchain Python3 libusb qt5 protobuf rpi_ws281x"
 PKG_DEPENDS_UNPACK="rpi_ws281x"
 PKG_SECTION="service"
 PKG_SHORTDESC="Hyperion: an AmbiLight controller"
-PKG_LONGDESC="Hyperion(${PKG_VERSION_DATE}) is an modern opensource AmbiLight implementation."
+PKG_LONGDESC="Hyperion (${PKG_VERSION_DATE}) is a modern opensource AmbiLight implementation."
 PKG_BUILD_FLAGS="-sysroot"
 
 PKG_IS_ADDON="yes"

@@ -13,7 +13,7 @@ PKG_URL=""
 PKG_DEPENDS_TARGET="toolchain ccid libusb pcsc-lite"
 PKG_SECTION="service"
 PKG_SHORTDESC="Middleware to access a smart card using SCard API (PC/SC)"
-PKG_LONGDESC="Middleware to access a smart card using SCard API (PC/SC)"
+PKG_LONGDESC="PCSCD ($(get_pkg_version pcsc-lite)) is middleware for accessing a Smart Card using SCard API (PC/SC)"
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"

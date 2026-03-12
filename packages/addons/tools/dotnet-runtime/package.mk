@@ -9,7 +9,7 @@ PKG_SITE="https://dotnet.microsoft.com/"
 PKG_DEPENDS_TARGET="toolchain icu aspnet8-runtime aspnet9-runtime"
 PKG_SECTION="tools"
 PKG_SHORTDESC="ASP.NET Core Runtime"
-PKG_LONGDESC="ASP.NET Core Runtime ($(get_pkg_version aspnet8-runtime)) and ($(get_pkg_version aspnet9-runtime)) enables you to run existing console/web/server applications."
+PKG_LONGDESC="ASP.NET Core Runtime ($(get_pkg_version aspnet8-runtime)) and ($(get_pkg_version aspnet9-runtime)) enable you to run existing console/web/server applications."
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"

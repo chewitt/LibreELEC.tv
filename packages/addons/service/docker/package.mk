@@ -9,7 +9,7 @@ PKG_SITE="http://www.docker.com/"
 PKG_DEPENDS_TARGET="cli containerd ctop docker-compose moby runc tini"
 PKG_SECTION="service/system"
 PKG_SHORTDESC="Docker is an open-source engine that automates the deployment of any application as a lightweight, portable, self-sufficient container that will run virtually anywhere."
-PKG_LONGDESC="Docker containers can encapsulate any payload, and will run consistently on and between virtually any server. The same container that a developer builds and tests on a laptop will run at scale, in production*, on VMs, bare-metal servers, OpenStack clusters, public instances, or combinations of the above."
+PKG_LONGDESC="Docker ($(get_pkg_version moby)) provides a runtime environment for container packaged applications."
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"
