@@ -377,12 +377,6 @@ devices = \
         'dtb': 'rk3399-roc-pc-plus.dtb',
         'soc': 'RK3399'
       },
-      'sapphire': {
-        'config': 'evb-rk3399_defconfig',
-        'dtb': 'rk3399-sapphire.dtb',
-        'rockchip_legacy_boot': '1',
-        'soc': 'RK3399'
-      },
       'nanopi-r5c': {
         'config': 'nanopi-r5c-rk3568_defconfig',
         'dtb': '',
@@ -530,11 +524,6 @@ devices = \
       },
     },
     'RK3328': {
-      'a1': {
-        'dtb': 'rk3328-a1.dtb',
-        'config': 'evb-rk3328_defconfig',
-        'rockchip_legacy_boot': '1'
-      },
       'roc-cc': {
         'dtb': 'rk3328-roc-cc.dtb',
         'config': 'roc-cc-rk3328_defconfig'
@@ -545,11 +534,6 @@ devices = \
       },
     },
     'RK3399': {
-      'hugsun-x99': {
-        'dtb': 'rk3399-hugsun-x99.dtb',
-        'config': 'evb-rk3399_defconfig',
-        'rockchip_legacy_boot': '1'
-      },
       'khadas-edge': {
         'dtb': 'rk3399-khadas-edge.dtb',
         'config': 'khadas-edge-rk3399_defconfig'
@@ -601,11 +585,6 @@ devices = \
       'roc-pc-plus': {
         'dtb': 'rk3399-roc-pc-plus.dtb',
         'config': 'roc-pc-rk3399_defconfig'
-      },
-      'sapphire': {
-        'dtb': 'rk3399-sapphire.dtb',
-        'config': 'evb-rk3399_defconfig',
-        'rockchip_legacy_boot': '1'
       },
     },
     'RK356X': {
