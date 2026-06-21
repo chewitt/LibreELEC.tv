@@ -25,6 +25,7 @@ PKG_DEPENDS_TARGET="toolchain \
                     bottom \
                     diffutils \
                     dool \
+                    drm-info \
                     dtach \
                     encfs \
                     evtest \
@@ -84,6 +85,9 @@ addon() {
 
     # dtach
     cp -P $(get_install_dir dtach)/usr/bin/dtach ${ADDON_BUILD}/${PKG_ADDON_ID}/bin
+
+    # drm-info
+    cp -P $(get_install_dir drm-info)/usr/bin/drm_info ${ADDON_BUILD}/${PKG_ADDON_ID}/bin
 
     # efibootmgr
     cp -P $(get_install_dir efibootmgr)/usr/bin/efibootmgr ${ADDON_BUILD}/${PKG_ADDON_ID}/bin 2>/dev/null || :
