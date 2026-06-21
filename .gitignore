@@ -40,3 +40,6 @@ tools/mkpkg/*.git
 
 # ignore old linux configs
 projects/**/*.old
+
+# ignore CLAUDE.md
+CLAUDE.md
