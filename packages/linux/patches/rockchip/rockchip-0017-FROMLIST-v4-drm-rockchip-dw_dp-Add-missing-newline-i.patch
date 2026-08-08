@@ -1,0 +1,32 @@
+From b2bde15ae64a81fb86cf2464beae7d27b8e84cfc Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Mon, 1 Jun 2026 19:13:45 +0300
+Subject: [PATCH 017/247] FROMLIST(v4): drm/rockchip: dw_dp: Add missing
+ newline in dev_err_probe() message
+
+Add the missing trailing newline to dev_err_probe() call in
+dw_dp_rockchip_bind().
+
+Fixes: d68ba7bac955 ("drm/rockchip: Add RK3588 DPTX output support")
+Fixes: 26cb3e26efa7 ("drm/rockchip: dw_dp: Simplify error handling")
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ drivers/gpu/drm/rockchip/dw_dp-rockchip.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/rockchip/dw_dp-rockchip.c b/drivers/gpu/drm/rockchip/dw_dp-rockchip.c
+index 32bc73a1d5e4..f137f699737c 100644
+--- a/drivers/gpu/drm/rockchip/dw_dp-rockchip.c
++++ b/drivers/gpu/drm/rockchip/dw_dp-rockchip.c
+@@ -109,7 +109,7 @@ static int dw_dp_rockchip_bind(struct device *dev, struct device *master, void *
+ 	connector = drm_bridge_connector_init(drm_dev, encoder);
+ 	if (IS_ERR(connector))
+ 		return dev_err_probe(dev, PTR_ERR(connector),
+-				     "Failed to init bridge connector");
++				     "Failed to init bridge connector\n");
+ 
+ 	return 0;
+ }
+-- 
+2.43.0
+

@@ -1,0 +1,41 @@
+From 9b891e5fff1fbba9412338297dcab666ff696b8f Mon Sep 17 00:00:00 2001
+From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+Date: Tue, 9 Jun 2026 14:44:04 +0200
+Subject: [PATCH 077/247] FROMLIST(v17): drm/rockchip: dw_hdmi_qp: Set
+ supported_formats platdata
+
+With the introduction of the supported_formats member in the
+dw-hdmi-qp platform data struct, drivers that have access to this
+information should now set it.
+
+Set it in the rockchip dw_hdmi_qp glue driver.
+
+This allows this information to be passed down to the dw-hdmi-qp core,
+which sets it in the bridge it creates, and consequently will allow the
+common HDMI bridge code to act on it.
+
+Reviewed-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+Signed-off-by: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+---
+ drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c b/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c
+index b77ef92ae954..815f9ea7bcbe 100644
+--- a/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c
++++ b/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c
+@@ -602,6 +602,10 @@ static int dw_hdmi_qp_rockchip_bind(struct device *dev, struct device *master,
+ 	plat_data.phy_data = hdmi;
+ 	plat_data.max_bpc = 10;
+ 
++	plat_data.supported_formats = BIT(DRM_OUTPUT_COLOR_FORMAT_RGB444) |
++				      BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR444) |
++				      BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR422);
++
+ 	encoder = &hdmi->encoder.encoder;
+ 	encoder->possible_crtcs = drm_of_find_possible_crtcs(drm, dev->of_node);
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,65 @@
+From 148acb3358a4bf71a08398a64b69a2c47db33eaf Mon Sep 17 00:00:00 2001
+From: Zhirun Liu <zhirunliu@aicsemi.com>
+Date: Sat, 29 Aug 2026 16:21:06 +0800
+Subject: [PATCH 151/247] FROMLIST(v4): wifi: aic: integrate AIC8800 driver
+
+Connect the completed AIC vendor directory to the wireless build and add its
+MAINTAINERS entry.  Keeping integration last prevents an earlier partial
+source state from being selected by Kconfig.
+
+Signed-off-by: Zhirun Liu <zhirunliu@aicsemi.com>
+Signed-off-by: Yanli Yang <yanli.yang@bedmex.com>
+---
+ MAINTAINERS                   | 10 ++++++++++
+ drivers/net/wireless/Kconfig  |  1 +
+ drivers/net/wireless/Makefile |  1 +
+ 3 files changed, 12 insertions(+)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 8014b9f8253e..4ccc1d7350e3 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -736,6 +736,16 @@ L:	linux-scsi@vger.kernel.org
+ S:	Maintained
+ F:	drivers/scsi/aic7xxx/
+ 
++AIC8800 WIRELESS DRIVER
++M:	Zhirun Liu <zhirunliu@aicsemi.com>
++M:	Dijia Xu <dijiaxu@aicsemi.com>
++M:	Chunqiu Liu <chunqiuliu@aicsemi.com>
++M:	Liheng Wei <liheng.wei@bedmex.com>
++M:	Yanli Yang <yanli.yang@bedmex.com>
++L:	linux-wireless@vger.kernel.org
++S:	Maintained
++F:	drivers/net/wireless/aic/
++
+ AIMSLAB FM RADIO RECEIVER DRIVER
+ M:	Hans Verkuil <hverkuil@kernel.org>
+ L:	linux-media@vger.kernel.org
+diff --git a/drivers/net/wireless/Kconfig b/drivers/net/wireless/Kconfig
+index c6599594dc99..65ab62d07369 100644
+--- a/drivers/net/wireless/Kconfig
++++ b/drivers/net/wireless/Kconfig
+@@ -19,6 +19,7 @@ menuconfig WLAN
+ if WLAN
+ 
+ source "drivers/net/wireless/admtek/Kconfig"
++source "drivers/net/wireless/aic/Kconfig"
+ source "drivers/net/wireless/ath/Kconfig"
+ source "drivers/net/wireless/atmel/Kconfig"
+ source "drivers/net/wireless/broadcom/Kconfig"
+diff --git a/drivers/net/wireless/Makefile b/drivers/net/wireless/Makefile
+index e1c4141c6004..bb0c29cb3e82 100644
+--- a/drivers/net/wireless/Makefile
++++ b/drivers/net/wireless/Makefile
+@@ -4,6 +4,7 @@
+ #
+ 
+ obj-$(CONFIG_WLAN_VENDOR_ADMTEK) += admtek/
++obj-$(CONFIG_WLAN_VENDOR_AIC) += aic/
+ obj-$(CONFIG_WLAN_VENDOR_ATH) += ath/
+ obj-$(CONFIG_WLAN_VENDOR_ATMEL) += atmel/
+ obj-$(CONFIG_WLAN_VENDOR_BROADCOM) += broadcom/
+-- 
+2.43.0
+

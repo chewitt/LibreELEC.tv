@@ -1,0 +1,86 @@
+From 5056a5f6f71fff712387b172ca7018764e38c58a Mon Sep 17 00:00:00 2001
+From: Jiaxing Hu <gahing@gahingwoo.com>
+Date: Mon, 31 Aug 2026 20:19:50 +1200
+Subject: [PATCH 167/247] FROMLIST(v11): dt-bindings: iommu: rockchip: describe
+ the RK3576 NPU MMU
+
+The RK3576 NPU MMUs are rk3568-iommu compatible but take five clocks
+where every other Rockchip MMU takes two, the extra three being the
+compute clock and the two convolution buffer clocks.
+
+Give them a compatible of their own and pin both sides with an allOf, so
+that an rk3568-iommu cannot carry five clocks and an NPU MMU cannot
+carry two. Describing the extra clocks as belonging to one SoC without
+saying so in the schema, which is what a comment on a description does,
+leaves both of those spellings valid.
+
+Signed-off-by: Jiaxing Hu <gahing@gahingwoo.com>
+Acked-by: Conor Dooley <conor.dooley@microchip.com>
+---
+ .../bindings/iommu/rockchip,iommu.yaml        | 28 +++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/iommu/rockchip,iommu.yaml b/Documentation/devicetree/bindings/iommu/rockchip,iommu.yaml
+index 6ce41d11ff5e..83d7e7c8e0c2 100644
+--- a/Documentation/devicetree/bindings/iommu/rockchip,iommu.yaml
++++ b/Documentation/devicetree/bindings/iommu/rockchip,iommu.yaml
+@@ -26,6 +26,7 @@ properties:
+       - items:
+           - enum:
+               - rockchip,rk3576-iommu
++              - rockchip,rk3576-npu-iommu
+               - rockchip,rk3588-iommu
+           - const: rockchip,rk3568-iommu
+ 
+@@ -42,14 +43,22 @@ properties:
+     minItems: 1
+ 
+   clocks:
++    minItems: 2
+     items:
+       - description: Core clock
+       - description: Interface clock
++      - description: Compute clock
++      - description: Convolution buffer core clock
++      - description: Convolution buffer interface clock
+ 
+   clock-names:
++    minItems: 2
+     items:
+       - const: aclk
+       - const: iface
++      - const: npu
++      - const: aclk_cbuf
++      - const: hclk_cbuf
+ 
+   "#iommu-cells":
+     const: 0
+@@ -72,6 +81,25 @@ required:
+   - clock-names
+   - "#iommu-cells"
+ 
++allOf:
++  - if:
++      properties:
++        compatible:
++          contains:
++            const: rockchip,rk3576-npu-iommu
++    then:
++      properties:
++        clocks:
++          minItems: 5
++        clock-names:
++          minItems: 5
++    else:
++      properties:
++        clocks:
++          maxItems: 2
++        clock-names:
++          maxItems: 2
++
+ additionalProperties: false
+ 
+ examples:
+-- 
+2.43.0
+

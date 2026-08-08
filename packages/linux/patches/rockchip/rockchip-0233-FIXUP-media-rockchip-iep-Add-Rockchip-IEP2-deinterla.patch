@@ -1,0 +1,125 @@
+From 0dabc8883cbcced84428d27f09c329c548a1f247 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 24 Aug 2026 13:48:35 +0000
+Subject: [PATCH 233/247] FIXUP: media: rockchip: iep: Add Rockchip IEP2
+ deinterlace driver
+
+Address review and checkpatch feedback, and fix one DMA setup bug:
+
+ - List the IEP2 binding in the MAINTAINERS entry added by the IEP1
+   patch. The driver itself is already covered by the directory
+   pattern there.
+
+ - Set the DMA coherent mask before allocating the MV and MD working
+   buffers. IEP2 only addresses 32 bits, so allocating first left a
+   window where the buffers could be placed above 4G and the hardware
+   would then program a truncated address. Moving the call up also
+   drops the now unnecessary unwind for this error path.
+
+ - Report the clock lookup failures with dev_err_probe(), so a probe
+   deferred on a clock controller does not log a spurious error on
+   every retry.
+
+ - Drop the "failed to allocate" messages on the working buffer
+   allocations. An allocation failure already warns and dumps a stack
+   trace, and a probe that returns an error is reported by the driver
+   core, so these lines only added noise.
+
+ - Declare MODULE_LICENSE("GPL") rather than "GPL v2". The two are
+   equivalent to the module loader, and "GPL v2" has been discouraged
+   since commit bf7fbeeae6db ("module: Cure the MODULE_LICENSE "GPL"
+   vs. "GPL v2" bogosity").
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ MAINTAINERS                                |  1 +
+ drivers/media/platform/rockchip/iep/iep2.c | 38 +++++++++-------------
+ 2 files changed, 17 insertions(+), 22 deletions(-)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 4c7c74d2850d..669618fc459b 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -23427,6 +23427,7 @@ M:	Christian Hewitt <christianshewitt@gmail.com>
+ L:	linux-media@vger.kernel.org
+ L:	linux-rockchip@lists.infradead.org
+ S:	Maintained
++F:	Documentation/devicetree/bindings/media/rockchip,rk3568-iep2.yaml
+ F:	Documentation/devicetree/bindings/media/rockchip-iep.yaml
+ F:	drivers/media/platform/rockchip/iep/
+ 
+diff --git a/drivers/media/platform/rockchip/iep/iep2.c b/drivers/media/platform/rockchip/iep/iep2.c
+index 0c4affb77725..f5f52fc6de39 100644
+--- a/drivers/media/platform/rockchip/iep/iep2.c
++++ b/drivers/media/platform/rockchip/iep/iep2.c
+@@ -463,45 +463,39 @@ static int iep2_probe(struct platform_device *pdev)
+ 		return PTR_ERR(iep2->base.regs);
+ 
+ 	iep2->aclk = devm_clk_get(&pdev->dev, "aclk");
+-	if (IS_ERR(iep2->aclk)) {
+-		dev_err(&pdev->dev, "failed to get aclk\n");
+-		return PTR_ERR(iep2->aclk);
+-	}
++	if (IS_ERR(iep2->aclk))
++		return dev_err_probe(&pdev->dev, PTR_ERR(iep2->aclk),
++				     "failed to get aclk\n");
+ 
+ 	iep2->hclk = devm_clk_get(&pdev->dev, "hclk");
+-	if (IS_ERR(iep2->hclk)) {
+-		dev_err(&pdev->dev, "failed to get hclk\n");
+-		return PTR_ERR(iep2->hclk);
+-	}
++	if (IS_ERR(iep2->hclk))
++		return dev_err_probe(&pdev->dev, PTR_ERR(iep2->hclk),
++				     "failed to get hclk\n");
+ 
+ 	iep2->sclk = devm_clk_get(&pdev->dev, "sclk");
+-	if (IS_ERR(iep2->sclk)) {
+-		dev_err(&pdev->dev, "failed to get sclk\n");
+-		return PTR_ERR(iep2->sclk);
++	if (IS_ERR(iep2->sclk))
++		return dev_err_probe(&pdev->dev, PTR_ERR(iep2->sclk),
++				     "failed to get sclk\n");
++
++	ret = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
++	if (ret) {
++		dev_err(&pdev->dev, "Could not set DMA coherent mask\n");
++		return ret;
+ 	}
+ 
+ 	/* Allocate DMA working buffers */
+ 	iep2->mv_buf = dma_alloc_coherent(&pdev->dev, IEP2_MV_BUF_SIZE,
+ 					   &iep2->mv_dma, GFP_KERNEL);
+-	if (!iep2->mv_buf) {
+-		dev_err(&pdev->dev, "failed to allocate MV buffer\n");
++	if (!iep2->mv_buf)
+ 		return -ENOMEM;
+-	}
+ 
+ 	iep2->md_buf = dma_alloc_coherent(&pdev->dev, IEP2_MD_BUF_SIZE,
+ 					   &iep2->md_dma, GFP_KERNEL);
+ 	if (!iep2->md_buf) {
+-		dev_err(&pdev->dev, "failed to allocate MD buffer\n");
+ 		ret = -ENOMEM;
+ 		goto err_free_mv;
+ 	}
+ 
+-	ret = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
+-	if (ret) {
+-		dev_err(&pdev->dev, "Could not set DMA coherent mask\n");
+-		goto err_free_md;
+-	}
+-
+ 	vb2_dma_contig_set_max_seg_size(&pdev->dev, DMA_BIT_MASK(32));
+ 
+ 	irq = platform_get_irq(pdev, 0);
+@@ -625,4 +619,4 @@ module_platform_driver(iep2_pdrv);
+ 
+ MODULE_AUTHOR("Christian Hewitt <christianshewitt@gmail.com>");
+ MODULE_DESCRIPTION("Rockchip Image Enhancement Processor v2");
+-MODULE_LICENSE("GPL v2");
++MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

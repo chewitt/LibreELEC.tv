@@ -1,0 +1,53 @@
+From 4a6b78b07d1cf29956b2c93045ec615ad5340f01 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Mon, 18 May 2026 19:37:40 +0000
+Subject: [PATCH 034/247] FROMLIST(v2): drm/rockchip: dw_hdmi: Remove empty
+ encoder helper funcs
+
+Remove the empty disable() and static return true mode_fixup() encoder
+helper funcs as they do not provide any useful functionality.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c | 18 ++----------------
+ 1 file changed, 2 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c b/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c
+index f638dd8f6c20..b53762f74251 100644
+--- a/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c
++++ b/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c
+@@ -226,18 +226,6 @@ dw_hdmi_rockchip_mode_valid(struct dw_hdmi *dw_hdmi, void *data,
+ 	return MODE_OK;
+ }
+ 
+-static void dw_hdmi_rockchip_encoder_disable(struct drm_encoder *encoder)
+-{
+-}
+-
+-static bool
+-dw_hdmi_rockchip_encoder_mode_fixup(struct drm_encoder *encoder,
+-				    const struct drm_display_mode *mode,
+-				    struct drm_display_mode *adj_mode)
+-{
+-	return true;
+-}
+-
+ static void dw_hdmi_rockchip_encoder_mode_set(struct drm_encoder *encoder,
+ 					      struct drm_display_mode *mode,
+ 					      struct drm_display_mode *adj_mode)
+@@ -290,10 +278,8 @@ dw_hdmi_rockchip_encoder_atomic_check(struct drm_encoder *encoder,
+ }
+ 
+ static const struct drm_encoder_helper_funcs dw_hdmi_rockchip_encoder_helper_funcs = {
+-	.mode_fixup = dw_hdmi_rockchip_encoder_mode_fixup,
+-	.mode_set   = dw_hdmi_rockchip_encoder_mode_set,
+-	.enable     = dw_hdmi_rockchip_encoder_enable,
+-	.disable    = dw_hdmi_rockchip_encoder_disable,
++	.mode_set = dw_hdmi_rockchip_encoder_mode_set,
++	.enable = dw_hdmi_rockchip_encoder_enable,
+ 	.atomic_check = dw_hdmi_rockchip_encoder_atomic_check,
+ };
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,32 @@
+From 9ad993d84d6c5403e21c5d72b0616c30b8b7d471 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 31 Aug 2026 16:14:17 +0000
+Subject: [PATCH 247/247] WIP: ARM: dts: rockchip: Rename rk3288-tinker HDMI
+ audio card
+
+Rename the card from "rockchip,tinker-codec" to "RK3288 HDMI" so it
+identifies the SoC in user-visible ALSA fields and matches the naming
+scheme used across the rest of the Rockchip family.
+
+Fixes: 2235995141332 ("ARM: dts: rockchip: add dts for RK3288-Tinker board")
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ arch/arm/boot/dts/rockchip/rk3288-tinker.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/boot/dts/rockchip/rk3288-tinker.dtsi b/arch/arm/boot/dts/rockchip/rk3288-tinker.dtsi
+index 8e27a20f2845..a16a55aefdfe 100644
+--- a/arch/arm/boot/dts/rockchip/rk3288-tinker.dtsi
++++ b/arch/arm/boot/dts/rockchip/rk3288-tinker.dtsi
+@@ -73,7 +73,7 @@ sdio_pwrseq: sdio-pwrseq {
+ 	sound {
+ 		compatible = "simple-audio-card";
+ 		simple-audio-card,format = "i2s";
+-		simple-audio-card,name = "rockchip,tinker-codec";
++		simple-audio-card,name = "RK3288 HDMI";
+ 		simple-audio-card,mclk-fs = <512>;
+ 
+ 		simple-audio-card,codec {
+-- 
+2.43.0
+

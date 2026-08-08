@@ -1,0 +1,33 @@
+From 1b975737afbf3eac09696ad3e7e22ba852eeead6 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Mon, 18 May 2026 19:37:42 +0000
+Subject: [PATCH 036/247] FROMLIST(v2): drm/rockchip: dw_hdmi: Set output_port
+ for RK3568/RK3566
+
+All in-tree RK3568/RK3566 device trees using HDMI also include the
+required hdmi-connector node at port@1 since their introduction.
+
+Define the output_port for RK3568 so that dw-hdmi bridge driver can pick
+up the display-connector bridge once the dw-hdmi connector is replaced
+with a bridge connector in a future change.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c b/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c
+index 3f3ff820b1b9..14adf6e8ff47 100644
+--- a/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c
++++ b/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c
+@@ -461,6 +461,7 @@ static const struct dw_hdmi_plat_data rk3568_hdmi_drv_data = {
+ 	.phy_config = rockchip_phy_config,
+ 	.phy_data = &rk3568_chip_data,
+ 	.use_drm_infoframe = true,
++	.output_port = 1,
+ };
+ 
+ static const struct of_device_id dw_hdmi_rockchip_dt_ids[] = {
+-- 
+2.43.0
+

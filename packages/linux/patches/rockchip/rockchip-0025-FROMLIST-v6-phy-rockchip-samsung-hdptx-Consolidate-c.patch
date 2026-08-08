@@ -1,0 +1,51 @@
+From 5102cd82aba134aedd4d011094805d395cdcd4a2 Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 11 Aug 2026 18:44:48 +0300
+Subject: [PATCH 025/247] FROMLIST(v6): phy: rockchip: samsung-hdptx:
+ Consolidate consumer_put on error path
+
+rk_hdptx_phy_consumer_put() is invoked in both branches of the mode
+check conditional in rk_hdptx_phy_power_on() on the error path.
+
+Simplify the code by moving the single call to the end of the
+function.
+
+No functional change intended.
+
+Reviewed-by: Manivannan Sadhasivam <manivannan.sadhasivam@oss.qualcomm.com>
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ drivers/phy/rockchip/phy-rockchip-samsung-hdptx.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/phy/rockchip/phy-rockchip-samsung-hdptx.c b/drivers/phy/rockchip/phy-rockchip-samsung-hdptx.c
+index 6941dac9deb4..294484da7085 100644
+--- a/drivers/phy/rockchip/phy-rockchip-samsung-hdptx.c
++++ b/drivers/phy/rockchip/phy-rockchip-samsung-hdptx.c
+@@ -1685,8 +1685,6 @@ static int rk_hdptx_phy_power_on(struct phy *phy)
+ 		rk_hdptx_dp_pll_init(hdptx);
+ 
+ 		ret = rk_hdptx_dp_aux_init(hdptx);
+-		if (ret)
+-			rk_hdptx_phy_consumer_put(hdptx, true);
+ 	} else {
+ 		dev_dbg(hdptx->dev, "%s rate=%llu bpc=%u\n", __func__,
+ 			hdptx->hdmi_cfg.rate, hdptx->hdmi_cfg.bpc);
+@@ -1703,11 +1701,11 @@ static int rk_hdptx_phy_power_on(struct phy *phy)
+ 			else
+ 				ret = rk_hdptx_tmds_ropll_mode_config(hdptx);
+ 		}
+-
+-		if (ret)
+-			rk_hdptx_phy_consumer_put(hdptx, true);
+ 	}
+ 
++	if (ret)
++		rk_hdptx_phy_consumer_put(hdptx, true);
++
+ 	return ret;
+ }
+ 
+-- 
+2.43.0
+

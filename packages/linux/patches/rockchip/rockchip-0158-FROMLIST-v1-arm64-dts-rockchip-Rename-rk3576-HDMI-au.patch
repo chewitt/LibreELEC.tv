@@ -1,0 +1,32 @@
+From d05c61e2e3d99a9a8d280008f372196ffe8ab5f7 Mon Sep 17 00:00:00 2001
+From: Detlev Casanova <detlev.casanova@collabora.com>
+Date: Mon, 31 Aug 2026 10:20:53 -0400
+Subject: [PATCH 158/247] FROMLIST(v1): arm64: dts: rockchip: Rename rk3576
+ HDMI audio card
+
+Rename the card from "HDMI" to "RK3576 HDMI" so it identifies the SoC
+in user-visible ALSA fields and no longer collides with the identical
+"HDMI" string used by other Rockchip SoCs.
+
+Fixes: 7f1561d82e3d3 ("arm64: dts: rockchip: Add RK3576 HDMI audio")
+Signed-off-by: Detlev Casanova <detlev.casanova@collabora.com>
+---
+ arch/arm64/boot/dts/rockchip/rk3576.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3576.dtsi b/arch/arm64/boot/dts/rockchip/rk3576.dtsi
+index e12a2a0cfb89..20dacb1438f7 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3576.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3576.dtsi
+@@ -410,7 +410,7 @@ scmi_clk: protocol@14 {
+ 
+ 	hdmi_sound: hdmi-sound {
+ 		compatible = "simple-audio-card";
+-		simple-audio-card,name = "HDMI";
++		simple-audio-card,name = "RK3576 HDMI";
+ 		simple-audio-card,format = "i2s";
+ 		simple-audio-card,mclk-fs = <256>;
+ 		status = "disabled";
+-- 
+2.43.0
+

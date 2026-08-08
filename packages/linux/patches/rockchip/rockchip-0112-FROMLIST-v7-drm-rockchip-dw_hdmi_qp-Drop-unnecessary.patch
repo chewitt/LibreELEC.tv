@@ -1,0 +1,30 @@
+From 5e5d0c93e8c6f6ad309678311f47524e6675b55b Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 2 Jun 2026 01:44:18 +0300
+Subject: [PATCH 112/247] FROMLIST(v7): drm/rockchip: dw_hdmi_qp: Drop
+ unnecessary #include
+
+Remove superfluous drm_simple_kms_helper.h include, which has no users
+in this file since commit e1f7b7cbd74c ("drm/rockchip: dw_hdmi_qp:
+Switch to drmm_encoder_init()").
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c b/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c
+index fee5acb44a7e..d6c587315bd2 100644
+--- a/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c
++++ b/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c
+@@ -25,7 +25,6 @@
+ #include <drm/drm_managed.h>
+ #include <drm/drm_of.h>
+ #include <drm/drm_probe_helper.h>
+-#include <drm/drm_simple_kms_helper.h>
+ 
+ #include "rockchip_drm_drv.h"
+ 
+-- 
+2.43.0
+

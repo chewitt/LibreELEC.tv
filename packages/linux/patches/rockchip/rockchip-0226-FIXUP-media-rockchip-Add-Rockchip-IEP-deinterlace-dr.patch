@@ -1,0 +1,113 @@
+From 92c4f4732c7a37b418f87cfc5fb913bc040e6fc3 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 24 Aug 2026 13:48:35 +0000
+Subject: [PATCH 226/247] FIXUP: media: rockchip: Add Rockchip IEP deinterlace
+ driver
+
+Add a MAINTAINERS entry for the driver, covering the binding and the
+new drivers/media/platform/rockchip/iep/ directory, so patches reach
+the right list.
+
+Improve the probe time clock error handling. The clocks are supplied by
+a controller that can probe after this driver, so report failures with
+dev_err_probe(): a plain dev_err() logs a spurious error on every
+-EPROBE_DEFER retry instead of letting the core record the deferral
+reason silently.
+
+While here, name the right clocks in those messages. IEP1 requests
+"axi" and "ahb", as required by the binding, but the messages reported
+"aclk" and "hclk", which are the IEP2 clock names and match nothing in
+this driver's device tree node.
+
+Also allocate the context with kzalloc_obj() rather than kzalloc() and
+an explicit sizeof(), the preferred form. iep-common.c is added by this
+patch, so the conversion belongs here rather than in the IEP2 patch
+that merely uses the shared code.
+
+Finally, declare MODULE_LICENSE("GPL") rather than "GPL v2". The two
+are equivalent to the module loader, and "GPL v2" has been discouraged
+since commit bf7fbeeae6db ("module: Cure the MODULE_LICENSE "GPL" vs.
+"GPL v2" bogosity").
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ MAINTAINERS                                      |  8 ++++++++
+ drivers/media/platform/rockchip/iep/iep-common.c |  4 ++--
+ drivers/media/platform/rockchip/iep/iep.c        | 16 +++++++---------
+ 3 files changed, 17 insertions(+), 11 deletions(-)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 4ccc1d7350e3..4c7c74d2850d 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -23422,6 +23422,14 @@ S:	Maintained
+ F:	Documentation/devicetree/bindings/sound/rockchip,i2s-tdm.yaml
+ F:	sound/soc/rockchip/rockchip_i2s_tdm.*
+ 
++ROCKCHIP IMAGE ENHANCEMENT PROCESSOR (IEP) DRIVER
++M:	Christian Hewitt <christianshewitt@gmail.com>
++L:	linux-media@vger.kernel.org
++L:	linux-rockchip@lists.infradead.org
++S:	Maintained
++F:	Documentation/devicetree/bindings/media/rockchip-iep.yaml
++F:	drivers/media/platform/rockchip/iep/
++
+ ROCKCHIP ISP V1 DRIVER
+ M:	Dafna Hirschfeld <dafna@fastmail.com>
+ M:	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+diff --git a/drivers/media/platform/rockchip/iep/iep-common.c b/drivers/media/platform/rockchip/iep/iep-common.c
+index a9ff71ba5b7a..61114b2cdd0a 100644
+--- a/drivers/media/platform/rockchip/iep/iep-common.c
++++ b/drivers/media/platform/rockchip/iep/iep-common.c
+@@ -479,7 +479,7 @@ int rk_iep_open(struct file *file)
+ 	if (mutex_lock_interruptible(&iep_dev->mutex))
+ 		return -ERESTARTSYS;
+ 
+-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
++	ctx = kzalloc_obj(*ctx);
+ 	if (!ctx) {
+ 		mutex_unlock(&iep_dev->mutex);
+ 		return -ENOMEM;
+@@ -663,4 +663,4 @@ void rk_iep_unregister(struct rk_iep_dev *iep_dev)
+ EXPORT_SYMBOL_GPL(rk_iep_unregister);
+ 
+ MODULE_DESCRIPTION("Rockchip IEP common framework");
+-MODULE_LICENSE("GPL v2");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/media/platform/rockchip/iep/iep.c b/drivers/media/platform/rockchip/iep/iep.c
+index 502838dfdd8f..d1f8fc11c6e0 100644
+--- a/drivers/media/platform/rockchip/iep/iep.c
++++ b/drivers/media/platform/rockchip/iep/iep.c
+@@ -359,16 +359,14 @@ static int iep_probe(struct platform_device *pdev)
+ 	iep->base.hw_init = iep_hw_init;
+ 
+ 	iep->axi_clk = devm_clk_get(iep->base.dev, "axi");
+-	if (IS_ERR(iep->axi_clk)) {
+-		dev_err(iep->base.dev, "failed to get aclk clock\n");
+-		return PTR_ERR(iep->axi_clk);
+-	}
++	if (IS_ERR(iep->axi_clk))
++		return dev_err_probe(iep->base.dev, PTR_ERR(iep->axi_clk),
++				     "failed to get axi clock\n");
+ 
+ 	iep->ahb_clk = devm_clk_get(iep->base.dev, "ahb");
+-	if (IS_ERR(iep->ahb_clk)) {
+-		dev_err(iep->base.dev, "failed to get hclk clock\n");
+-		return PTR_ERR(iep->ahb_clk);
+-	}
++	if (IS_ERR(iep->ahb_clk))
++		return dev_err_probe(iep->base.dev, PTR_ERR(iep->ahb_clk),
++				     "failed to get ahb clock\n");
+ 
+ 	ret = clk_set_rate(iep->axi_clk, 300000000);
+ 	if (ret) {
+@@ -477,4 +475,4 @@ module_platform_driver(iep_pdrv);
+ 
+ MODULE_AUTHOR("Alex Bee <knaerzche@gmail.com>");
+ MODULE_DESCRIPTION("Rockchip Image Enhancement Processor");
+-MODULE_LICENSE("GPL v2");
++MODULE_LICENSE("GPL");
+-- 
+2.43.0
+

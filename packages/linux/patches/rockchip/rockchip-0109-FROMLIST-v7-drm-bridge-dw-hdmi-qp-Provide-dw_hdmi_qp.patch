@@ -1,0 +1,85 @@
+From 2d8c064b19acaa95a393d7c34453e079d5b0848b Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 2 Jun 2026 01:44:15 +0300
+Subject: [PATCH 109/247] FROMLIST(v7): drm/bridge: dw-hdmi-qp: Provide
+ dw_hdmi_qp_hpd_notify() helper
+
+Export dw_hdmi_qp_hpd_notify() for platform drivers to report hot-plug
+detection events.  Unlike drm_helper_hpd_irq_event() which polls all
+connectors, this helper targets only the affected connector and ensures
+.detect_ctx() is invoked on reconnection events to trigger SCDC state
+recovery.
+
+Note that this helper may sleep, so it must only be called from a
+threaded HPD interrupt handler or a work function.
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c | 31 ++++++++++++++++++++
+ include/drm/bridge/dw_hdmi_qp.h              |  1 +
+ 2 files changed, 32 insertions(+)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c
+index 94a45689d9c9..92738732da58 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c
+@@ -29,6 +29,7 @@
+ #include <drm/drm_edid.h>
+ #include <drm/drm_modes.h>
+ #include <drm/drm_print.h>
++#include <drm/drm_probe_helper.h>
+ 
+ #include <media/cec.h>
+ 
+@@ -1441,6 +1442,36 @@ struct dw_hdmi_qp *dw_hdmi_qp_bind(struct platform_device *pdev,
+ }
+ EXPORT_SYMBOL_GPL(dw_hdmi_qp_bind);
+ 
++/**
++ * dw_hdmi_qp_hpd_notify() - Notify a hot-plug detection event
++ * @hdmi: pointer to the DW HDMI QP controller
++ *
++ * Platform drivers should call this from their threaded IRQ handler or work
++ * function to notify the bridge of a connection status change.
++ * The bridge's .read_hpd() phy_ops callback is used to read the current
++ * connection status.
++ */
++void dw_hdmi_qp_hpd_notify(struct dw_hdmi_qp *hdmi)
++{
++	enum drm_connector_status status;
++
++	status = hdmi->phy.ops->read_hpd(hdmi, hdmi->phy.data);
++	dev_dbg(hdmi->dev, "%s status=%d\n", __func__, status);
++
++	/*
++	 * When the display pipeline has been already active, switch to
++	 * drm_connector_helper_hpd_irq_event() to ensure .detect_ctx()
++	 * gets invoked, i.e. via drm_helper_probe_detect(), because
++	 * drm_bridge_hpd_notify() defers to a delayed hotplug path in
++	 * this case.
++	 */
++	if (hdmi->curr_conn && status == connector_status_connected)
++		drm_connector_helper_hpd_irq_event(hdmi->curr_conn);
++	else
++		drm_bridge_hpd_notify(&hdmi->bridge, status);
++}
++EXPORT_SYMBOL_GPL(dw_hdmi_qp_hpd_notify);
++
+ void dw_hdmi_qp_suspend(struct device *dev, struct dw_hdmi_qp *hdmi)
+ {
+ 	disable_irq(hdmi->main_irq);
+diff --git a/include/drm/bridge/dw_hdmi_qp.h b/include/drm/bridge/dw_hdmi_qp.h
+index b80fceffc315..b4fb1c578a5b 100644
+--- a/include/drm/bridge/dw_hdmi_qp.h
++++ b/include/drm/bridge/dw_hdmi_qp.h
+@@ -36,6 +36,7 @@ struct dw_hdmi_qp_plat_data {
+ struct dw_hdmi_qp *dw_hdmi_qp_bind(struct platform_device *pdev,
+ 				   struct drm_encoder *encoder,
+ 				   const struct dw_hdmi_qp_plat_data *plat_data);
++void dw_hdmi_qp_hpd_notify(struct dw_hdmi_qp *hdmi);
+ void dw_hdmi_qp_suspend(struct device *dev, struct dw_hdmi_qp *hdmi);
+ void dw_hdmi_qp_resume(struct device *dev, struct dw_hdmi_qp *hdmi);
+ #endif /* __DW_HDMI_QP__ */
+-- 
+2.43.0
+

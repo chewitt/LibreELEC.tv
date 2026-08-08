@@ -1,0 +1,39 @@
+From 0d63b7f218767cac941ecad4765e795418705802 Mon Sep 17 00:00:00 2001
+From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+Date: Tue, 9 Jun 2026 14:44:11 +0200
+Subject: [PATCH 080/247] FROMLIST(v17): drm/connector: Update docs of
+ "colorspace" for color format prop
+
+The colorspace property's documentation states that BT2020_RGB and
+BT2020_YCC are equivalent, and the output format depends on the driver.
+
+Now that there is a "color format" property that userspace can use to
+explicitly set a format, update the colorspace docs to mention this.
+
+The behaviour here is not changed for userspace that doesn't know about
+the color format property yet, as the color format property defaults to
+"AUTO", where the choice of output format is left up to drivers.
+
+Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+Signed-off-by: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+---
+ drivers/gpu/drm/drm_connector.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/drm_connector.c b/drivers/gpu/drm/drm_connector.c
+index 22a5675f11bb..d7543e984ff3 100644
+--- a/drivers/gpu/drm/drm_connector.c
++++ b/drivers/gpu/drm/drm_connector.c
+@@ -2573,7 +2573,8 @@ EXPORT_SYMBOL(drm_mode_create_aspect_ratio_property);
+  *		conversion matrix and convert to the appropriate quantization
+  *		range.
+  *		The variants BT2020_RGB and BT2020_YCC are equivalent and the
+- *		driver chooses between RGB and YCbCr on its own.
++ *		driver chooses between RGB and YCbCr based on the color format
++ *		property.
+  *
+  *	SMPTE_170M_YCC:
+  *	BT709_YCC:
+-- 
+2.43.0
+

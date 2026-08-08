@@ -1,0 +1,111 @@
+From a76cb93ba7a1a0f01302a702688d3ee7ec91c666 Mon Sep 17 00:00:00 2001
+From: Jiaxing Hu <gahing@gahingwoo.com>
+Date: Mon, 31 Aug 2026 20:19:45 +1200
+Subject: [PATCH 162/247] FROMLIST(v11): accel/rocket: wait for a running IRQ
+ handler before resetting a core
+
+rocket_reset() calls drm_sched_stop(), which stops the scheduler and
+returns. It does not wait for a threaded handler that is already
+running, so the comment that follows, "Remaining interrupts have been
+handled", states an assumption rather than something the code arranges.
+
+Call synchronize_irq(core->irq) after drm_sched_stop() and reword the
+comment to say what holds afterwards.
+
+It has to go before the scoped_guard(mutex, &core->job_lock) rather than
+inside it. rocket_job_handle_irq() takes job_lock, so waiting for the
+handler while holding that lock would be waiting for a handler that is
+waiting for us. Nothing is held at that point, and both callers,
+rocket_job_timedout() and rocket_reset_work(), run in process context,
+so sleeping there is allowed.
+
+This does not stop a handler that has already read in_flight_job from
+finishing its work on the job the reset is about to drop. That window
+needs the check and the register writes to be one step under the lock,
+which is what the previous patch does; the two are complementary.
+
+Mask the block before the sync as well. INTERRUPT_MASK is armed by
+hw_submit() on every submit and cleared only by the hardirq, so on an
+ordinary timeout it is still live and a completion can arrive after
+synchronize_irq() returns. Nothing is lost by clearing it, since the next
+submit arms it again.
+
+That write is the first register access this function has ever made, and
+it is guarded, because the function holds no runtime PM reference of its
+own. The only reference in the window belongs to in_flight_job, and the
+completion path can have put it and cleared the pointer before the
+timeout worker arrives: drm_sched_stop() sits in between and can block on
+cancel_work_sync() and on a dma_fence_wait(), and it subtracts every
+pending job's credits, so rocket_job_is_idle() is true and
+rocket_device_runtime_suspend() will not refuse. With the autosuspend
+delay elapsed the clocks are off and both NPU domains are down. A
+register access in that state takes an async SError on this hardware,
+which is the failure two later patches in this series describe from the
+power-on side.
+
+pm_runtime_get_if_active() resumes nothing and allocates nothing; if the
+core is already down there is no live interrupt to mask and the following
+synchronize_irq() is all that is needed. Igor Paunovic asked the general
+form of this on v8 -- whether rocket_reset() should hold a reference --
+and it was deferred then because nothing in the path touched a register.
+This patch is what makes it matter.
+
+The deadlock this placement avoids would not have been reported. The wait
+is on desc->wait_for_threads rather than on a lock, so lockdep does not
+model it and it would have hung silently.
+
+Suggested-by: Igor Paunovic <royalnet026@gmail.com>
+Signed-off-by: Jiaxing Hu <gahing@gahingwoo.com>
+Tested-by: Igor Paunovic <royalnet026@gmail.com> # RK3588, three cores, induced reset, differential base, JOB_TIMEOUT_MS=2
+---
+ drivers/accel/rocket/rocket_job.c | 34 ++++++++++++++++++++++++++++---
+ 1 file changed, 31 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/accel/rocket/rocket_job.c b/drivers/accel/rocket/rocket_job.c
+index 0e6fe4f8394c..e13c487275de 100644
+--- a/drivers/accel/rocket/rocket_job.c
++++ b/drivers/accel/rocket/rocket_job.c
+@@ -362,9 +362,37 @@ rocket_reset(struct rocket_core *core, struct drm_sched_job *bad)
+ 	drm_sched_stop(&core->sched, bad);
+ 
+ 	/*
+-	 * Remaining interrupts have been handled, but we might still have
+-	 * stuck jobs. Let's make sure the PM counters stay balanced by
+-	 * manually calling pm_runtime_put_noidle().
++	 * Mask the block before waiting. hw_submit() arms INTERRUPT_MASK on
++	 * every submit and only the hardirq clears it, so on an ordinary
++	 * timeout it is still live and a completion can arrive after the sync
++	 * returns. The next submit re-arms it, so nothing is lost here.
++	 *
++	 * Only when the device is already awake, though. This function holds no
++	 * runtime PM reference of its own: the only one in the window belongs to
++	 * in_flight_job, and the completion path may have put it and cleared the
++	 * pointer before the timeout worker got here. drm_sched_stop() above can
++	 * block for a long time, and it drops every pending job's credits, so
++	 * rocket_job_is_idle() is true and nothing keeps the core resumed. On
++	 * this hardware a register access with the domain down takes an async
++	 * SError, so a reset must not be the thing that causes one.
++	 */
++	if (pm_runtime_get_if_active(core->dev) > 0) {
++		rocket_pc_writel(core, INTERRUPT_MASK, 0x0);
++		pm_runtime_put_autosuspend(core->dev);
++	}
++
++	/*
++	 * drm_sched_stop() returns without waiting for a threaded handler that
++	 * is already running, so wait for one here. This has to stay outside
++	 * job_lock: the handler takes that lock, so waiting for it while
++	 * holding it would deadlock instead of fencing anything.
++	 */
++	synchronize_irq(core->irq);
++
++	/*
++	 * No handler is running now, but we might still have stuck jobs. Let's
++	 * make sure the PM counters stay balanced by manually calling
++	 * pm_runtime_put_noidle().
+ 	 */
+ 	scoped_guard(mutex, &core->job_lock) {
+ 		if (core->in_flight_job)
+-- 
+2.43.0
+

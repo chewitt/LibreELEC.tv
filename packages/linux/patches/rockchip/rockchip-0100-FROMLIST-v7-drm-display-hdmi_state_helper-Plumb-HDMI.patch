@@ -1,0 +1,52 @@
+From 120711fa1480a3caf7670f9a61389dbdee8002f7 Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 2 Jun 2026 01:44:06 +0300
+Subject: [PATCH 100/247] FROMLIST(v7): drm/display: hdmi_state_helper: Plumb
+ HDMI 2.0 source scrambling capability
+
+Toggle drm_connector_hdmi_state.scrambler_needed flag when the TMDS
+character rate exceeds 340 MHz and both the source and the sink advertise
+SCDC scrambling capability.  Drivers no longer need to open-code this
+check.
+
+According to HDMI 2.0 spec, scrambling is only mandatory above 340 MHz;
+the optional sub-340 MHz scrambling path is intentionally not requested.
+
+Once all drivers are converted to advertise the scrambler support, the
+unsupported HDMI 2.0 modes could be simply rejected.
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+---
+ drivers/gpu/drm/display/drm_hdmi_state_helper.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/gpu/drm/display/drm_hdmi_state_helper.c b/drivers/gpu/drm/display/drm_hdmi_state_helper.c
+index e91076081acd..4572353f177c 100644
+--- a/drivers/gpu/drm/display/drm_hdmi_state_helper.c
++++ b/drivers/gpu/drm/display/drm_hdmi_state_helper.c
+@@ -588,6 +588,21 @@ hdmi_compute_clock(const struct drm_connector *connector,
+ 	if (status != MODE_OK)
+ 		return -EINVAL;
+ 
++	if (clock > HDMI_1_3_TMDS_CHAR_RATE_MAX_HZ) {
++		const struct drm_display_info *info = &connector->display_info;
++
++		/*
++		 * TODO: Reject unsupported HDMI 2.0 modes once all drivers
++		 *	 advertise their scrambler capability.
++		 */
++		conn_state->hdmi.scrambler_needed = connector->hdmi.scrambler_supported &&
++						    info->is_hdmi &&
++						    info->hdmi.scdc.supported &&
++						    info->hdmi.scdc.scrambling.supported;
++	} else {
++		conn_state->hdmi.scrambler_needed = false;
++	}
++
+ 	conn_state->hdmi.tmds_char_rate = clock;
+ 
+ 	return 0;
+-- 
+2.43.0
+

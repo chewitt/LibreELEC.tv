@@ -1,0 +1,95 @@
+From f66ddbf77e6106d2d6096908053ccb1afe244529 Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 2 Jun 2026 01:44:11 +0300
+Subject: [PATCH 105/247] FROMLIST(v7): drm/display: bridge_connector: Wire up
+ HDMI 2.0 scrambler callbacks
+
+Connect the bridge connector's .scrambler_{enable|disable} callbacks to
+the underlying bridge's .hdmi_scrambler_{enable|disable} funcs when
+DRM_BRIDGE_OP_HDMI_SCRAMBLER is advertised.
+
+This completes the bridge connector plumbing so that the SCDC
+scrambling helpers can control source-side scrambling through the
+bridge chain.
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ .../gpu/drm/display/drm_bridge_connector.c    | 41 ++++++++++++++++++-
+ 1 file changed, 40 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/display/drm_bridge_connector.c b/drivers/gpu/drm/display/drm_bridge_connector.c
+index 4abd7472dffc..f5ca092419e0 100644
+--- a/drivers/gpu/drm/display/drm_bridge_connector.c
++++ b/drivers/gpu/drm/display/drm_bridge_connector.c
+@@ -572,6 +572,32 @@ static int drm_bridge_connector_write_spd_infoframe(struct drm_connector *connec
+ 	return bridge->funcs->hdmi_write_spd_infoframe(bridge, buffer, len);
+ }
+ 
++static int drm_bridge_connector_scrambler_enable(struct drm_connector *connector)
++{
++	struct drm_bridge_connector *bridge_connector =
++		to_drm_bridge_connector(connector);
++	struct drm_bridge *bridge;
++
++	bridge = bridge_connector->bridge_hdmi;
++	if (!bridge)
++		return -EINVAL;
++
++	return bridge->funcs->hdmi_scrambler_enable(bridge);
++}
++
++static int drm_bridge_connector_scrambler_disable(struct drm_connector *connector)
++{
++	struct drm_bridge_connector *bridge_connector =
++		to_drm_bridge_connector(connector);
++	struct drm_bridge *bridge;
++
++	bridge = bridge_connector->bridge_hdmi;
++	if (!bridge)
++		return -EINVAL;
++
++	return bridge->funcs->hdmi_scrambler_disable(bridge);
++}
++
+ static const struct drm_edid *
+ drm_bridge_connector_read_edid(struct drm_connector *connector)
+ {
+@@ -597,7 +623,7 @@ static const struct drm_connector_hdmi_funcs drm_bridge_connector_hdmi_funcs = {
+ 		.clear_infoframe = drm_bridge_connector_clear_hdmi_infoframe,
+ 		.write_infoframe = drm_bridge_connector_write_hdmi_infoframe,
+ 	},
+-	/* audio, hdr_drm and spd are set dynamically during init */
++	/* scrambler, audio, hdr_drm and spd are set dynamically during init */
+ };
+ 
+ static const struct drm_connector_infoframe_funcs drm_bridge_connector_hdmi_audio_infoframe = {
+@@ -903,6 +929,11 @@ struct drm_connector *drm_bridge_connector_init(struct drm_device *drm,
+ 			     !bridge->funcs->hdmi_clear_spd_infoframe))
+ 				return ERR_PTR(-EINVAL);
+ 
++			if (bridge->ops & DRM_BRIDGE_OP_HDMI_SCRAMBLER &&
++			    (!bridge->funcs->hdmi_scrambler_enable ||
++			     !bridge->funcs->hdmi_scrambler_disable))
++				return ERR_PTR(-EINVAL);
++
+ 			bridge_connector->bridge_hdmi = drm_bridge_get(bridge);
+ 
+ 			if (bridge->supported_formats)
+@@ -1007,6 +1038,14 @@ struct drm_connector *drm_bridge_connector_init(struct drm_device *drm,
+ 			bridge_connector->hdmi_funcs.spd =
+ 				drm_bridge_connector_hdmi_spd_infoframe;
+ 
++		if (bridge_connector->bridge_hdmi->ops & DRM_BRIDGE_OP_HDMI_SCRAMBLER) {
++			bridge_connector->hdmi_funcs.scrambler_enable =
++				drm_bridge_connector_scrambler_enable;
++			bridge_connector->hdmi_funcs.scrambler_disable =
++				drm_bridge_connector_scrambler_disable;
++			connector->hdmi.scrambler_supported = true;
++		}
++
+ 		ret = drmm_connector_hdmi_init(drm, connector,
+ 					       bridge_connector->bridge_hdmi->vendor,
+ 					       bridge_connector->bridge_hdmi->product,
+-- 
+2.43.0
+

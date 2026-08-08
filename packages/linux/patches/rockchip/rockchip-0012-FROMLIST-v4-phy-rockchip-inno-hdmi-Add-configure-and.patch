@@ -1,0 +1,148 @@
+From 20cbee09b020458343ddbe598f39074b7039c17b Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Mon, 18 May 2026 18:07:20 +0000
+Subject: [PATCH 012/247] FROMLIST(v4): phy: rockchip: inno-hdmi: Add
+ configure() and validate() ops
+
+The commit 10ed34d6eaaf ("phy: Add HDMI configuration options")
+introduced a way for HDMI PHYs to be configured through the generic
+phy_configure() function.
+
+This driver derives the TMDS character rate from the pixel clock and the
+PHY bus width setting. However, no in-tree consumer of this PHY has ever
+called phy_set_bus_width() to change the TMDS character rate as only
+8-bit RGB output is supported by the HDMI display driver.
+
+Add configure() and validate() ops to allow consumers to configure the
+TMDS character rate using phy_configure(). Fallback to the deprecated
+way of using the PHY bus width to configure the TMDS character rate.
+
+A typical call chain during DRM modeset on a RK3328 device:
+
+  dw_hdmi_rockchip_encoder_atomic_check():
+  - inno_hdmi_phy_validate(): pixclock 148500000 tmdsclock 594000000
+
+  dw_hdmi_rockchip_encoder_atomic_mode_set():
+  - inno_hdmi_phy_configure(): pixclock 148500000
+    - inno_hdmi_phy_validate(): pixclock 148500000 tmdsclock 594000000
+
+  vop_crtc_atomic_enable():
+  - inno_hdmi_phy_rk3328_clk_set_rate(): rate 594000000 tmdsclk 594000000
+    inno_hdmi_phy_rk3328_clk_set_rate(): pixclock 594000000 tmdsclock 594000000
+  - inno_hdmi_phy_rk3328_clk_recalc_rate(): pixclock 594000000 vco 594000000
+
+  dw_hdmi_rockchip_encoder_enable():
+  - inno_hdmi_phy_power_on(): Inno HDMI PHY Power On
+    - inno_hdmi_phy_rk3328_clk_set_rate(): rate 594000000 tmdsclk 594000000
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+Reviewed-by: Heiko Stuebner <heiko@sntech.de>
+Tested-by: Heiko Stuebner <heiko@sntech.de> #rk3328
+---
+ drivers/phy/rockchip/phy-rockchip-inno-hdmi.c | 62 ++++++++++++++++++-
+ 1 file changed, 61 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c b/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c
+index 1483907413fa..1c43ea700f0e 100644
+--- a/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c
++++ b/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c
+@@ -245,6 +245,7 @@ struct inno_hdmi_phy {
+ 	struct clk *phyclk;
+ 	unsigned long pixclock;
+ 	unsigned long tmdsclock;
++	unsigned long opts_tmds_char_rate;
+ };
+ 
+ struct pre_pll_config {
+@@ -554,7 +555,12 @@ static inline void inno_update_bits(struct inno_hdmi_phy *inno, u8 reg,
+ static unsigned long inno_hdmi_phy_get_tmdsclk(struct inno_hdmi_phy *inno,
+ 					       unsigned long rate)
+ {
+-	int bus_width = phy_get_bus_width(inno->phy);
++	int bus_width;
++
++	if (inno->opts_tmds_char_rate)
++		return inno->opts_tmds_char_rate;
++
++	bus_width = phy_get_bus_width(inno->phy);
+ 
+ 	switch (bus_width) {
+ 	case 4:
+@@ -602,6 +608,57 @@ static irqreturn_t inno_hdmi_phy_rk3328_irq(int irq, void *dev_id)
+ 	return IRQ_HANDLED;
+ }
+ 
++/*
++ * phy_validate() is expected to be called from encoder atomic_check(), before
++ * the hdmiphy pixel clock is known. Without knowing the actual pixel clock, we
++ * cannot do full validation of the configuration. Instead, we do a simple check
++ * that the pre-pll table contains an entry for the requested TMDS char rate.
++ */
++static int inno_hdmi_phy_validate(struct phy *phy, enum phy_mode mode,
++				  int submode, union phy_configure_opts *opts)
++{
++	const struct pre_pll_config *cfg = pre_pll_cfg_table;
++	unsigned long tmdsclock;
++
++	if (!(mode == PHY_MODE_HDMI && submode == PHY_HDMI_MODE_TMDS))
++		return -EINVAL;
++
++	if (!opts)
++		return -EINVAL;
++
++	if (!opts->hdmi.tmds_char_rate || opts->hdmi.tmds_char_rate > 594000000)
++		return -EINVAL;
++
++	tmdsclock = opts->hdmi.tmds_char_rate;
++	for (; cfg->pixclock != 0; cfg++)
++		if (cfg->tmdsclock == tmdsclock)
++			return 0;
++
++	return -EINVAL;
++}
++
++/*
++ * phy_configure() is expected to be called from encoder atomic_set_mode(),
++ * before the hdmiphy pixel clock is known. Store the requested TMDS character
++ * rate, so that it can be used later in power_on() and/or set_rate() when the
++ * pixel clock is known.
++ */
++static int inno_hdmi_phy_configure(struct phy *phy,
++				   union phy_configure_opts *opts)
++{
++	struct inno_hdmi_phy *inno = phy_get_drvdata(phy);
++	int ret;
++
++	ret = inno_hdmi_phy_validate(phy, phy_get_mode(phy),
++				     PHY_HDMI_MODE_TMDS, opts);
++	if (ret)
++		return ret;
++
++	inno->opts_tmds_char_rate = opts->hdmi.tmds_char_rate;
++
++	return 0;
++}
++
+ static int inno_hdmi_phy_power_on(struct phy *phy)
+ {
+ 	struct inno_hdmi_phy *inno = phy_get_drvdata(phy);
+@@ -670,6 +727,8 @@ static const struct phy_ops inno_hdmi_phy_ops = {
+ 	.owner = THIS_MODULE,
+ 	.power_on = inno_hdmi_phy_power_on,
+ 	.power_off = inno_hdmi_phy_power_off,
++	.configure = inno_hdmi_phy_configure,
++	.validate = inno_hdmi_phy_validate,
+ };
+ 
+ static const
+@@ -1392,6 +1451,7 @@ static int inno_hdmi_phy_probe(struct platform_device *pdev)
+ 	}
+ 
+ 	phy_set_drvdata(inno->phy, inno);
++	phy_set_mode_ext(inno->phy, PHY_MODE_HDMI, PHY_HDMI_MODE_TMDS);
+ 	phy_set_bus_width(inno->phy, 8);
+ 
+ 	if (inno->plat_data->ops->init) {
+-- 
+2.43.0
+

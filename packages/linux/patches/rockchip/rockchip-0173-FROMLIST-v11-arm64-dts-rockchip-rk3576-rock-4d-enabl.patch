@@ -1,0 +1,62 @@
+From 7a455b5756115a967e1bb7b6333004fe836a8431 Mon Sep 17 00:00:00 2001
+From: Jiaxing Hu <gahing@gahingwoo.com>
+Date: Mon, 31 Aug 2026 20:19:56 +1200
+Subject: [PATCH 173/247] FROMLIST(v11): arm64: dts: rockchip: rk3576-rock-4d:
+ enable NPU
+
+Enable rknn_core_0 and its IOMMU on the Radxa ROCK 4D, and hand
+vdd_npu_s0 to the NPU power domain as its domain-supply, so the rail is
+switched by the domain that gates the block.
+
+Measured on a ROCK 4D with this in place. The rail's regulator debugfs
+reports open_count 1, so the domain is the consumer that took it. A
+sampler running beside an inference caught use_count at 1, and three
+reads at rest report use_count 0 with the rail disabled, so it follows
+the domain rather than staying on. Over the same run the genpd
+active_time of all four NPU domains rises by roughly 60ms per inference,
+and the inferences either side of that are 128 of 128 channels against
+the CPU reference.
+
+rknn_core_0 keeps npu-supply on the same rail, which the binding
+requires. Only rknn_core_0 is enabled: the driver binds one core per
+node and the second core is left to whoever can test it.
+
+Signed-off-by: Jiaxing Hu <gahing@gahingwoo.com>
+---
+ arch/arm64/boot/dts/rockchip/rk3576-rock-4d.dts | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3576-rock-4d.dts b/arch/arm64/boot/dts/rockchip/rk3576-rock-4d.dts
+index 81dc5d497896..7a09b40f4e47 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3576-rock-4d.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3576-rock-4d.dts
+@@ -724,6 +724,10 @@ &pcie0 {
+ 	status = "okay";
+ };
+ 
++&pd_npu {
++	domain-supply = <&vdd_npu_s0>;
++};
++
+ &pinctrl {
+ 	hdmi {
+ 		hdmi_tx_on_h: hdmi-tx-on-h {
+@@ -781,6 +785,15 @@ wifi_en_h: wifi-en-h {
+ 	};
+ };
+ 
++&rknn_core_0 {
++	npu-supply = <&vdd_npu_s0>;
++	status = "okay";
++};
++
++&rknn_mmu_0 {
++	status = "okay";
++};
++
+ &sai6 {
+ 	status = "okay";
+ };
+-- 
+2.43.0
+

@@ -1,0 +1,54 @@
+From 074609519bde4b89d81429a10123f431ff537bfe Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 2 Jun 2026 01:44:01 +0300
+Subject: [PATCH 095/247] FROMLIST(v7): drm/fb-helper: Remove unused local
+ variable in hotplug_event()
+
+Remove the 'err' local variable in drm_fb_helper_hotplug_event() which
+only stores a return value that is never used beyond the immediate
+return statement.  This simplifies the code without behavior changes.
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Acked-by: Maxime Ripard <mripard@kernel.org>
+Reviewed-by: Thomas Zimmermann <tzimmermann@suse.de>
+---
+ drivers/gpu/drm/drm_fb_helper.c | 11 +++--------
+ 1 file changed, 3 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/gpu/drm/drm_fb_helper.c b/drivers/gpu/drm/drm_fb_helper.c
+index 80ca785bdb26..d4664ed468b2 100644
+--- a/drivers/gpu/drm/drm_fb_helper.c
++++ b/drivers/gpu/drm/drm_fb_helper.c
+@@ -1834,21 +1834,17 @@ EXPORT_SYMBOL(drm_fb_helper_initial_config);
+  */
+ int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
+ {
+-	int err = 0;
+-
+ 	if (!drm_fbdev_emulation || !fb_helper)
+ 		return 0;
+ 
+ 	mutex_lock(&fb_helper->lock);
+-	if (fb_helper->deferred_setup) {
+-		err = __drm_fb_helper_initial_config_and_unlock(fb_helper);
+-		return err;
+-	}
++	if (fb_helper->deferred_setup)
++		return __drm_fb_helper_initial_config_and_unlock(fb_helper);
+ 
+ 	if (!fb_helper->fb || !drm_master_internal_acquire(fb_helper->dev)) {
+ 		fb_helper->delayed_hotplug = true;
+ 		mutex_unlock(&fb_helper->lock);
+-		return err;
++		return 0;
+ 	}
+ 
+ 	drm_master_internal_release(fb_helper->dev);
+@@ -1892,4 +1888,3 @@ bool drm_fb_helper_gem_is_fb(const struct drm_fb_helper *fb_helper,
+ 	return gem == obj;
+ }
+ EXPORT_SYMBOL_GPL(drm_fb_helper_gem_is_fb);
+-
+-- 
+2.43.0
+

@@ -1,0 +1,115 @@
+From b1396af99aac3880ce21076aaba72540ad68d37b Mon Sep 17 00:00:00 2001
+From: Jiaxing Hu <gahing@gahingwoo.com>
+Date: Mon, 31 Aug 2026 20:19:48 +1200
+Subject: [PATCH 165/247] FROMLIST(v11): dt-bindings: npu: rockchip: add
+ rockchip,rk3576-rknn-core
+
+The RK3576 NPU has two cores of the same RKNN block the RK3588 binding
+already describes, but it wires them up differently: two extra CBUF
+clocks, two power domains per core, and a single reset instead of two.
+It also has no NPU SRAM supply.
+
+Widen the property ranges to cover both, then pin each SoC back to its
+own shape in allOf so nothing loosens for RK3588, and keep sram-supply
+required for rockchip,rk3588-rknn-core only.
+
+Signed-off-by: Jiaxing Hu <gahing@gahingwoo.com>
+Reviewed-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+---
+ .../npu/rockchip,rk3588-rknn-core.yaml        | 47 +++++++++++++++++--
+ 1 file changed, 44 insertions(+), 3 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/npu/rockchip,rk3588-rknn-core.yaml b/Documentation/devicetree/bindings/npu/rockchip,rk3588-rknn-core.yaml
+index caca2a4903cd..3b611b64c8aa 100644
+--- a/Documentation/devicetree/bindings/npu/rockchip,rk3588-rknn-core.yaml
++++ b/Documentation/devicetree/bindings/npu/rockchip,rk3588-rknn-core.yaml
+@@ -21,6 +21,7 @@ properties:
+ 
+   compatible:
+     enum:
++      - rockchip,rk3576-rknn-core
+       - rockchip,rk3588-rknn-core
+ 
+   reg:
+@@ -33,14 +34,18 @@ properties:
+       - const: core # Main NPU core processing unit registers
+ 
+   clocks:
+-    maxItems: 4
++    minItems: 4
++    maxItems: 6
+ 
+   clock-names:
++    minItems: 4
+     items:
+       - const: aclk
+       - const: hclk
+       - const: npu
+       - const: pclk
++      - const: aclk_cbuf
++      - const: hclk_cbuf
+ 
+   interrupts:
+     maxItems: 1
+@@ -51,12 +56,15 @@ properties:
+   npu-supply: true
+ 
+   power-domains:
+-    maxItems: 1
++    minItems: 1
++    maxItems: 2
+ 
+   resets:
++    minItems: 1
+     maxItems: 2
+ 
+   reset-names:
++    minItems: 1
+     items:
+       - const: srst_a
+       - const: srst_h
+@@ -75,7 +83,40 @@ required:
+   - resets
+   - reset-names
+   - npu-supply
+-  - sram-supply
++
++allOf:
++  - if:
++      properties:
++        compatible:
++          contains:
++            const: rockchip,rk3588-rknn-core
++    then:
++      properties:
++        clocks:
++          maxItems: 4
++        clock-names:
++          maxItems: 4
++        power-domains:
++          maxItems: 1
++        resets:
++          minItems: 2
++        reset-names:
++          minItems: 2
++      required:
++        - sram-supply
++    else:
++      properties:
++        clocks:
++          minItems: 6
++        clock-names:
++          minItems: 6
++        power-domains:
++          minItems: 2
++        resets:
++          maxItems: 1
++        reset-names:
++          maxItems: 1
++        sram-supply: false
+ 
+ additionalProperties: false
+ 
+-- 
+2.43.0
+

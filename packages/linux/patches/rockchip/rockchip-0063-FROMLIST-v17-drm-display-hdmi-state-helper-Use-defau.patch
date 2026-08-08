@@ -1,0 +1,47 @@
+From 79093899c10ca03cb8e43eb493c91ad14ce0f712 Mon Sep 17 00:00:00 2001
+From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+Date: Tue, 9 Jun 2026 14:43:49 +0200
+Subject: [PATCH 063/247] FROMLIST(v17): drm/display: hdmi-state-helper: Use
+ default case for unsupported formats
+
+Switch statements that do not handle all possible values of an
+enumeration will generate a warning during compilation. In preparation
+for adding a COUNT value to the end of the enum, this needs to be dealt
+with.
+
+Add a default case to sink_supports_format_bpc's DRM_OUTPUT_COLOR_FORMAT
+switch statement, and move the log-and-return unknown pixel format
+handling into it.
+
+No functional change.
+
+Reviewed-by: Maxime Ripard <mripard@kernel.org>
+Reviewed-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+Signed-off-by: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+---
+ drivers/gpu/drm/display/drm_hdmi_state_helper.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/display/drm_hdmi_state_helper.c b/drivers/gpu/drm/display/drm_hdmi_state_helper.c
+index cae0d85fb440..d81cb1ef95a0 100644
+--- a/drivers/gpu/drm/display/drm_hdmi_state_helper.c
++++ b/drivers/gpu/drm/display/drm_hdmi_state_helper.c
+@@ -541,10 +541,11 @@ sink_supports_format_bpc(const struct drm_connector *connector,
+ 		drm_dbg_kms(dev, "YUV444 format supported in that configuration.\n");
+ 
+ 		return true;
+-	}
+ 
+-	drm_dbg_kms(dev, "Unsupported pixel format.\n");
+-	return false;
++	default:
++		drm_dbg_kms(dev, "Unsupported pixel format.\n");
++		return false;
++	}
+ }
+ 
+ static enum drm_mode_status
+-- 
+2.43.0
+

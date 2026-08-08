@@ -1,0 +1,137 @@
+From 3216a50a48a6299f4cba3063ca8ad95c2a1fe26d Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 2 Jun 2026 01:44:05 +0300
+Subject: [PATCH 099/247] FROMLIST(v7): drm/display: hdmi_state_helper: Add
+ ctx-aware hotplug helper for SCDC sync
+
+Introduce drm_atomic_helper_connector_hdmi_hotplug_ctx(), a variant of
+drm_atomic_helper_connector_hdmi_hotplug() that accepts a
+drm_modeset_acquire_ctx.
+
+This enables SCDC status synchronization on hotplug events, which
+requires lock acquisition context for performing the CRTC reset
+triggered by drm_scdc_sync_status().
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ .../gpu/drm/display/drm_hdmi_state_helper.c   | 40 +++++++++++++++----
+ include/drm/display/drm_hdmi_state_helper.h   |  4 ++
+ 2 files changed, 37 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/display/drm_hdmi_state_helper.c b/drivers/gpu/drm/display/drm_hdmi_state_helper.c
+index 8a88e52c6a50..e91076081acd 100644
+--- a/drivers/gpu/drm/display/drm_hdmi_state_helper.c
++++ b/drivers/gpu/drm/display/drm_hdmi_state_helper.c
+@@ -12,6 +12,7 @@
+ #include <drm/display/drm_hdmi_cec_helper.h>
+ #include <drm/display/drm_hdmi_helper.h>
+ #include <drm/display/drm_hdmi_state_helper.h>
++#include <drm/display/drm_scdc_helper.h>
+ 
+ /**
+  * DOC: hdmi helpers
+@@ -1195,18 +1196,20 @@ drm_atomic_helper_connector_hdmi_clear_audio_infoframe(struct drm_connector *con
+ }
+ EXPORT_SYMBOL(drm_atomic_helper_connector_hdmi_clear_audio_infoframe);
+ 
+-static void
++static int
+ drm_atomic_helper_connector_hdmi_update(struct drm_connector *connector,
+-					enum drm_connector_status status)
++					enum drm_connector_status status,
++					struct drm_modeset_acquire_ctx *ctx)
+ {
+ 	const struct drm_edid *drm_edid;
++	int ret = 0;
+ 
+ 	if (status == connector_status_disconnected) {
+-		// TODO: also handle scramber, HDMI sink disconnected.
++		ret = drm_scdc_sync_status(connector, false, ctx);
+ 		drm_connector_hdmi_audio_plugged_notify(connector, false);
+ 		drm_edid_connector_update(connector, NULL);
+ 		drm_connector_cec_phys_addr_invalidate(connector);
+-		return;
++		return ret;
+ 	}
+ 
+ 	if (connector->hdmi.funcs->read_edid)
+@@ -1219,10 +1222,12 @@ drm_atomic_helper_connector_hdmi_update(struct drm_connector *connector,
+ 	drm_edid_free(drm_edid);
+ 
+ 	if (status == connector_status_connected) {
+-		// TODO: also handle scramber, HDMI sink is now connected.
++		ret = drm_scdc_sync_status(connector, true, ctx);
+ 		drm_connector_hdmi_audio_plugged_notify(connector, true);
+ 		drm_connector_cec_phys_addr_set(connector);
+ 	}
++
++	return ret;
+ }
+ 
+ /**
+@@ -1236,10 +1241,31 @@ drm_atomic_helper_connector_hdmi_update(struct drm_connector *connector,
+ void drm_atomic_helper_connector_hdmi_hotplug(struct drm_connector *connector,
+ 					      enum drm_connector_status status)
+ {
+-	drm_atomic_helper_connector_hdmi_update(connector, status);
++	drm_atomic_helper_connector_hdmi_update(connector, status, NULL);
+ }
+ EXPORT_SYMBOL(drm_atomic_helper_connector_hdmi_hotplug);
+ 
++/**
++ * drm_atomic_helper_connector_hdmi_hotplug_ctx - Handle the hotplug event for the HDMI connector
++ * @connector: A pointer to the HDMI connector
++ * @status: Connection status
++ * @ctx: Lock acquisition context to be used for resetting CRTC
++ *
++ * This function should be called as a part of the .detect() / .detect_ctx()
++ * callbacks for all status changes.
++ *
++ * Returns:
++ * Zero on success, error code on failure.
++ * If @ctx is set, it might also return -EDEADLK.
++ */
++int drm_atomic_helper_connector_hdmi_hotplug_ctx(struct drm_connector *connector,
++						 enum drm_connector_status status,
++						 struct drm_modeset_acquire_ctx *ctx)
++{
++	return drm_atomic_helper_connector_hdmi_update(connector, status, ctx);
++}
++EXPORT_SYMBOL(drm_atomic_helper_connector_hdmi_hotplug_ctx);
++
+ /**
+  * drm_atomic_helper_connector_hdmi_force - HDMI Connector implementation of the force callback
+  * @connector: A pointer to the HDMI connector
+@@ -1251,6 +1277,6 @@ EXPORT_SYMBOL(drm_atomic_helper_connector_hdmi_hotplug);
+  */
+ void drm_atomic_helper_connector_hdmi_force(struct drm_connector *connector)
+ {
+-	drm_atomic_helper_connector_hdmi_update(connector, connector->status);
++	drm_atomic_helper_connector_hdmi_update(connector, connector->status, NULL);
+ }
+ EXPORT_SYMBOL(drm_atomic_helper_connector_hdmi_force);
+diff --git a/include/drm/display/drm_hdmi_state_helper.h b/include/drm/display/drm_hdmi_state_helper.h
+index 0adc30c55ec9..a572fe2bf9aa 100644
+--- a/include/drm/display/drm_hdmi_state_helper.h
++++ b/include/drm/display/drm_hdmi_state_helper.h
+@@ -7,6 +7,7 @@ struct drm_atomic_commit;
+ struct drm_connector;
+ struct drm_connector_state;
+ struct drm_display_mode;
++struct drm_modeset_acquire_ctx;
+ struct hdmi_audio_infoframe;
+ 
+ enum drm_connector_status;
+@@ -24,6 +25,9 @@ int drm_atomic_helper_connector_hdmi_update_infoframes(struct drm_connector *con
+ 						       struct drm_atomic_commit *state);
+ void drm_atomic_helper_connector_hdmi_hotplug(struct drm_connector *connector,
+ 					      enum drm_connector_status status);
++int drm_atomic_helper_connector_hdmi_hotplug_ctx(struct drm_connector *connector,
++						 enum drm_connector_status status,
++						 struct drm_modeset_acquire_ctx *ctx);
+ void drm_atomic_helper_connector_hdmi_force(struct drm_connector *connector);
+ 
+ enum drm_mode_status
+-- 
+2.43.0
+

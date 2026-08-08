@@ -1,0 +1,70 @@
+From 0ef2152607d007bd1ac9579750a5b285d6724251 Mon Sep 17 00:00:00 2001
+From: Jiaxing Hu <gahing@gahingwoo.com>
+Date: Mon, 31 Aug 2026 20:19:46 +1200
+Subject: [PATCH 163/247] FROMLIST(v11): accel/rocket: let the core suspend
+ after a reset
+
+rocket_reset() drops the in-flight job's runtime PM reference with
+pm_runtime_put_noidle(), a bare decrement that requests nothing. The core
+is left at usage_count 0 but still runtime-active with no idle request
+pending, so it does not suspend until something else asks, and on a
+platform whose power domain does work on power-on that work never happens.
+
+On RK3576 that work is a bus interface reset the domain cycles when it
+comes up. Without it the NPU's IOMMU stops answering, and the job after a
+timeout returns a surface of the output zero point with rk_iommu reporting
+that MMU_DTE_ADDR is not functioning.
+
+Measured on a ROCK 4D in one boot, three runs, one variable between them.
+With the bare put the core reads runtime-active with its rail still up
+after the reset, the IOMMU reports the failure on the next attach and the
+inference returns 0 of 128 channels. With the reference put back through
+pm_runtime_put_autosuspend() the core reads suspended with the rail down,
+there is no IOMMU message, and the same inference returns 128 of 128. A
+third run repeating the first failed the same way.
+
+It also matches the put in the completion path a few lines away, so the
+reset path no longer leaves the device in a state the rest of the driver
+never produces. The remaining put, on the error path in rocket_job_run(),
+is a plain pm_runtime_put() and is left alone here: it unwinds a
+get_sync() that never reached the hardware, and changing it belongs in
+its own patch.
+
+Igor Paunovic ran the differential on RK3588: 45 induced resets across
+three cores, with and without the two preceding patches, and the domain
+dropped every single time with no MMU message on either kernel. So this
+is not rocket-wide. His conditions cross a healthy block with a lowered
+timeout rather than a hung one, which he was careful to say his protocol
+cannot settle, but it is what scopes the change to RK3576.
+
+Link: https://lore.kernel.org/all/20260819073530.6087-1-royalnet026@gmail.com/
+Fixes: 0810d5ad88a1 ("accel/rocket: Add job submission IOCTL")
+Signed-off-by: Jiaxing Hu <gahing@gahingwoo.com>
+Tested-by: Igor Paunovic <royalnet026@gmail.com> # RK3588, three cores, induced reset, JOB_TIMEOUT_MS=2
+---
+ drivers/accel/rocket/rocket_job.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/accel/rocket/rocket_job.c b/drivers/accel/rocket/rocket_job.c
+index e13c487275de..049e7e169413 100644
+--- a/drivers/accel/rocket/rocket_job.c
++++ b/drivers/accel/rocket/rocket_job.c
+@@ -391,12 +391,12 @@ rocket_reset(struct rocket_core *core, struct drm_sched_job *bad)
+ 
+ 	/*
+ 	 * No handler is running now, but we might still have stuck jobs. Let's
+-	 * make sure the PM counters stay balanced by manually calling
+-	 * pm_runtime_put_noidle().
++	 * make sure the PM counters stay balanced by putting the reference the
++	 * job took, and request idle while doing it so the core can suspend.
+ 	 */
+ 	scoped_guard(mutex, &core->job_lock) {
+ 		if (core->in_flight_job)
+-			pm_runtime_put_noidle(core->dev);
++			pm_runtime_put_autosuspend(core->dev);
+ 
+ 		iommu_detach_group(NULL, core->iommu_group);
+ 
+-- 
+2.43.0
+

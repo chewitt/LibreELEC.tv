@@ -1,0 +1,41 @@
+From fce6138397bb7fe79cf4360221c9e6a2a9b78c6d Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Thu, 9 Jul 2026 00:57:36 +0300
+Subject: [PATCH 094/247] FROMLIST(v3): arm64: dts: rockchip: Add RK3588 VOP2
+ resets
+
+Add the missing reset properties to VOP2 on RK3588.
+
+Co-developed-by: Andy Yan <andy.yan@rock-chips.com>
+Signed-off-by: Andy Yan <andy.yan@rock-chips.com>
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ arch/arm64/boot/dts/rockchip/rk3588-base.dtsi | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi b/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi
+index fba334b71283..1638dec1d7f5 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi
+@@ -1656,6 +1656,18 @@ vop: vop@fdd90000 {
+ 			      "pll_hdmiphy0";
+ 		iommus = <&vop_mmu>;
+ 		power-domains = <&power RK3588_PD_VOP>;
++		resets = <&cru SRST_A_VOP>,
++			 <&cru SRST_H_VOP>,
++			 <&cru SRST_D_VOP0>,
++			 <&cru SRST_D_VOP1>,
++			 <&cru SRST_D_VOP2>,
++			 <&cru SRST_D_VOP3>;
++		reset-names = "axi",
++			      "ahb",
++			      "dclk_vp0",
++			      "dclk_vp1",
++			      "dclk_vp2",
++			      "dclk_vp3";
+ 		rockchip,grf = <&sys_grf>;
+ 		rockchip,vop-grf = <&vop_grf>;
+ 		rockchip,vo1-grf = <&vo1_grf>;
+-- 
+2.43.0
+

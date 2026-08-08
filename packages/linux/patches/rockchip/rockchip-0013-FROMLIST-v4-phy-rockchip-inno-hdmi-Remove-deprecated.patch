@@ -1,0 +1,67 @@
+From 5de3613faceeba33dabe3503999d85e220eab571 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Mon, 18 May 2026 18:07:21 +0000
+Subject: [PATCH 013/247] FROMLIST(v4): phy: rockchip: inno-hdmi: Remove
+ deprecated way to configure TMDS rate
+
+The TMDS character rate of this PHY is configured using PHY bus width
+in downstream vendor kernel and out-of-tree patches, however no in-tree
+consumer of this PHY has ever called phy_set_bus_width() to change the
+TMDS character rate as currently only 8-bit RGB output is supported by
+the HDMI display driver.
+
+The series "Split Generic PHY consumer and provider" clarifies that
+phy_set_bus_width() is intended as a provider-only function.
+
+Remove the deprecated unused fallback way to configure TMDS character
+rate now that this HDMI PHY support using phy_configure() to configure
+the TMDS character rate.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+Reviewed-by: Heiko Stuebner <heiko@sntech.de>
+Tested-by: Heiko Stuebner <heiko@sntech.de> #rk3328
+---
+ drivers/phy/rockchip/phy-rockchip-inno-hdmi.c | 17 +----------------
+ 1 file changed, 1 insertion(+), 16 deletions(-)
+
+diff --git a/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c b/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c
+index 1c43ea700f0e..c3d257a0f4a6 100644
+--- a/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c
++++ b/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c
+@@ -555,24 +555,10 @@ static inline void inno_update_bits(struct inno_hdmi_phy *inno, u8 reg,
+ static unsigned long inno_hdmi_phy_get_tmdsclk(struct inno_hdmi_phy *inno,
+ 					       unsigned long rate)
+ {
+-	int bus_width;
+-
+ 	if (inno->opts_tmds_char_rate)
+ 		return inno->opts_tmds_char_rate;
+ 
+-	bus_width = phy_get_bus_width(inno->phy);
+-
+-	switch (bus_width) {
+-	case 4:
+-	case 5:
+-	case 6:
+-	case 10:
+-	case 12:
+-	case 16:
+-		return (u64)rate * bus_width / 8;
+-	default:
+-		return rate;
+-	}
++	return rate;
+ }
+ 
+ static irqreturn_t inno_hdmi_phy_rk3328_hardirq(int irq, void *dev_id)
+@@ -1452,7 +1438,6 @@ static int inno_hdmi_phy_probe(struct platform_device *pdev)
+ 
+ 	phy_set_drvdata(inno->phy, inno);
+ 	phy_set_mode_ext(inno->phy, PHY_MODE_HDMI, PHY_HDMI_MODE_TMDS);
+-	phy_set_bus_width(inno->phy, 8);
+ 
+ 	if (inno->plat_data->ops->init) {
+ 		ret = inno->plat_data->ops->init(inno);
+-- 
+2.43.0
+

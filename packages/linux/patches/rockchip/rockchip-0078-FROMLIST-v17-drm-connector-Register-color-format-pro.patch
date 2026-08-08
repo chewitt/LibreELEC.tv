@@ -1,0 +1,38 @@
+From 5ef93753aeec31f249d16414218898ff4d366803 Mon Sep 17 00:00:00 2001
+From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+Date: Tue, 9 Jun 2026 14:44:05 +0200
+Subject: [PATCH 078/247] FROMLIST(v17): drm/connector: Register color format
+ property on HDMI connectors
+
+The drmm_connector_hdmi_init function can figure out what DRM color
+formats are supported by a particular connector based on the supported
+HDMI format bitmask that's passed in.
+
+Use it to register the drm color format property.
+
+Reviewed-by: Maxime Ripard <mripard@kernel.org>
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+Signed-off-by: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+---
+ drivers/gpu/drm/drm_connector.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/gpu/drm/drm_connector.c b/drivers/gpu/drm/drm_connector.c
+index cf1544279d45..22a5675f11bb 100644
+--- a/drivers/gpu/drm/drm_connector.c
++++ b/drivers/gpu/drm/drm_connector.c
+@@ -627,6 +627,10 @@ int drmm_connector_hdmi_init(struct drm_device *dev,
+ 	if (max_bpc > 8)
+ 		drm_connector_attach_hdr_output_metadata_property(connector);
+ 
++	ret = drm_connector_attach_color_format_property(connector, supported_formats);
++	if (ret)
++		return ret;
++
+ 	connector->hdmi.funcs = hdmi_funcs;
+ 
+ 	return 0;
+-- 
+2.43.0
+

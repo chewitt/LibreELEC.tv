@@ -1,0 +1,77 @@
+From 45ff5035c3a1f8683983c48c13a0befcbb670849 Mon Sep 17 00:00:00 2001
+From: Jiaxing Hu <gahing@gahingwoo.com>
+Date: Mon, 31 Aug 2026 08:19:00 +0000
+Subject: [PATCH 164/247] FROMLIST(v11): accel/rocket: factor the completion
+ tail out of the IRQ handler
+
+rocket_job_handle_irq() stops the block and then either starts the job's
+next task or retires the job. The second half is a step of its own and
+reads better with a name, now that taking the register writes under
+job_lock has moved it a level deeper inside the scoped guard.
+
+Move it to rocket_job_next_locked(). The early return that used to leave
+the handler now leaves the helper, which is the same thing here: the
+scoped guard drops job_lock either way and nothing follows it.
+
+Doing it as its own patch keeps the locking fix at the head of the
+series minimal, so a bisect that stops before this one gets that fix and
+nothing else. There is one caller, and no functional change.
+
+Signed-off-by: Jiaxing Hu <gahing@gahingwoo.com>
+Reviewed-by: Igor Paunovic <royalnet026@gmail.com>
+---
+ drivers/accel/rocket/rocket_job.c | 31 ++++++++++++++++++++-----------
+ 1 file changed, 20 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/accel/rocket/rocket_job.c b/drivers/accel/rocket/rocket_job.c
+index 049e7e169413..7bcbd2bcd24f 100644
+--- a/drivers/accel/rocket/rocket_job.c
++++ b/drivers/accel/rocket/rocket_job.c
+@@ -326,6 +326,25 @@ static struct dma_fence *rocket_job_run(struct drm_sched_job *sched_job)
+ 	return fence;
+ }
+ 
++/* Start the job's next task, or retire it. Caller holds job_lock. */
++static void rocket_job_next_locked(struct rocket_core *core)
++{
++	lockdep_assert_held(&core->job_lock);
++
++	if (!core->in_flight_job)
++		return;
++
++	if (core->in_flight_job->next_task_idx < core->in_flight_job->task_count) {
++		rocket_job_hw_submit(core, core->in_flight_job);
++		return;
++	}
++
++	iommu_detach_group(NULL, iommu_group_get(core->dev));
++	dma_fence_signal(core->in_flight_job->done_fence);
++	pm_runtime_put_autosuspend(core->dev);
++	core->in_flight_job = NULL;
++}
++
+ static void rocket_job_handle_irq(struct rocket_core *core)
+ {
+ 	pm_runtime_mark_last_busy(core->dev);
+@@ -339,17 +358,7 @@ static void rocket_job_handle_irq(struct rocket_core *core)
+ 		rocket_pc_writel(core, OPERATION_ENABLE, 0x0);
+ 		rocket_pc_writel(core, INTERRUPT_CLEAR, 0x1ffff);
+ 
+-		if (core->in_flight_job) {
+-			if (core->in_flight_job->next_task_idx < core->in_flight_job->task_count) {
+-				rocket_job_hw_submit(core, core->in_flight_job);
+-				return;
+-			}
+-
+-			iommu_detach_group(NULL, iommu_group_get(core->dev));
+-			dma_fence_signal(core->in_flight_job->done_fence);
+-			pm_runtime_put_autosuspend(core->dev);
+-			core->in_flight_job = NULL;
+-		}
++		rocket_job_next_locked(core);
+ 	}
+ }
+ 
+-- 
+2.43.0
+

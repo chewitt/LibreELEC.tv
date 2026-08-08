@@ -1,0 +1,45 @@
+From c3c60bf8329e65feb6ec3f44b1ab61a38de995b2 Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Mon, 1 Jun 2026 21:00:03 +0300
+Subject: [PATCH 014/247] FROMLIST(v2): drm/rockchip: vop2: Rename CSC_BT2020
+ to CSC_BT2020L
+
+Rename CSC_BT2020 to CSC_BT2020L for consistency with the other
+limited-range enum members (CSC_BT601L, CSC_BT709L) and to distinguish
+it from a potential future full-range BT.2020 variant.
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ drivers/gpu/drm/rockchip/rockchip_drm_vop2.c | 2 +-
+ drivers/gpu/drm/rockchip/rockchip_drm_vop2.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
+index a160077a507f..64ac07cb1b0d 100644
+--- a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
++++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
+@@ -658,7 +658,7 @@ static int vop2_convert_csc_mode(int csc_mode)
+ 	case V4L2_COLORSPACE_JPEG:
+ 		return CSC_BT601F;
+ 	case V4L2_COLORSPACE_BT2020:
+-		return CSC_BT2020;
++		return CSC_BT2020L;
+ 	default:
+ 		return CSC_BT709L;
+ 	}
+diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.h b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.h
+index 37722652844a..ffcb39c130aa 100644
+--- a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.h
++++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.h
+@@ -373,7 +373,7 @@ enum vop_csc_format {
+ 	CSC_BT601L,
+ 	CSC_BT709L,
+ 	CSC_BT601F,
+-	CSC_BT2020,
++	CSC_BT2020L,
+ };
+ 
+ enum src_factor_mode {
+-- 
+2.43.0
+

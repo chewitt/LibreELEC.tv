@@ -1,0 +1,46 @@
+From c534fce27f11748396ebda468b5044459baa3fa4 Mon Sep 17 00:00:00 2001
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 2 Jun 2026 01:44:19 +0300
+Subject: [PATCH 113/247] FROMLIST(v7): drm/rockchip: dw_hdmi_qp: Defer HPD IRQ
+ enable until after connector setup
+
+Request the HPD IRQ early in bind() with IRQF_NO_AUTOEN, keeping it
+disabled until all DRM resources are fully initialized, at which point
+enable_irq() arms it.  This prevents premature interrupt delivery
+without forcing devm_request_threaded_irq() to the very end of the
+initialization sequence, which would complicate error unwinding.
+
+Note that IRQF_NO_AUTOEN is incompatible with IRQF_SHARED; the latter is
+dropped as this IRQ has no other users.
+
+Suggested-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c b/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c
+index d6c587315bd2..b6593f007ba2 100644
+--- a/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c
++++ b/drivers/gpu/drm/rockchip/dw_hdmi_qp-rockchip.c
+@@ -681,7 +681,7 @@ static int dw_hdmi_qp_rockchip_bind(struct device *dev, struct device *master,
+ 	ret = devm_request_threaded_irq(dev, irq,
+ 					cfg->ctrl_ops->hardirq_callback,
+ 					cfg->ctrl_ops->irq_callback,
+-					IRQF_SHARED, "dw-hdmi-qp-hpd",
++					IRQF_NO_AUTOEN, "dw-hdmi-qp-hpd",
+ 					hdmi);
+ 	if (ret)
+ 		return ret;
+@@ -703,6 +703,8 @@ static int dw_hdmi_qp_rockchip_bind(struct device *dev, struct device *master,
+ 		return dev_err_probe(dev, PTR_ERR(connector),
+ 				     "Failed to init bridge connector\n");
+ 
++	enable_irq(irq);
++
+ 	return 0;
+ }
+ 
+-- 
+2.43.0
+

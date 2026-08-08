@@ -1,0 +1,147 @@
+From 28547c7255400ca71f2343ede514710782e9f1af Mon Sep 17 00:00:00 2001
+From: Jiaxing Hu <gahing@gahingwoo.com>
+Date: Mon, 31 Aug 2026 20:19:55 +1200
+Subject: [PATCH 172/247] FROMLIST(v11): arm64: dts: rockchip: rk3576: add NPU
+ (RKNN) nodes
+
+Add the two RKNN cores and their IOMMUs. Both cores are disabled by
+default; boards enable what they wire up.
+
+PD_NPU0 and PD_NPU1 are siblings under PD_NPUTOP and hold one core each,
+but the convolution buffer and the DSU sit above them: ACLK_RKNN_CBUF,
+HCLK_RKNN_CBUF and CLK_RKNN_DSU0 belong to the block rather than to
+either core, and PD_NPUTOP already lists all three. Add them to both
+core domains as well, so a core domain switching state has the clocks of
+the path it shares running, and give each core domain the BIU reset that
+the pmdomain driver now cycles once power is on.
+
+Each core lists both core domains, its own first, so that a core in use
+has the whole block powered. Whether a single core can reach the shared
+path with the sibling domain off is not something this series
+establishes; listing both is the description that has been tested here.
+The IOMMU in front of each core lists that core's domain only.
+
+Label the outer PD_NPU node so a board can attach the NPU rail to the
+domain that gates the block.
+
+Signed-off-by: Jiaxing Hu <gahing@gahingwoo.com>
+---
+ arch/arm64/boot/dts/rockchip/rk3576.dtsi | 82 +++++++++++++++++++++++-
+ 1 file changed, 79 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3576.dtsi b/arch/arm64/boot/dts/rockchip/rk3576.dtsi
+index 20dacb1438f7..36c69eb7b56e 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3576.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3576.dtsi
+@@ -1042,7 +1042,7 @@ power: power-controller {
+ 				#address-cells = <1>;
+ 				#size-cells = <0>;
+ 
+-				power-domain@RK3576_PD_NPU {
++				pd_npu: power-domain@RK3576_PD_NPU {
+ 					reg = <RK3576_PD_NPU>;
+ 					#power-domain-cells = <1>;
+ 					#address-cells = <1>;
+@@ -1070,14 +1070,22 @@ power-domain@RK3576_PD_NPUTOP {
+ 						power-domain@RK3576_PD_NPU0 {
+ 							reg = <RK3576_PD_NPU0>;
+ 							clocks = <&cru HCLK_RKNN_ROOT>,
+-								 <&cru ACLK_RKNN0>;
++								 <&cru ACLK_RKNN0>,
++								 <&cru CLK_RKNN_DSU0>,
++								 <&cru ACLK_RKNN_CBUF>,
++								 <&cru HCLK_RKNN_CBUF>;
++							resets = <&cru SRST_A_RKNN0_BIU>;
+ 							pm_qos = <&qos_npu_m0>;
+ 							#power-domain-cells = <0>;
+ 						};
+ 						power-domain@RK3576_PD_NPU1 {
+ 							reg = <RK3576_PD_NPU1>;
+ 							clocks = <&cru HCLK_RKNN_ROOT>,
+-								 <&cru ACLK_RKNN1>;
++								 <&cru ACLK_RKNN1>,
++								 <&cru CLK_RKNN_DSU0>,
++								 <&cru ACLK_RKNN_CBUF>,
++								 <&cru HCLK_RKNN_CBUF>;
++							resets = <&cru SRST_A_RKNN1_BIU>;
+ 							pm_qos = <&qos_npu_m1>;
+ 							#power-domain-cells = <0>;
+ 						};
+@@ -1261,6 +1269,74 @@ power-domain@RK3576_PD_VO1 {
+ 			};
+ 		};
+ 
++		rknn_core_0: npu@27700000 {
++			compatible = "rockchip,rk3576-rknn-core";
++			reg = <0x0 0x27700000 0x0 0x1000>,
++			      <0x0 0x27701000 0x0 0x1000>,
++			      <0x0 0x27703000 0x0 0x1000>;
++			reg-names = "pc", "cna", "core";
++			interrupts = <GIC_SPI 247 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&cru ACLK_RKNN0>, <&cru HCLK_RKNN_ROOT>,
++				 <&cru CLK_RKNN_DSU0>, <&cru PCLK_NPUTOP_ROOT>,
++				 <&cru ACLK_RKNN_CBUF>, <&cru HCLK_RKNN_CBUF>;
++			clock-names = "aclk", "hclk", "npu", "pclk",
++				      "aclk_cbuf", "hclk_cbuf";
++			resets = <&cru SRST_A_RKNN0>;
++			reset-names = "srst_a";
++			power-domains = <&power RK3576_PD_NPU0>, <&power RK3576_PD_NPU1>;
++			iommus = <&rknn_mmu_0>;
++			status = "disabled";
++		};
++
++		rknn_mmu_0: iommu@27702000 {
++			compatible = "rockchip,rk3576-npu-iommu", "rockchip,rk3568-iommu";
++			reg = <0x0 0x27702000 0x0 0x100>,
++			      <0x0 0x27702100 0x0 0x100>;
++			interrupts = <GIC_SPI 247 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&cru ACLK_RKNN0>, <&cru HCLK_RKNN_ROOT>,
++				 <&cru CLK_RKNN_DSU0>, <&cru ACLK_RKNN_CBUF>,
++				 <&cru HCLK_RKNN_CBUF>;
++			clock-names = "aclk", "iface", "npu",
++				      "aclk_cbuf", "hclk_cbuf";
++			#iommu-cells = <0>;
++			power-domains = <&power RK3576_PD_NPU0>;
++			status = "disabled";
++		};
++
++		rknn_core_1: npu@27708000 {
++			compatible = "rockchip,rk3576-rknn-core";
++			reg = <0x0 0x27708000 0x0 0x1000>,
++			      <0x0 0x27709000 0x0 0x1000>,
++			      <0x0 0x2770b000 0x0 0x1000>;
++			reg-names = "pc", "cna", "core";
++			interrupts = <GIC_SPI 248 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&cru ACLK_RKNN1>, <&cru HCLK_RKNN_ROOT>,
++				 <&cru CLK_RKNN_DSU0>, <&cru PCLK_NPUTOP_ROOT>,
++				 <&cru ACLK_RKNN_CBUF>, <&cru HCLK_RKNN_CBUF>;
++			clock-names = "aclk", "hclk", "npu", "pclk",
++				      "aclk_cbuf", "hclk_cbuf";
++			resets = <&cru SRST_A_RKNN1>;
++			reset-names = "srst_a";
++			power-domains = <&power RK3576_PD_NPU1>, <&power RK3576_PD_NPU0>;
++			iommus = <&rknn_mmu_1>;
++			status = "disabled";
++		};
++
++		rknn_mmu_1: iommu@2770a000 {
++			compatible = "rockchip,rk3576-npu-iommu", "rockchip,rk3568-iommu";
++			reg = <0x0 0x2770a000 0x0 0x100>,
++			      <0x0 0x2770a100 0x0 0x100>;
++			interrupts = <GIC_SPI 248 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&cru ACLK_RKNN1>, <&cru HCLK_RKNN_ROOT>,
++				 <&cru CLK_RKNN_DSU0>, <&cru ACLK_RKNN_CBUF>,
++				 <&cru HCLK_RKNN_CBUF>;
++			clock-names = "aclk", "iface", "npu",
++				      "aclk_cbuf", "hclk_cbuf";
++			#iommu-cells = <0>;
++			power-domains = <&power RK3576_PD_NPU1>;
++			status = "disabled";
++		};
++
+ 		gpu: gpu@27800000 {
+ 			compatible = "rockchip,rk3576-mali", "arm,mali-bifrost";
+ 			reg = <0x0 0x27800000 0x0 0x20000>;
+-- 
+2.43.0
+

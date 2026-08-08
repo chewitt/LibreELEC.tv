@@ -1,0 +1,48 @@
+From 6dfe27f40c94b851f4775299363f23fc4f4e58bd Mon Sep 17 00:00:00 2001
+From: Michael Bommarito <michael.bommarito@gmail.com>
+Date: Wed, 27 May 2026 15:47:35 -0400
+Subject: [PATCH 121/247] FROMLIST(v2): media: rkvdec: hevc: tighten EXT SPS
+ RPS control dimensions
+
+The VDPU381 HEVC driver registers V4L2_CID_STATELESS_HEVC_EXT_SPS_ST_RPS
+and V4L2_CID_STATELESS_HEVC_EXT_SPS_LT_RPS with .cfg.dims = { 65 }, but
+the HEVC spec caps num_short_term_ref_pic_sets at 64 (ITU-T H.265 7.4.8)
+and num_long_term_ref_pics_sps at 32 (7.4.3.2.1). The hardware descriptor
+table (struct rkvdec_rps) sizes match those spec limits: refs[32] and
+short_term_ref_sets[64].
+
+Reduce the dims to { 64 } and { 32 } respectively so the V4L2 control
+framework rejects oversized payloads before any driver code runs.
+
+Fixes: c9a59dc2acc7 ("media: rkvdec: Add HEVC support for the VDPU381 variant")
+Cc: stable@vger.kernel.org
+Suggested-by: Detlev Casanova <detlev.casanova@collabora.com>
+Assisted-by: Claude:claude-opus-4-7
+Signed-off-by: Michael Bommarito <michael.bommarito@gmail.com>
+Reviewed-by: Nicolas Dufresne <nicolas.dufresne@collabora.com>
+---
+ drivers/media/platform/rockchip/rkvdec/rkvdec.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/media/platform/rockchip/rkvdec/rkvdec.c b/drivers/media/platform/rockchip/rkvdec/rkvdec.c
+index d48f5cdf96db..e22a56e55948 100644
+--- a/drivers/media/platform/rockchip/rkvdec/rkvdec.c
++++ b/drivers/media/platform/rockchip/rkvdec/rkvdec.c
+@@ -278,12 +278,12 @@ static const struct rkvdec_ctrl_desc vdpu346_hevc_ctrl_descs[] = {
+ 	{
+ 		.cfg.id = V4L2_CID_STATELESS_HEVC_EXT_SPS_ST_RPS,
+ 		.cfg.ops = &rkvdec_ctrl_ops,
+-		.cfg.dims = { 65 },
++		.cfg.dims = { 64 },
+ 	},
+ 	{
+ 		.cfg.id = V4L2_CID_STATELESS_HEVC_EXT_SPS_LT_RPS,
+ 		.cfg.ops = &rkvdec_ctrl_ops,
+-		.cfg.dims = { 65 },
++		.cfg.dims = { 32 },
+ 	},
+ };
+ 
+-- 
+2.43.0
+

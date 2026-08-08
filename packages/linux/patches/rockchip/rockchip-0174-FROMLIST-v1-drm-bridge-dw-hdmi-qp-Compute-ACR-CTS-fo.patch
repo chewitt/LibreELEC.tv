@@ -1,0 +1,119 @@
+From 0b4f9bb62e211fef4fe673865816ffb1d219a4fc Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Tue, 1 Sep 2026 08:59:36 +0000
+Subject: [PATCH 174/247] FROMLIST(v1): drm/bridge: dw-hdmi-qp: Compute ACR CTS
+ for unlisted TMDS rates
+
+common_tmds_cts_table[] holds only six TMDS character rates (25.175,
+25.2, 27, 54, 74.25 and 148.5 MHz), so dw_hdmi_qp_find_cts() returns 0
+for everything else. dw_hdmi_qp_set_cts_n() then clears the CTS override
+enable and programs a value of 0, leaving the sink with no CTS to
+regenerate the audio clock from.
+
+Any deep colour link falls into this gap: a 10 bpc RK3576 HDMI output
+runs at 185625000 Hz (148.5 MHz * 1.25), which is absent from both
+tables. N is computed dynamically and comes out correct at 6144, but
+AUDPKT_ACR_CONTROL1 reads back as 0.
+
+Give CTS the same dynamic fallback that N already has, using the formula
+from the Audio chapter of the HDMI specification, and drop the -ENOENT
+returned into an unsigned int for the unlisted sample rates.
+
+Fixes: fd0141d1a8a2a ("drm/bridge: synopsys: Add audio support for dw-hdmi-qp")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+
+---
+This was found after testing unrelated patches from DetlevC that rename
+the RK audio cards to see the impact in Kodi. RK3588 had audio output,
+while RK3576 did not. I'd not used an RK3576 board for a while so tasked
+Claude to help triage the problem, and this was the finding. The problem
+appears to have been exposed since Kodi reworked plane selection logic
+and support for 10bpc planes; earlier Kodi/LibreELEC images were using
+8bpc planes thus avoiding the problem.
+---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c | 45 ++++++++++++--------
+ 1 file changed, 27 insertions(+), 18 deletions(-)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c
+index d596e5a267c3..b199c411bafd 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c
+@@ -12,6 +12,7 @@
+ #include <linux/export.h>
+ #include <linux/i2c.h>
+ #include <linux/irq.h>
++#include <linux/math64.h>
+ #include <linux/minmax.h>
+ #include <linux/module.h>
+ #include <linux/mutex.h>
+@@ -307,8 +308,15 @@ static unsigned int dw_hdmi_qp_find_n(struct dw_hdmi_qp *hdmi, unsigned long pix
+ 	return dw_hdmi_qp_compute_n(hdmi, pixel_clk, sample_rate);
+ }
+ 
++static unsigned int dw_hdmi_qp_compute_cts(unsigned long pixel_clk,
++					   unsigned long sample_rate,
++					   unsigned int n)
++{
++	return div64_u64((u64)pixel_clk * n, 128ULL * sample_rate);
++}
++
+ static unsigned int dw_hdmi_qp_find_cts(struct dw_hdmi_qp *hdmi, unsigned long pixel_clk,
+-					unsigned long sample_rate)
++					unsigned long sample_rate, unsigned int n)
+ {
+ 	const struct dw_hdmi_audio_tmds_cts *tmds_cts = NULL;
+ 	int i;
+@@ -320,23 +328,24 @@ static unsigned int dw_hdmi_qp_find_cts(struct dw_hdmi_qp *hdmi, unsigned long p
+ 		}
+ 	}
+ 
+-	if (!tmds_cts)
+-		return 0;
+-
+-	switch (sample_rate) {
+-	case 32000:
+-		return tmds_cts->cts_32k;
+-	case 44100:
+-	case 88200:
+-	case 176400:
+-		return tmds_cts->cts_44k1;
+-	case 48000:
+-	case 96000:
+-	case 192000:
+-		return tmds_cts->cts_48k;
+-	default:
+-		return -ENOENT;
++	if (tmds_cts) {
++		switch (sample_rate) {
++		case 32000:
++			return tmds_cts->cts_32k;
++		case 44100:
++		case 88200:
++		case 176400:
++			return tmds_cts->cts_44k1;
++		case 48000:
++		case 96000:
++		case 192000:
++			return tmds_cts->cts_48k;
++		}
+ 	}
++
++	dev_dbg(hdmi->dev, "Rate %lu missing; compute CTS dynamically\n", pixel_clk);
++
++	return dw_hdmi_qp_compute_cts(pixel_clk, sample_rate, n);
+ }
+ 
+ static void dw_hdmi_qp_set_audio_interface(struct dw_hdmi_qp *hdmi,
+@@ -459,7 +468,7 @@ static void dw_hdmi_qp_set_sample_rate(struct dw_hdmi_qp *hdmi, unsigned long lo
+ 	unsigned int n, cts;
+ 
+ 	n = dw_hdmi_qp_find_n(hdmi, tmds_char_rate, sample_rate);
+-	cts = dw_hdmi_qp_find_cts(hdmi, tmds_char_rate, sample_rate);
++	cts = dw_hdmi_qp_find_cts(hdmi, tmds_char_rate, sample_rate, n);
+ 
+ 	dw_hdmi_qp_set_cts_n(hdmi, cts, n);
+ }
+-- 
+2.43.0
+

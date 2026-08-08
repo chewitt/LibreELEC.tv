@@ -1,0 +1,133 @@
+From 3817c18f26bff4f0f4e3f66cd17319558116c47c Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 31 Aug 2026 07:28:18 +0000
+Subject: [PATCH 153/247] FIXUP: wifi: aic: fix cfg80211 mgmt_tx, RoC and
+ probe_status prototypes
+
+The FullMAC driver was written against a cfg80211 API that differs from
+the one it is being built against, so it does not compile:
+
+  rwnx_main.c:2794:17: error: too many arguments to function
+    'cfg80211_probe_status'; expected 7, have 8
+  rwnx_main.c:4672:20: error: initialization of 'int (*)(struct wiphy *,
+    struct wireless_dev *, struct cfg80211_mgmt_tx_params *, u64 *)' from
+    incompatible pointer type 'int (*)(struct wiphy *, struct wireless_dev *,
+    struct cfg80211_mgmt_tx_params *, u64)'
+  rwnx_main.c:4693:30: error: initialization of 'int (*)(struct wiphy *,
+    struct wireless_dev *, struct ieee80211_channel *, unsigned int, u64 *,
+    const u8 *)' from incompatible pointer type 'int (*)(struct wiphy *,
+    struct wireless_dev *, struct ieee80211_channel *, unsigned int, u64,
+    const u8 *)'
+
+apm_probe_sta_work_process() passes an extra -1 between the cookie and
+the acked argument; cfg80211_probe_status() has no such parameter. Drop
+it from both call sites.
+
+The mgmt_tx and remain_on_channel cookie is an output: the driver mints
+it and hands it back to cfg80211 through a u64 *. Both callbacks took it
+by value, which matched neither the ops struct nor the semantics - no
+code assigned a cookie at all, so roc_elem->cookie and sw_txhdr->cookie
+held whatever cfg80211 happened to pass in, and the cookies later
+reported by cfg80211_mgmt_tx_status() and
+cfg80211_remain_on_channel_expired() would not have matched any request.
+
+Take u64 *cookie in both callbacks and allocate one from a new per-device
+counter in struct rwnx_hw, pre-incremented so 0 is never handed out. The
+internal consumers rwnx_cfg80211_remain_on_channel_() and
+rwnx_start_mgmt_xmit() keep taking the cookie by value.
+
+Fixes: ffe89cfa8409 ("FROMLIST(v4): wifi: aic: add FullMAC WLAN driver")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ .../net/wireless/aic/aic8800_fdrv/rwnx_defs.h |  1 +
+ .../net/wireless/aic/aic8800_fdrv/rwnx_main.c | 20 ++++++++++++-------
+ 2 files changed, 14 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/net/wireless/aic/aic8800_fdrv/rwnx_defs.h b/drivers/net/wireless/aic/aic8800_fdrv/rwnx_defs.h
+index eae8d04bee9d..01cb486c707a 100644
+--- a/drivers/net/wireless/aic/aic8800_fdrv/rwnx_defs.h
++++ b/drivers/net/wireless/aic/aic8800_fdrv/rwnx_defs.h
+@@ -562,6 +562,7 @@ struct rwnx_hw {
+ 	struct rwnx_roc_elem *roc_elem; /* Information provided by cfg80211 in its
+ 					 * remain on channel request
+ 					 */
++	u64 roc_cookie_cnt;
+ 
+ 	struct rwnx_cmd_mgr *cmd_mgr;
+ 
+diff --git a/drivers/net/wireless/aic/aic8800_fdrv/rwnx_main.c b/drivers/net/wireless/aic/aic8800_fdrv/rwnx_main.c
+index b870193f4c48..07bb55c944e9 100644
+--- a/drivers/net/wireless/aic/aic8800_fdrv/rwnx_main.c
++++ b/drivers/net/wireless/aic/aic8800_fdrv/rwnx_main.c
+@@ -2792,11 +2792,11 @@ void apm_probe_sta_work_process(struct work_struct *work)
+ 	AICWFDBG(LOGDEBUG, "AICWF sta %pM found = %d\n", mac, found);
+ 	if (found)
+ 		cfg80211_probe_status(rwnx_vif->ndev, mac,
+-				      (u64)rwnx_vif->sta_probe.probe_id, -1,
++				      (u64)rwnx_vif->sta_probe.probe_id,
+ 				      true, 0, false, GFP_ATOMIC);
+ 	else
+ 		cfg80211_probe_status(rwnx_vif->ndev, mac,
+-				      (u64)rwnx_vif->sta_probe.probe_id, -1,
++				      (u64)rwnx_vif->sta_probe.probe_id,
+ 				      false, 0, false, GFP_ATOMIC);
+ 	rwnx_vif->sta_probe.probe_id++;
+ }
+@@ -3428,11 +3428,15 @@ static int rwnx_cfg80211_remain_on_channel_(struct wiphy *wiphy,
+ static int rwnx_cfg80211_remain_on_channel(struct wiphy *wiphy,
+ 					   struct wireless_dev *wdev,
+ 					   struct ieee80211_channel *chan,
+-					   unsigned int duration, u64 cookie,
++					   unsigned int duration, u64 *cookie,
+ 					   const u8 *rx_addr)
+ {
++	struct rwnx_hw *rwnx_hw = wiphy_priv(wiphy);
++
++	*cookie = ++rwnx_hw->roc_cookie_cnt;
++
+ 	return rwnx_cfg80211_remain_on_channel_(wiphy, wdev, chan,
+-						duration, cookie, false);
++						duration, *cookie, false);
+ }
+ 
+ /*
+@@ -3574,7 +3578,7 @@ static int rwnx_cfg80211_get_channel(struct wiphy *wiphy,
+ 
+ static int rwnx_cfg80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
+ 				 struct cfg80211_mgmt_tx_params *params,
+-				 u64 cookie)
++				 u64 *cookie)
+ {
+ 	struct rwnx_hw *rwnx_hw = wiphy_priv(wiphy);
+ 	struct rwnx_vif *rwnx_vif =
+@@ -3586,6 +3590,8 @@ static int rwnx_cfg80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
+ 	bool ap = false;
+ 	bool offchan = false;
+ 
++	*cookie = ++rwnx_hw->roc_cookie_cnt;
++
+ 	/* Check if provided VIF is an AP or a STA one */
+ 	switch (RWNX_VIF_TYPE(rwnx_vif)) {
+ #if !IS_ENABLED(CONFIG_AIC8800_STA_ONLY)
+@@ -3647,7 +3653,7 @@ static int rwnx_cfg80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
+ 
+ 		/* Start a ROC procedure for 30ms */
+ 		error = rwnx_cfg80211_remain_on_channel_(wiphy, wdev, channel, 30,
+-							 cookie, true);
++							 *cookie, true);
+ 		if (error) {
+ 			AICWFDBG(LOGDEBUG, "AICWF mgmt rx chan err\n");
+ 			return error;
+@@ -3656,7 +3662,7 @@ static int rwnx_cfg80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
+ 	offchan = true;
+ 
+ send_frame:
+-	return rwnx_start_mgmt_xmit(rwnx_vif, rwnx_sta, params, offchan, cookie);
++	return rwnx_start_mgmt_xmit(rwnx_vif, rwnx_sta, params, offchan, *cookie);
+ }
+ 
+ /*
+-- 
+2.43.0
+

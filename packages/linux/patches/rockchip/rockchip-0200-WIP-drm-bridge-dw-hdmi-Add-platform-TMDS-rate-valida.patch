@@ -1,0 +1,62 @@
+From 31ad3b13757c3c80e24de32399b03c2b9632febb Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Mon, 27 Apr 2026 15:46:03 +0000
+Subject: [PATCH 200/247] WIP: drm/bridge: dw-hdmi: Add platform TMDS rate
+ validation hook
+
+Allow DW-HDMI platform drivers to validate modes using the computed TMDS
+character rate by adding a tmds_char_rate_valid() callback to platform
+data.
+
+Use the new callback before falling back to the legacy mode_valid() hook
+so platforms can reject modes based on the actual TMDS rate, including
+cases where color depth or format affects the link rate.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.c | 3 +++
+ include/drm/bridge/dw_hdmi.h              | 7 +++++--
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+index 5669a76f6f8a..1b29425f2626 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+@@ -2641,6 +2641,9 @@ dw_hdmi_bridge_tmds_char_rate_valid(const struct drm_bridge *bridge,
+ 	else if (tmds_rate > HDMI_1_3_TMDS_CHAR_RATE_MAX_HZ &&
+ 		 hdmi->version < 0x200a)
+ 		return MODE_CLOCK_HIGH;
++	else if (pdata->tmds_char_rate_valid)
++		return pdata->tmds_char_rate_valid(hdmi, pdata->priv_data,
++						   mode, tmds_rate);
+ 	else if (pdata->mode_valid)
+ 		return pdata->mode_valid(hdmi, pdata->priv_data, NULL, mode);
+ 
+diff --git a/include/drm/bridge/dw_hdmi.h b/include/drm/bridge/dw_hdmi.h
+index 7f7a18e5a055..72b62142d79b 100644
+--- a/include/drm/bridge/dw_hdmi.h
++++ b/include/drm/bridge/dw_hdmi.h
+@@ -139,8 +139,8 @@ struct dw_hdmi_plat_data {
+ 	unsigned int max_bpc;
+ 
+ 	/*
+-	 * Private data passed to all the .mode_valid() and .configure_phy()
+-	 * callback functions.
++	 * Private data passed to all the .mode_valid(), .tmds_char_rate_valid()
++	 * and .configure_phy() callback functions.
+ 	 */
+ 	void *priv_data;
+ 
+@@ -148,6 +148,9 @@ struct dw_hdmi_plat_data {
+ 	enum drm_mode_status (*mode_valid)(struct dw_hdmi *hdmi, void *data,
+ 					   const struct drm_display_info *info,
+ 					   const struct drm_display_mode *mode);
++	enum drm_mode_status (*tmds_char_rate_valid)(struct dw_hdmi *hdmi, void *data,
++						     const struct drm_display_mode *mode,
++						     unsigned long long tmds_rate);
+ 
+ 	/*
+ 	 * priv_audio is specially used for additional audio device to get
+-- 
+2.43.0
+

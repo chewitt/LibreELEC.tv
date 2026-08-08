@@ -1,0 +1,44 @@
+From c94b3ce6a071f64132775038002e09674e1fedac Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Mon, 20 Jul 2020 22:25:15 +0000
+Subject: [PATCH 205/247] WIP: drm/bridge: dw-hdmi: add mpll_cfg_420 for
+ ycbcr420 mode
+
+NOTE: rockchip need different mpll cfg for ycbcr 4:2:0 mode
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.c | 4 +++-
+ include/drm/bridge/dw_hdmi.h              | 1 +
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+index c67f2c523546..3dc7991992a7 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+@@ -1541,7 +1541,9 @@ static int hdmi_phy_configure_dwc_hdmi_3d_tx(struct dw_hdmi *hdmi,
+ 	const struct dw_hdmi_phy_config *phy_config = pdata->phy_config;
+ 	int depth;
+ 
+-	/* TOFIX Will need 420 specific PHY configuration tables */
++	if (hdmi_bus_fmt_is_yuv420(hdmi->hdmi_data.enc_out_bus_format) &&
++	    pdata->mpll_cfg_420)
++		mpll_config = pdata->mpll_cfg_420;
+ 
+ 	/* PLL/MPLL Cfg - always match on final entry */
+ 	for (; mpll_config->mpixelclock != ~0UL; mpll_config++)
+diff --git a/include/drm/bridge/dw_hdmi.h b/include/drm/bridge/dw_hdmi.h
+index ab2e8aa7d5e1..8c166bfa9f3b 100644
+--- a/include/drm/bridge/dw_hdmi.h
++++ b/include/drm/bridge/dw_hdmi.h
+@@ -168,6 +168,7 @@ struct dw_hdmi_plat_data {
+ 
+ 	/* Synopsys PHY support */
+ 	const struct dw_hdmi_mpll_config *mpll_cfg;
++	const struct dw_hdmi_mpll_config *mpll_cfg_420;
+ 	const struct dw_hdmi_curr_ctrl *cur_ctr;
+ 	const struct dw_hdmi_phy_config *phy_config;
+ 	int (*configure_phy)(struct dw_hdmi *hdmi, void *data,
+-- 
+2.43.0
+

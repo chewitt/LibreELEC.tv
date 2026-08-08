@@ -1,0 +1,52 @@
+From c401a37d742eac762a690fb9120c8b392031a384 Mon Sep 17 00:00:00 2001
+From: Jonas Karlman <jonas@kwiboo.se>
+Date: Mon, 18 May 2026 19:37:39 +0000
+Subject: [PATCH 033/247] FROMLIST(v2): drm/rockchip: dw_hdmi: Hold a reference
+ to the dw-hdmi bridge
+
+Take a reference on the dw-hdmi bridge during bind and drop it again
+from unbind to ensure the bridge is kept alive for the lifetime of the
+encoder component.
+
+Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
+---
+ drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c b/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c
+index 57d6df93b303..f638dd8f6c20 100644
+--- a/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c
++++ b/drivers/gpu/drm/rockchip/dw_hdmi-rockchip.c
+@@ -79,6 +79,7 @@ struct rockchip_hdmi {
+ 	struct clk *hdmiphy_clk;
+ 	struct clk *ref_clk;
+ 	struct clk *grf_clk;
++	struct drm_bridge *bridge;
+ 	struct dw_hdmi *hdmi;
+ 	struct phy *phy;
+ };
+@@ -611,6 +612,13 @@ static int dw_hdmi_rockchip_bind(struct device *dev, struct device *master,
+ 		return dev_err_probe(dev, PTR_ERR(hdmi->hdmi),
+ 				     "failed to probe dw-hdmi bridge\n");
+ 
++	hdmi->bridge = of_drm_find_and_get_bridge(np);
++	if (!hdmi->bridge) {
++		dw_hdmi_unbind(hdmi->hdmi);
++		return dev_err_probe(dev, -ENODEV,
++				     "failed to find dw-hdmi bridge\n");
++	}
++
+ 	return 0;
+ }
+ 
+@@ -619,6 +627,7 @@ static void dw_hdmi_rockchip_unbind(struct device *dev, struct device *master,
+ {
+ 	struct rockchip_hdmi *hdmi = dev_get_drvdata(dev);
+ 
++	drm_bridge_put(hdmi->bridge);
+ 	dw_hdmi_unbind(hdmi->hdmi);
+ }
+ 
+-- 
+2.43.0
+

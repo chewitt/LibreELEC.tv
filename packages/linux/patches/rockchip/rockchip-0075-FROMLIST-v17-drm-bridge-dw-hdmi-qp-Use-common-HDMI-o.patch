@@ -1,0 +1,34 @@
+From 0b982a1c0efe5a75e0ba2803977c1a1ca882f0d5 Mon Sep 17 00:00:00 2001
+From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+Date: Tue, 9 Jun 2026 14:44:02 +0200
+Subject: [PATCH 075/247] FROMLIST(v17): drm/bridge: dw-hdmi-qp: Use common
+ HDMI output bus fmts helper
+
+Make use of the common drm_bridge_funcs.atomic_get_output_bus_fmts
+helper for HDMI bridge connectors.
+
+This allows dw-hdmi-qp HDMI bridges to participate in recursive bus
+format selection in a meaningful way.
+
+Reviewed-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+Signed-off-by: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
+---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c
+index ed40f92c47fd..573dc08b18f3 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-qp.c
+@@ -1191,6 +1191,7 @@ static int dw_hdmi_qp_cec_transmit(struct drm_bridge *bridge, u8 attempts,
+ #endif /* CONFIG_DRM_DW_HDMI_QP_CEC */
+ 
+ static const struct drm_bridge_funcs dw_hdmi_qp_bridge_funcs = {
++	.atomic_get_output_bus_fmts = drm_atomic_helper_bridge_get_hdmi_output_bus_fmts,
+ 	.atomic_duplicate_state = drm_atomic_helper_bridge_duplicate_state,
+ 	.atomic_destroy_state = drm_atomic_helper_bridge_destroy_state,
+ 	.atomic_reset = drm_atomic_helper_bridge_reset,
+-- 
+2.43.0
+
