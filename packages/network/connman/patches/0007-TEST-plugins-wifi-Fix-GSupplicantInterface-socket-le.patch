@@ -1,0 +1,46 @@
+From b8444ce417c3d28cc5c6c6133effb302a9756641 Mon Sep 17 00:00:00 2001
+From: Doemela <kasuta@riseup.net>
+Date: Sun, 16 Aug 2026 06:17:00 +0000
+Subject: [PATCH] TEST: plugins/wifi: Fix GSupplicantInterface socket leak
+ during teardown
+
+When a virtual or unmanaged wifi interface is dropped out-of-band,
+interface_removed() is invoked within the wireless event loop.
+
+If the underlying wifi struct or its device linkage has already been
+cleared during a topology shift, the current logic bypasses the
+mandatory g_supplicant_interface_cancel() and data unreferencing
+routines due to missing fallback handling. This causes netlink and
+event file descriptors to permanently leak in the process table.
+
+Refactor interface_removed() to ensure resource cancellation runs
+unconditionally, even if device pointers are already gone.
+
+Signed-off-by: Doemela <kasuta@riseup.net>
+---
+ plugins/wifi.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/plugins/wifi.c b/plugins/wifi.c
+index d3a2340e..d17e2ec9 100644
+--- a/plugins/wifi.c
++++ b/plugins/wifi.c
+@@ -2755,12 +2755,10 @@ static void interface_removed(GSupplicantInterface *interface)
+ 	if (wifi && wifi->tethering)
+ 		return;
+ 
+-	if (!wifi || !wifi->device) {
+-		DBG("wifi interface already removed");
+-		return;
+-	}
++	if (wifi != NULL && wifi->device != NULL)
++		connman_device_set_powered(wifi->device, FALSE);
+ 
+-	connman_device_set_powered(wifi->device, false);
++	g_supplicant_interface_set_data(interface, NULL);
+ 
+ 	check_p2p_technology();
+ }
+-- 
+2.43.0
+
