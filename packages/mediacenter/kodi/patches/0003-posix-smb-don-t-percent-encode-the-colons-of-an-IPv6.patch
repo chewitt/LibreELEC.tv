@@ -1,0 +1,93 @@
+From 393385483e3464896e84773cf9680e8070fa051b Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Tue, 18 Aug 2026 16:52:55 +0000
+Subject: [PATCH 3/3] [posix][smb] don't percent encode the colons of an IPv6
+ host
+
+The URL handed to libsmbclient is built by hand and ran the host through the
+same percent encoder as the path components, so an IPv6 literal came out as
+smb://%3a%3a1/share rather than smb://[::1]/share. It was also never bracketed,
+which an address containing colons requires.
+
+Nothing noticed because libsmbclient percent decodes the URL again before
+parsing it, but the address is only reachable by accident and any host name
+substituted by CSMB::GetResolvedUrl() can be an IPv6 address.
+
+Bracket an IPv6 literal and leave its colons alone. Host names cannot contain
+a colon so they keep being encoded as before.
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+---
+ xbmc/filesystem/test/TestSMBFile.cpp       | 31 ++++++++++++++++++++++
+ xbmc/platform/posix/filesystem/SMBFile.cpp | 14 +++++++++-
+ 2 files changed, 44 insertions(+), 1 deletion(-)
+
+diff --git a/xbmc/filesystem/test/TestSMBFile.cpp b/xbmc/filesystem/test/TestSMBFile.cpp
+index 097d518834..ad437afb63 100644
+--- a/xbmc/filesystem/test/TestSMBFile.cpp
++++ b/xbmc/filesystem/test/TestSMBFile.cpp
+@@ -40,3 +40,34 @@ TEST(TestSMBFileRecovery, ZeroBytesAtOrBeyondKnownFileEndIsValidEof)
+   EXPECT_TRUE(SMBFileRecovery::IsValidEof(4096, 4096));
+   EXPECT_TRUE(SMBFileRecovery::IsValidEof(8192, 4096));
+ }
++
++TEST(TestSMBUrlEncode, HostNameIsEncoded)
++{
++  const CURL url("smb://kodi:secret@MEDIABOX/MEDIA/TEST");
++  EXPECT_EQ(smb.URLEncode(url), "smb://kodi:secret@MEDIABOX/MEDIA/TEST");
++}
++
++TEST(TestSMBUrlEncode, FileNameIsEncoded)
++{
++  const CURL url("smb://MEDIABOX/MEDIA/TEST/01 Mr. Blue Sky.flac");
++  EXPECT_EQ(smb.URLEncode(url), "smb://MEDIABOX/MEDIA/TEST/01%20Mr.%20Blue%20Sky.flac");
++}
++
++TEST(TestSMBUrlEncode, IPv6HostNameIsBracketed)
++{
++  const CURL url("smb://kodi:secret@[fd00::1]/MEDIA/TEST");
++  EXPECT_EQ(smb.URLEncode(url), "smb://kodi:secret@[fd00::1]/MEDIA/TEST");
++}
++
++TEST(TestSMBUrlEncode, IPv6HostNameWithPortIsBracketed)
++{
++  const CURL url("smb://[fd00::1]:445/MEDIA/TEST");
++  EXPECT_EQ(smb.URLEncode(url), "smb://[fd00::1]:445/MEDIA/TEST");
++}
++
++TEST(TestSMBUrlEncode, IPv6HostNameSubstitutedForAResolvedNameIsBracketed)
++{
++  CURL url("smb://kodi:secret@MEDIABOX/MEDIA/TEST");
++  url.SetHostName("fd00::1");
++  EXPECT_EQ(smb.URLEncode(url), "smb://kodi:secret@[fd00::1]/MEDIA/TEST");
++}
+diff --git a/xbmc/platform/posix/filesystem/SMBFile.cpp b/xbmc/platform/posix/filesystem/SMBFile.cpp
+index d1ea7582ec..5d0febb67d 100644
+--- a/xbmc/platform/posix/filesystem/SMBFile.cpp
++++ b/xbmc/platform/posix/filesystem/SMBFile.cpp
+@@ -565,7 +565,19 @@ std::string CSMB::URLEncode(const CURL& url)
+     }
+     flat += "@";
+   }
+-  flat += URLEncode(url.GetHostName());
++  const std::string& hostName = url.GetHostName();
++  if (hostName.find(':') != std::string::npos)
++  {
++    /* an IPv6 literal has to be bracketed and its colons must stay unencoded, otherwise
++       libsmbclient cannot read it back as an address */
++    flat += '[';
++    flat += hostName;
++    flat += ']';
++  }
++  else
++  {
++    flat += URLEncode(hostName);
++  }
+ 
+   if (url.HasPort())
+   {
+-- 
+2.43.0
+
