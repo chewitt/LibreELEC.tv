@@ -1,0 +1,39 @@
+From 54d2d395751ad87b5cafe44a9910d80cdc405e8a Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Tue, 18 Aug 2026 16:52:55 +0000
+Subject: [PATCH 2/3] [network] DNSNameCache: only ask for address families
+ this host can use
+
+A lookup asked for every address family, so a host with an AAAA record was
+resolved to an IPv6 address on a machine that has no IPv6 address configured
+and can never connect to it.
+
+Set AI_ADDRCONFIG so that only families this host has an address for are
+offered. Note that a machine whose sole configured address is loopback then
+resolves nothing at all, which is the reason curl dropped the flag, but such a
+machine cannot reach a remote host either way.
+
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+---
+ xbmc/network/DNSNameCache.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/xbmc/network/DNSNameCache.cpp b/xbmc/network/DNSNameCache.cpp
+index d91d8e124d..89b8e2f59e 100644
+--- a/xbmc/network/DNSNameCache.cpp
++++ b/xbmc/network/DNSNameCache.cpp
+@@ -90,6 +90,9 @@ bool CDNSNameCache::Lookup(const std::string& strHostName, std::string& strIpAdd
+   hints.ai_family = AF_UNSPEC;
+   hints.ai_socktype = SOCK_STREAM;
+   hints.ai_flags |= AI_CANONNAME;
++  // don't get offered addresses of a family this host has no address configured for, they
++  // could never be connected to
++  hints.ai_flags |= AI_ADDRCONFIG;
+ 
+   if (getaddrinfo(strHostName.c_str(), nullptr, &hints, &res) == 0)
+   {
+-- 
+2.43.0
+
