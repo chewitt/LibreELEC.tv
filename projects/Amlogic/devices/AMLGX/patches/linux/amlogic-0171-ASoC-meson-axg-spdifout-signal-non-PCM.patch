@@ -1,0 +1,206 @@
+From b8612fbb0c5d1ca590375330cf33aea041387821 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Tue, 15 Sep 2026 01:46:26 +0000
+Subject: [PATCH 171/177] ASoC: meson: axg-spdifout: signal non-PCM
+
+The S/PDIF output always tells the receiver it is sending linear PCM.
+Its channel status is built by
+snd_pcm_create_iec958_consumer_hw_params(), which constructs all four
+bytes from the hardware parameters alone, so byte 0 comes back with the
+non-audio bit clear whatever the stream is, and nothing exposes an
+IEC958 Playback Default control for userspace to say otherwise.
+
+Add that control alongside its mask, seeded at probe, and take the
+channel status from it - snd_pcm_fill_iec958_consumer() fills in the
+sample rate and word length while leaving byte 0 alone.
+
+Apply it at prepare rather than at hw_params.  The ctl_elems hook that
+alsa-lib's iec958 device uses to set the control runs after the slave's
+hw_params has returned, and only prepare follows it, so a channel status
+latched in hw_params always carries the previous value rather than the
+one userspace asked for.
+
+Carry the validity bit set for as long as such a stream runs.  It says
+whether the samples of a frame are suitable for conversion to analogue,
+and the ones of a compressed stream are not; the driver has used it for
+digital mute alone, which for a stream that is already invalid changes
+nothing.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ sound/soc/meson/axg-spdifout.c | 93 ++++++++++++++++++++++++++++++++--
+ 1 file changed, 88 insertions(+), 5 deletions(-)
+
+diff --git a/sound/soc/meson/axg-spdifout.c b/sound/soc/meson/axg-spdifout.c
+index 84868fe574e0..1093b020405e 100644
+--- a/sound/soc/meson/axg-spdifout.c
++++ b/sound/soc/meson/axg-spdifout.c
+@@ -10,6 +10,7 @@
+ #include <sound/soc.h>
+ #include <sound/soc-dai.h>
+ #include <sound/pcm_params.h>
++#include <sound/asoundef.h>
+ #include <sound/pcm_iec958.h>
+ 
+ /*
+@@ -60,6 +61,7 @@ struct axg_spdifout {
+ 	struct regmap *map;
+ 	struct clk *mclk;
+ 	struct clk *pclk;
++	u8 iec_status[AES_IEC958_STATUS_SIZE];
+ };
+ 
+ static void axg_spdifout_enable(struct regmap *map)
+@@ -111,10 +113,15 @@ static int axg_spdifout_trigger(struct snd_pcm_substream *substream, int cmd,
+ static int axg_spdifout_mute(struct snd_soc_dai *dai, int mute, int direction)
+ {
+ 	struct axg_spdifout *priv = snd_soc_dai_get_drvdata(dai);
++	bool nonaudio = priv->iec_status[0] & IEC958_AES0_NONAUDIO;
+ 
+-	/* Use spdif valid bit to perform digital mute */
++	/*
++	 * Use spdif valid bit to perform digital mute.  A stream that is not
++	 * linear PCM carries it set for as long as it runs: the samples are
++	 * not audio and a receiver must not convert them to analogue.
++	 */
+ 	regmap_update_bits(priv->map, SPDIFOUT_CTRL0, SPDIFOUT_CTRL0_VSET,
+-			   mute ? SPDIFOUT_CTRL0_VSET : 0);
++			   mute || nonaudio ? SPDIFOUT_CTRL0_VSET : 0);
+ 
+ 	return 0;
+ }
+@@ -176,7 +183,7 @@ static int axg_spdifout_sample_fmt(struct snd_pcm_hw_params *params,
+ 	return 0;
+ }
+ 
+-static int axg_spdifout_set_chsts(struct snd_pcm_hw_params *params,
++static int axg_spdifout_set_chsts(struct snd_pcm_runtime *runtime,
+ 				  struct snd_soc_dai *dai)
+ {
+ 	struct axg_spdifout *priv = snd_soc_dai_get_drvdata(dai);
+@@ -185,7 +192,8 @@ static int axg_spdifout_set_chsts(struct snd_pcm_hw_params *params,
+ 	u8 cs[4];
+ 	u32 val;
+ 
+-	ret = snd_pcm_create_iec958_consumer_hw_params(params, cs, 4);
++	memcpy(cs, priv->iec_status, sizeof(cs));
++	ret = snd_pcm_fill_iec958_consumer(runtime, cs, sizeof(cs));
+ 	if (ret < 0) {
+ 		dev_err(dai->dev, "Creating IEC958 channel status failed %d\n",
+ 			ret);
+@@ -233,7 +241,15 @@ static int axg_spdifout_hw_params(struct snd_pcm_substream *substream,
+ 		return ret;
+ 	}
+ 
+-	ret = axg_spdifout_set_chsts(params, dai);
++	return 0;
++}
++
++static int axg_spdifout_prepare(struct snd_pcm_substream *substream,
++				struct snd_soc_dai *dai)
++{
++	int ret;
++
++	ret = axg_spdifout_set_chsts(substream->runtime, dai);
+ 	if (ret) {
+ 		dev_err(dai->dev, "failed to setup channel status words\n");
+ 		return ret;
+@@ -286,6 +302,7 @@ static void axg_spdifout_shutdown(struct snd_pcm_substream *substream,
+ static const struct snd_soc_dai_ops axg_spdifout_ops = {
+ 	.trigger	= axg_spdifout_trigger,
+ 	.mute_stream	= axg_spdifout_mute,
++	.prepare	= axg_spdifout_prepare,
+ 	.hw_params	= axg_spdifout_hw_params,
+ 	.startup	= axg_spdifout_startup,
+ 	.shutdown	= axg_spdifout_shutdown,
+@@ -339,7 +356,67 @@ static const struct snd_soc_dapm_route axg_spdifout_dapm_routes[] = {
+ 	{ "Playback", NULL, "SRC SEL" },
+ };
+ 
++static int axg_spdifout_iec958_info(struct snd_kcontrol *kcontrol,
++				    struct snd_ctl_elem_info *uinfo)
++{
++	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
++	uinfo->count = 1;
++
++	return 0;
++}
++
++static int axg_spdifout_iec958_mask_get(struct snd_kcontrol *kcontrol,
++					struct snd_ctl_elem_value *ucontrol)
++{
++	memset(ucontrol->value.iec958.status, 0xff,
++	       sizeof(ucontrol->value.iec958.status));
++
++	return 0;
++}
++
++static int axg_spdifout_iec958_get(struct snd_kcontrol *kcontrol,
++				   struct snd_ctl_elem_value *ucontrol)
++{
++	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
++	struct axg_spdifout *priv = snd_soc_component_get_drvdata(component);
++
++	memcpy(ucontrol->value.iec958.status, priv->iec_status,
++	       sizeof(priv->iec_status));
++
++	return 0;
++}
++
++static int axg_spdifout_iec958_put(struct snd_kcontrol *kcontrol,
++				   struct snd_ctl_elem_value *ucontrol)
++{
++	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
++	struct axg_spdifout *priv = snd_soc_component_get_drvdata(component);
++
++	if (!memcmp(priv->iec_status, ucontrol->value.iec958.status,
++		    sizeof(priv->iec_status)))
++		return 0;
++
++	memcpy(priv->iec_status, ucontrol->value.iec958.status,
++	       sizeof(priv->iec_status));
++
++	return 1;
++}
++
+ static const struct snd_kcontrol_new axg_spdifout_controls[] = {
++	{
++		.access	= SNDRV_CTL_ELEM_ACCESS_READ,
++		.iface	= SNDRV_CTL_ELEM_IFACE_PCM,
++		.name	= SNDRV_CTL_NAME_IEC958("", PLAYBACK, MASK),
++		.info	= axg_spdifout_iec958_info,
++		.get	= axg_spdifout_iec958_mask_get,
++	},
++	{
++		.iface	= SNDRV_CTL_ELEM_IFACE_PCM,
++		.name	= SNDRV_CTL_NAME_IEC958("", PLAYBACK, DEFAULT),
++		.info	= axg_spdifout_iec958_info,
++		.get	= axg_spdifout_iec958_get,
++		.put	= axg_spdifout_iec958_put,
++	},
+ 	SOC_DOUBLE("Playback Volume", SPDIFOUT_GAIN0,  0,  8, 255, 0),
+ 	SOC_DOUBLE("Playback Switch", SPDIFOUT_CTRL0, 22, 21, 1, 1),
+ 	SOC_SINGLE("Playback Gain Enable Switch",
+@@ -404,12 +481,18 @@ static int axg_spdifout_probe(struct platform_device *pdev)
+ 	struct device *dev = &pdev->dev;
+ 	struct axg_spdifout *priv;
+ 	void __iomem *regs;
++	int ret;
+ 
+ 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+ 	if (!priv)
+ 		return -ENOMEM;
+ 	platform_set_drvdata(pdev, priv);
+ 
++	ret = snd_pcm_create_iec958_consumer_default(priv->iec_status,
++						     sizeof(priv->iec_status));
++	if (ret < 0)
++		return ret;
++
+ 	regs = devm_platform_ioremap_resource(pdev, 0);
+ 	if (IS_ERR(regs))
+ 		return PTR_ERR(regs);
+-- 
+2.43.0
+

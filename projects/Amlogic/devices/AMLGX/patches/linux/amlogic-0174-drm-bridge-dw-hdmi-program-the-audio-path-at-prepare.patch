@@ -1,0 +1,69 @@
+From 1f730be2de93f57bd84aa750bc54d8a17c969325 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Thu, 17 Sep 2026 06:07:14 +0000
+Subject: [PATCH 174/177] drm/bridge: dw-hdmi: program the audio path at
+ prepare
+
+The audio path is programmed from hw_params, which reads the channel
+status out of the HDMI codec's IEC958 control.  A player sets that
+control through alsa-lib's iec958 device, whose ctl_elems hook runs
+after the slave's hw_params has returned and before prepare, so the
+value read is always the one from the previous stream.
+
+The controller needs it: the non-PCM bit selects the NLPCM or HBR packet
+type, so a stream is announced to the sink as whatever the last one was.
+
+Register the same programming for prepare, which runs after the hook.
+hw_params is left in place, so nothing that relies on it changes, and
+codec to codec links reach prepare too.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ .../drm/bridge/synopsys/dw-hdmi-i2s-audio.c   | 21 ++++++++++++-------
+ 1 file changed, 14 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
+index 29ec2b63cc9a..b3295e6d8e2a 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
+@@ -129,13 +129,12 @@ static int dw_hdmi_i2s_hw_params(struct device *dev, void *data,
+ 	 * audio is the non-PCM bit, which this controller drives from
+ 	 * AUD_CONF2 rather than from the stream.  dw-hdmi-gp-audio.c already
+ 	 * derives it the same way for the GP path.
+-	 */
+-	/*
+-	 * HBR (TrueHD, DTS-HD MA) is the same IEC61937 payload spread over all
+-	 * of the lanes at four times the rate, and the controller packetises
+-	 * it differently -- HBR and NLPCM select the packet type, so they are
+-	 * alternatives, not flags to combine.  Eight non-PCM channels is what
+-	 * distinguishes them; dw-hdmi-qp makes the same 8-channel decision.
++	 *
++	 * HBR (TrueHD, DTS-HD MA) is the same payload spread over all of the
++	 * lanes at four times the rate, and is packetised differently -- HBR
++	 * and NLPCM select the packet type, so they are alternatives rather
++	 * than flags to combine.  Eight non-PCM channels is what distinguishes
++	 * them; dw-hdmi-qp makes the same 8-channel decision.
+ 	 */
+ 	hbr = (hparms->iec.status[0] & IEC958_AES0_NONAUDIO) &&
+ 	      hparms->channels == 8;
+@@ -268,8 +267,16 @@ static int dw_hdmi_i2s_hook_plugged_cb(struct device *dev, void *data,
+ 	return dw_hdmi_set_plugged_cb(hdmi, fn, codec_dev);
+ }
+ 
++static int dw_hdmi_i2s_prepare(struct device *dev, void *data,
++			       struct hdmi_codec_daifmt *fmt,
++			       struct hdmi_codec_params *hparms)
++{
++	return dw_hdmi_i2s_hw_params(dev, data, fmt, hparms);
++}
++
+ static const struct hdmi_codec_ops dw_hdmi_i2s_ops = {
+ 	.hw_params	= dw_hdmi_i2s_hw_params,
++	.prepare	= dw_hdmi_i2s_prepare,
+ 	.audio_startup  = dw_hdmi_i2s_audio_startup,
+ 	.audio_shutdown	= dw_hdmi_i2s_audio_shutdown,
+ 	.get_eld	= dw_hdmi_i2s_get_eld,
+-- 
+2.43.0
+

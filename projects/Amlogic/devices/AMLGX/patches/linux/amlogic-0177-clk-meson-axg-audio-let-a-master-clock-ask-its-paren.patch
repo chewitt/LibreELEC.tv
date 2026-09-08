@@ -1,0 +1,44 @@
+From 098329c69924f96b9a56c9504864bcb29f5c119d Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Fri, 18 Sep 2026 16:36:01 +0000
+Subject: [PATCH 177/177] clk: meson: axg-audio: let a master clock ask its
+ parent for a rate
+
+The muxes feeding the audio master clocks do not propagate a rate
+request, so a clock is whatever its divider can make of the rate its
+parent happens to be left at.  Nothing asks a PLL for an audio rate, and
+the S/PDIF encoder ends up on mpll2 divided by three, 8ppm below what
+the stream asks for.
+
+Propagate the request, as the GX audio clocks now do.  The mux then
+reaches hifi_pll, which is the audio PLL and can be set so that an
+integer divider lands on the rate exactly: an HBR stream that asked for
+98304000 got 98303213 before and gets 98304000 now.
+
+This depends on the previous patch.  Without it the video decoder shares
+hifi_pll and re-rates it at the start of every stream, so audio would
+gain an exact rate and lose it again to the next decode.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/clk/meson/axg-audio.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/clk/meson/axg-audio.c b/drivers/clk/meson/axg-audio.c
+index fd7eca652261..5f9d14f2546f 100644
+--- a/drivers/clk/meson/axg-audio.c
++++ b/drivers/clk/meson/axg-audio.c
+@@ -250,7 +250,8 @@ static const struct clk_parent_data mst_mux_parent_data[] = {
+ 		 CLK_SET_RATE_PARENT)
+ 
+ #define AUD_MST_MCLK_MUX(_name, _reg)					\
+-	AUD_MST_MUX(_name, _reg, CLK_MUX_ROUND_CLOSEST)
++	AUD_MUX(_name##_sel, _reg, 0x7, 24, CLK_MUX_ROUND_CLOSEST,	\
++		mst_mux_parent_data, CLK_SET_RATE_PARENT)
+ #define AUD_MST_MCLK_DIV(_name, _reg)					\
+ 	AUD_MST_DIV(_name, _reg, CLK_DIVIDER_ROUND_CLOSEST)
+ 
+-- 
+2.43.0
+

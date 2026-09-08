@@ -1,0 +1,60 @@
+From 290713dd6695a8e872291d5e5979f07838444bcf Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 15:17:18 +0000
+Subject: [PATCH 146/177] drm/meson: deep color PLL parameters for GXL and GXM
+
+The GXL/GXM branch knows three VCO frequencies and none of them is a
+deep-color one, so asking this clock code for 3712.5 or 4455 MHz on
+those parts programs m = 0 - a dead PLL.  That is what the G12A-only
+gate in the HDMI encoder exists to prevent.
+
+The silicon is not the limit.  The vendor's set_gxl_hpll_clk_out(),
+which GXL and GXM share, carries both frequencies with the same m
+values G12A uses, and its analog parameters do not vary with the rate:
+CNTL2..CNTL5 are 0x860f30c4 / 0x0c8e0000 / 0x001fa729 / 0x01a31500 at
+2970, 3712.5 and 4455 MHz alike.  Mainline already writes exactly those
+for any m and frac, so the register sequence this produces is
+byte-identical to the vendor's at the new rates:
+
+  3712.5 MHz  m 0x9a  frac 0x2c0 (0x222 at 1000/1001)
+  4455   MHz  m 0xb9  frac 0x280 (0x1c2 at 1000/1001)
+
+This changes nothing on its own - the encoder still refuses deep color
+on these SoCs - but it is what any such offer needs underneath it.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/gpu/drm/meson/meson_vclk.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/gpu/drm/meson/meson_vclk.c b/drivers/gpu/drm/meson/meson_vclk.c
+index 7b9ccdf00baa..b3ece8a844a3 100644
+--- a/drivers/gpu/drm/meson/meson_vclk.c
++++ b/drivers/gpu/drm/meson/meson_vclk.c
+@@ -1012,10 +1012,22 @@ static void meson_vclk_set(struct meson_drm *priv,
+ 			m = 0x7b;
+ 			frac = vic_alternate_clock ? 0x281 : 0x300;
+ 			break;
++		case 3712500000:
++			/* deep color: TMDS x1.25 (vendor hw_gxl.c case
++			 * 3712500, which GXL and GXM share)
++			 */
++			m = 0x9a;
++			frac = vic_alternate_clock ? 0x222 : 0x2c0;
++			break;
+ 		case 4320000000:
+ 			m = vic_alternate_clock ? 0xb3 : 0xb4;
+ 			frac = vic_alternate_clock ? 0x347 : 0;
+ 			break;
++		case 4455000000:
++			/* deep color: TMDS x1.5 (vendor case 4455000) */
++			m = 0xb9;
++			frac = vic_alternate_clock ? 0x1c2 : 0x280;
++			break;
+ 		case 5940000000:
+ 			m = 0xf7;
+ 			frac = vic_alternate_clock ? 0x102 : 0x200;
+-- 
+2.43.0
+

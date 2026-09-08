@@ -1,0 +1,63 @@
+From fcf7b03c0c7fa8d92d8816a257c77451781615af Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 15:17:52 +0000
+Subject: [PATCH 147/177] drm/meson: offer 10-bit deep color on GXM
+
+GXM was refused deep color along with the rest of the GX family, on the
+grounds that the clock code would program a dead PLL.  With the GXL/GXM
+PLL parameters in place that is no longer true, and GXM is the one GX
+part where the depth is real: S912 has a 10-bit pipeline and the 12-to-
+10-bit dithering to feed it, where S905 and S905X have an 8-to-10
+converter sitting in front of the HDMI controller and 8 bits behind it.
+
+So offer 10 bits on GXM and keep 12 for the G12A family, whose pipeline
+carries them.  A 12-bit wire on GXM would be dithered back down to 10
+for the sake of a 1.5x TMDS rate.
+
+GXBB and GXL are unchanged: a deeper wire format there would carry
+upconverted 8-bit data at a higher clock, which buys nothing and puts a
+working modeset at risk.
+
+Untested on GXM hardware.  The clock tree entries are SoC-independent,
+so this changes what a DC_30 sink is offered at 1080p24/25/30,
+1080p50/60 and 4K24/25/30 on GXM from 8 to 10 bits.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/gpu/drm/meson/meson_encoder_hdmi.c | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/meson/meson_encoder_hdmi.c b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+index cd2815d851ad..5ff676a78959 100644
+--- a/drivers/gpu/drm/meson/meson_encoder_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+@@ -393,11 +393,22 @@ meson_encoder_hdmi_get_inp_bus_fmts(struct drm_bridge *bridge,
+ 		return NULL;
+ 
+ 	/*
+-	 * Deep color is implemented (PLL m/frac cases, analog band
+-	 * parameters, VPU dither block) for G12A-family only; on older
+-	 * SoCs the clock code would program a dead PLL.
++	 * Deep color needs PLL parameters for the deeper VCOs, which exist
++	 * for the G12A family and for GXL/GXM, and a pipeline with the bits
++	 * to carry, which is where the parts differ: S912 (GXM) is 10-bit
++	 * throughout and dithers 12 down to it, while S905 and S905X have
++	 * an 8-to-10 converter in front of the HDMI controller and nothing
++	 * behind it - a deeper wire format there carries upconverted 8-bit
++	 * data at a higher clock, which is worth nothing and risks the
++	 * modeset.  So: 10 and 12 bits on G12A-family, 10 bits on GXM,
++	 * 8 bits everywhere else.
+ 	 */
+ 	if (meson_encoder_hdmi_fmt_depth(output_fmt) > 8 &&
++	    !meson_vpu_is_compatible(encoder_hdmi->priv, VPU_COMPATIBLE_G12A) &&
++	    !meson_vpu_is_compatible(encoder_hdmi->priv, VPU_COMPATIBLE_GXM))
++		return NULL;
++
++	if (meson_encoder_hdmi_fmt_depth(output_fmt) > 10 &&
+ 	    !meson_vpu_is_compatible(encoder_hdmi->priv, VPU_COMPATIBLE_G12A))
+ 		return NULL;
+ 
+-- 
+2.43.0
+

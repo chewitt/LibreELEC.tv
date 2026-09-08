@@ -1,0 +1,65 @@
+From 1e30a44cf154301d05a249cd6dc28e975f960027 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 14 Sep 2026 20:33:25 +0000
+Subject: [PATCH 162/177] ASoC: hdmi-codec: register the sink controls once per
+ codec
+
+hdmi_codec_pcm_new() runs for every DAI, and a codec registered with
+both i2s and spdif has two.  The ELD, channel map and IEC958 controls
+describe the sink rather than the DAI, so the second pass adds the same
+controls again and overwrites chmap_info.
+
+Whether that is visible depends on the device numbers the two PCMs get.
+Where they collide, snd_ctl_add() refuses the duplicate and the card
+fails to probe:
+
+  control 3:0:0:Playback Channel Map:0 is already present
+  ASoC error (-16): at snd_soc_pcm_dai_new() on spdif-hifi
+
+Register them once.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ sound/soc/codecs/hdmi-codec.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/sound/soc/codecs/hdmi-codec.c b/sound/soc/codecs/hdmi-codec.c
+index 531497ee19a8..5bbf7e22292d 100644
+--- a/sound/soc/codecs/hdmi-codec.c
++++ b/sound/soc/codecs/hdmi-codec.c
+@@ -291,6 +291,7 @@ struct hdmi_codec_priv {
+ 	unsigned int jack_status;
+ 	u8 iec_status[AES_IEC958_STATUS_SIZE];
+ 	struct snd_info_entry *proc_entry;
++	bool ctls_added;
+ };
+ 
+ static const struct snd_soc_dapm_widget hdmi_widgets[] = {
+@@ -800,6 +801,14 @@ static int hdmi_codec_pcm_new(struct snd_soc_pcm_runtime *rtd,
+ 	unsigned int i;
+ 	int ret;
+ 
++	/*
++	 * Both DAIs of a codec describe the same sink, so the ELD, channel map
++	 * and IEC958 controls only need registering once.  Doing it per DAI
++	 * also overwrites chmap_info.
++	 */
++	if (hcp->ctls_added)
++		return 0;
++
+ 	ret =  snd_pcm_add_chmap_ctls(rtd->pcm, SNDRV_PCM_STREAM_PLAYBACK,
+ 				      NULL, drv->playback.channels_max, 0,
+ 				      &hcp->chmap_info);
+@@ -829,6 +838,8 @@ static int hdmi_codec_pcm_new(struct snd_soc_pcm_runtime *rtd,
+ 			return ret;
+ 	}
+ 
++	hcp->ctls_added = true;
++
+ 	return 0;
+ }
+ 
+-- 
+2.43.0
+

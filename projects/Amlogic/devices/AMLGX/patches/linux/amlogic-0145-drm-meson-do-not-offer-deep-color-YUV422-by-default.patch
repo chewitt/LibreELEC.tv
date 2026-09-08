@@ -1,0 +1,76 @@
+From 8c8f00256f0c426b6e1995d913c8ebfae3df7d4b Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 14:06:56 +0000
+Subject: [PATCH 145/177] drm/meson: do not offer deep-color YUV422 by default
+
+A mode with no 444 deep-color clock entry does not fall back to 8 bits.
+It falls into YUV422, because 422 carries deep color at the 8-bit TMDS
+rate and is therefore exempt from the clock gate that rejects every
+other deep-color format the clock tree cannot deliver.  Nothing logs
+it: the gate refuses 444 during format negotiation, so the "invalid
+HDMI vclk freq" error that would name the missing entry is never
+reached, and the sink is handed a format it may not lock.
+
+That is how a G12B board lost HDMI sync on every switch to 1080p23.98
+until the 74.25 MHz entries were added.  Walking dw-hdmi's preference
+order for that mode against what this driver offers: 444 12-bit gated
+out, RGB 12-bit and 422 12-bit not offered at all, 444 10-bit gated
+out, and then 422 10-bit - exempt - accepted.  27 MHz and 54 MHz still
+have no 444 deep-color entries and would do the same.
+
+Gate 422 above 8 bits only.  8-bit 422 stays, because it is not a
+theoretical path: dw-hdmi orders UYVY8_1X16 ahead of YUV8_1X24, so
+every 8-bit fallback already takes it, and on GXBB, GXL and GXM - where
+deep color is refused outright - that is every mode on every board.
+Those boards display correctly, which is the evidence that 8-bit 422
+works here; nothing suggests the same of the deep-color variant, which
+has been selected exactly once and went dark.
+
+Nothing is lost at 2160p60, where 422 would be the only unsubsampled
+route above 8 bits: MEDIA_BUS_FMT_UYVY12_1X24 is not in this driver's
+format list, so 12-bit 422 has never been reachable.  What deep_422=Y
+restores is the 10-bit variant, for fixing or measuring it.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/gpu/drm/meson/meson_encoder_hdmi.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/drivers/gpu/drm/meson/meson_encoder_hdmi.c b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+index e64b3cc6454d..cd2815d851ad 100644
+--- a/drivers/gpu/drm/meson/meson_encoder_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+@@ -44,6 +44,18 @@ module_param(scrambled_deep, bool, 0644);
+ MODULE_PARM_DESC(scrambled_deep,
+ 		 "Offer deep color above 340 MHz TMDS (default Y; N restricts to the unscrambled domain)");
+ 
++/*
++ * YUV422 carries deep color at the 8-bit TMDS rate, so it is the one
++ * wire format the clock gate below cannot refuse - which makes it what
++ * negotiation falls into when a mode has no 444 entry at any depth,
++ * with nothing in any log to say so.  8-bit 422 is what every GX board
++ * has always run and is left alone; deep-color 422 is opt-in.
++ */
++static bool deep_422;
++module_param(deep_422, bool, 0644);
++MODULE_PARM_DESC(deep_422,
++		 "Offer YUV422 above 8 bits (default N; it bypasses the deep-color clock gate)");
++
+ struct meson_encoder_hdmi {
+ 	struct drm_encoder encoder;
+ 	struct drm_bridge bridge;
+@@ -376,6 +388,10 @@ meson_encoder_hdmi_get_inp_bus_fmts(struct drm_bridge *bridge,
+ 
+ 	*num_input_fmts = 0;
+ 
++	if (meson_encoder_hdmi_fmt_is_422(output_fmt) &&
++	    meson_encoder_hdmi_fmt_depth(output_fmt) > 8 && !deep_422)
++		return NULL;
++
+ 	/*
+ 	 * Deep color is implemented (PLL m/frac cases, analog band
+ 	 * parameters, VPU dither block) for G12A-family only; on older
+-- 
+2.43.0
+

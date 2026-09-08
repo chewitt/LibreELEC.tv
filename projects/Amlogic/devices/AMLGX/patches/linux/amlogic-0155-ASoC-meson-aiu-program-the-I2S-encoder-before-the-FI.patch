@@ -1,0 +1,61 @@
+From bb714a0bc2ebb75fb6699b35ef3e0de83742edc9 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 16:29:20 +0000
+Subject: [PATCH 155/177] ASoC: meson: aiu: program the I2S encoder before the
+ FIFO starts
+
+aiu_formatter_i2s_prepare() writes the channel count and sample width
+into AIU_I2S_SOURCE_DESC, but it runs from gx_stream_start() at the
+encoder's trigger, by which time aiu_fifo_i2s_trigger() has already
+reset the pipeline and started the FIFO.  The encoder therefore keeps
+consuming frames in whatever mode the previous stream left behind.
+
+Two channels are unaffected, so this shows up as silence, buffer
+underruns or static on an eight channel stream only.
+
+Start the stream from the encoder's prepare instead, so the formatter is
+configured before the FIFO runs.  The call left in trigger is harmless,
+gx_formatter_enable() returns early once enabled, and still covers
+resume and pause release.
+
+Fixes: 83b83024cdbf ("ASoC: meson: aiu: use aiu-formatter-i2s to format I2S output data")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ sound/soc/meson/aiu-encoder-i2s.c | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
+
+diff --git a/sound/soc/meson/aiu-encoder-i2s.c b/sound/soc/meson/aiu-encoder-i2s.c
+index 58dce9f08c9d..d7e76656f557 100644
+--- a/sound/soc/meson/aiu-encoder-i2s.c
++++ b/sound/soc/meson/aiu-encoder-i2s.c
+@@ -201,18 +201,17 @@ static int aiu_encoder_i2s_prepare(struct snd_pcm_substream *substream,
+ 	struct snd_soc_component *component = dai->component;
+ 	int ret;
+ 
+-	if (ts->clk_enabled)
+-		return 0;
+-
+-	ret = clk_prepare_enable(ts->iface->mclk);
+-	if (ret)
+-		return ret;
++	if (!ts->clk_enabled) {
++		ret = clk_prepare_enable(ts->iface->mclk);
++		if (ret)
++			return ret;
+ 
+-	ts->clk_enabled = true;
++		ts->clk_enabled = true;
+ 
+-	aiu_encoder_i2s_divider_enable(component, true);
++		aiu_encoder_i2s_divider_enable(component, true);
++	}
+ 
+-	return 0;
++	return gx_stream_start(ts);
+ }
+ 
+ static int aiu_encoder_i2s_hw_free(struct snd_pcm_substream *substream,
+-- 
+2.43.0
+

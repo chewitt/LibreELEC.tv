@@ -1,0 +1,60 @@
+From 7de72c5b43c86dc7e751dcb3a71aaa5496b40f6f Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 19 Sep 2026 11:00:56 +0000
+Subject: [PATCH 158/177] ASoC: meson: aiu: put the channel status bytes in the
+ right order
+
+The SPDIF encoder takes the channel status word as two 16 bit halves,
+each holding the bits in the order they go on the wire: the datasheet
+says AIU_958_chstat_l0 "contains Bits 15:0 of the channel status word.
+Note that bit zero of the channel status word is sent out first", so
+byte 0 belongs in the low half of the register and byte 1 in the high
+half.
+
+The driver writes them the other way round, and has since it was added,
+so every subframe carries byte 1 where the receiver looks for byte 0 and
+byte 3 where it looks for byte 2.  A receiver is therefore told the
+category code in place of the mode bits and, worse, reads the sample
+rate out of byte 2 rather than byte 3: a stream is announced as 44.1kHz
+whatever it is, because byte 2 is zero and zero is 44.1kHz.
+
+The vendor driver writes 0x8206 and 0x0900 where this one writes 0x0682
+and 0x0009, for the same stream on the same silicon.
+
+It is hard to notice for linear PCM, where the receiver locks to the
+rate it is given and the channel status is advisory.  It is not hard to
+notice for a compressed stream at a high frame rate, where a receiver
+told 44.1kHz while the frame runs at 768kHz loses lock every few
+seconds.
+
+The AXG encoder already gets this right.
+
+Fixes: 6ae9ca9ce986 ("ASoC: meson: aiu: add i2s and spdif support")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ sound/soc/meson/aiu-encoder-spdif.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sound/soc/meson/aiu-encoder-spdif.c b/sound/soc/meson/aiu-encoder-spdif.c
+index 97da60db2c4d..5d654e17c45f 100644
+--- a/sound/soc/meson/aiu-encoder-spdif.c
++++ b/sound/soc/meson/aiu-encoder-spdif.c
+@@ -80,12 +80,12 @@ static int aiu_encoder_spdif_setup_cs_word(struct snd_soc_component *component,
+ 		return ret;
+ 
+ 	/* Write the 1st half word */
+-	val = cs[1] | cs[0] << 8;
++	val = cs[0] | cs[1] << 8;
+ 	snd_soc_component_write(component, AIU_958_CHSTAT_L0, val);
+ 	snd_soc_component_write(component, AIU_958_CHSTAT_R0, val);
+ 
+ 	/* Write the 2nd half word */
+-	val = cs[3] | cs[2] << 8;
++	val = cs[2] | cs[3] << 8;
+ 	snd_soc_component_write(component, AIU_958_CHSTAT_L1, val);
+ 	snd_soc_component_write(component, AIU_958_CHSTAT_R1, val);
+ 
+-- 
+2.43.0
+

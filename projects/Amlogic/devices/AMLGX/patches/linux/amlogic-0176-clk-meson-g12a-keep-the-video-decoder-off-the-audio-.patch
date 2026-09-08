@@ -1,0 +1,83 @@
+From d325f869132b9d4c2842896c9fa1763c5e81c8b0 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Fri, 18 Sep 2026 16:56:17 +0000
+Subject: [PATCH 176/177] clk: meson: g12a: keep the video decoder off the
+ audio and GP0 PLLs
+
+The three video decoder muxes may pick hifi_pll or gp0_pll and carry
+CLK_SET_RATE_PARENT, so a decoder asking for its clock rate is free to
+reprogram either PLL.  The decoder does exactly that at the start of
+every stream, which pulls the PLL to a video rate under whoever else is
+using it.
+
+hifi_pll is the audio PLL, and once an audio master clock is allowed to
+ask its own parent for a rate the two collide: on a G12B board playing
+a compressed stream over HDMI, both the S/PDIF output and the decoder
+end up on hifi_pll, and the next stream the decoder starts drags the
+audio clock with it.
+
+Drop both PLLs from the parent list and select the remaining parents
+through a mux table, as the vendor driver does.  Every rate the decoder
+asks for is available from the fixed dividers, so it loses nothing: it
+asks for 666666666 and fclk_div3 answers, which is where it already sat
+before it was allowed to reparent.
+
+This mirrors the two muxes that already decline.  mali_0_sel carries no
+flags, with a comment saying the MPLLs are needed for audio, and
+vpu_0_sel is CLK_SET_RATE_NO_REPARENT.  The decoder was the one that
+was missed.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/clk/meson/g12a.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/clk/meson/g12a.c b/drivers/clk/meson/g12a.c
+index d0d4c7b6dc82..3b6c9f976b78 100644
+--- a/drivers/clk/meson/g12a.c
++++ b/drivers/clk/meson/g12a.c
+@@ -2928,14 +2928,14 @@ static struct clk_regmap g12a_vpu = {
+ 
+ /* VDEC clocks */
+ 
++static u32 g12a_vdec_mux_table[] = { 0, 1, 2, 3, 4 };
++
+ static const struct clk_hw *g12a_vdec_parents[] = {
+ 	&g12a_fclk_div2p5.hw,
+ 	&g12a_fclk_div3.hw,
+ 	&g12a_fclk_div4.hw,
+ 	&g12a_fclk_div5.hw,
+ 	&g12a_fclk_div7.hw,
+-	&g12a_hifi_pll.hw,
+-	&g12a_gp0_pll.hw,
+ };
+ 
+ static struct clk_regmap g12a_vdec_1_sel = {
+@@ -2944,6 +2944,7 @@ static struct clk_regmap g12a_vdec_1_sel = {
+ 		.mask = 0x7,
+ 		.shift = 9,
+ 		.flags = CLK_MUX_ROUND_CLOSEST,
++		.table = g12a_vdec_mux_table,
+ 	},
+ 	.hw.init = &(struct clk_init_data){
+ 		.name = "vdec_1_sel",
+@@ -2994,6 +2995,7 @@ static struct clk_regmap g12a_vdec_hevcf_sel = {
+ 		.mask = 0x7,
+ 		.shift = 9,
+ 		.flags = CLK_MUX_ROUND_CLOSEST,
++		.table = g12a_vdec_mux_table,
+ 	},
+ 	.hw.init = &(struct clk_init_data){
+ 		.name = "vdec_hevcf_sel",
+@@ -3044,6 +3046,7 @@ static struct clk_regmap g12a_vdec_hevc_sel = {
+ 		.mask = 0x7,
+ 		.shift = 25,
+ 		.flags = CLK_MUX_ROUND_CLOSEST,
++		.table = g12a_vdec_mux_table,
+ 	},
+ 	.hw.init = &(struct clk_init_data){
+ 		.name = "vdec_hevc_sel",
+-- 
+2.43.0
+

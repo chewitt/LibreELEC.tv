@@ -1,0 +1,242 @@
+From 8413d6bebb96caf7b64a78384ce6a0833584b336 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 14 Sep 2026 16:39:38 +0000
+Subject: [PATCH 163/177] drm/bridge: dw-hdmi: support the SPDIF audio input
+
+The controller can sample audio from either its I2S or its SPDIF input,
+but only I2S is driven: dw_hdmi_i2s_hw_params() rejects HDMI_SPDIF as an
+unsupported format, and the codec is registered without the spdif DAI
+that would produce it.  Every other HDMI driver in the tree handles
+HDMI_SPDIF.
+
+Program the SPDIF sampler when the DAI format asks for it - AUD_CONF0
+clear so I2S_SELECT and the lane enables are off, the width in
+AUD_SPDIF1, and a reset of the SPDIF FIFO alongside the I2S one.
+AUD_CONF2 stays clear because that interface takes C, U and V from the
+stream, so an ordinary compressed stream carries the non-PCM bit in the
+incoming channel status.
+
+A frame carries one subframe per channel, so the clock the sampler is
+told to expect follows the channel count: 128FS for the stereo frame an
+ordinary stream arrives in, and 512FS for the eight subframes of an HBR
+stream, which arrives at four times the rate.  Anything the register
+cannot describe is rejected rather than mis-clocked; IEC61937 uses two
+channels for NLPCM and eight for HBR, so only those ratios arise.
+
+HBR is the exception in what it must be told, too.  It is packetised
+differently and the sampler cannot infer it, so name it in AUD_SPDIF1 as
+the vendor driver does, setting SETNLPCM and HBR together for a non-PCM
+stream of eight channels.  Hoist that test out of the I2S path, which
+already made the same decision for AUD_CONF2, so both interfaces agree on
+what HBR is.  Such a stream fills the eight channel container whatever
+the bitstream inside it decodes to, so the speaker allocation is a
+property of the transport: name the eight channel allocation for it
+rather than take the one the HDMI codec derives from a channel map a
+compressed stream does not have.
+
+Register the spdif DAI as well as i2s.  A device tree that binds the
+codec without an index still gets i2s, which is the first DAI, so
+existing users are unaffected.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ .../drm/bridge/synopsys/dw-hdmi-i2s-audio.c   | 98 +++++++++++++++----
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.h     | 11 +++
+ 2 files changed, 92 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
+index 166cdc19eea3..29ec2b63cc9a 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
+@@ -35,6 +35,9 @@ static inline u8 hdmi_read(struct dw_hdmi_i2s_audio_data *audio, int offset)
+ 	return audio->read(hdmi, offset);
+ }
+ 
++/* HBR fills the eight channel container, whatever the stream's own map */
++#define DW_HDMI_HBR_CHANNEL_ALLOCATION	0x13
++
+ static int dw_hdmi_i2s_hw_params(struct device *dev, void *data,
+ 				 struct hdmi_codec_daifmt *fmt,
+ 				 struct hdmi_codec_params *hparms)
+@@ -45,16 +48,30 @@ static int dw_hdmi_i2s_hw_params(struct device *dev, void *data,
+ 	u8 conf1 = 0;
+ 	u8 conf2 = 0;
+ 	u8 inputclkfs = 0;
++	bool spdif = fmt->fmt == HDMI_SPDIF;
++	u8 spdif0 = 0, spdif1;
++	bool hbr;
+ 
+-	/* it cares I2S only */
+-	if (fmt->bit_clk_provider | fmt->frame_clk_provider) {
++	/* the clock settings describe the I2S interface only */
++	if (!spdif && (fmt->bit_clk_provider | fmt->frame_clk_provider)) {
+ 		dev_err(dev, "unsupported clock settings\n");
+ 		return -EINVAL;
+ 	}
+ 
+ 	/* Reset the FIFOs before applying new params */
+ 	hdmi_write(audio, HDMI_AUD_CONF0_SW_RESET, HDMI_AUD_CONF0);
+-	hdmi_write(audio, (u8)~HDMI_MC_SWRSTZ_I2SSWRST_REQ, HDMI_MC_SWRSTZ);
++	if (spdif) {
++		spdif0 = hdmi_read(audio, HDMI_AUD_SPDIF0);
++		hdmi_write(audio, spdif0 | HDMI_AUD_SPDIF0_SW_RESET,
++			   HDMI_AUD_SPDIF0);
++		hdmi_write(audio, spdif0, HDMI_AUD_SPDIF0);
++		hdmi_write(audio, (u8)~(HDMI_MC_SWRSTZ_I2SSWRST_REQ |
++					HDMI_MC_SWRSTZ_SPDIFSWRST_REQ),
++			   HDMI_MC_SWRSTZ);
++	} else {
++		hdmi_write(audio, (u8)~HDMI_MC_SWRSTZ_I2SSWRST_REQ,
++			   HDMI_MC_SWRSTZ);
++	}
+ 
+ 	inputclkfs	= HDMI_AUD_INPUTCLKFS_64FS;
+ 	conf0		= (HDMI_AUD_CONF0_I2S_SELECT | HDMI_AUD_CONF0_I2S_EN0);
+@@ -83,6 +100,9 @@ static int dw_hdmi_i2s_hw_params(struct device *dev, void *data,
+ 	}
+ 
+ 	switch (fmt->fmt) {
++	case HDMI_SPDIF:
++		/* AUD_CONF1 describes the I2S sampler */
++		break;
+ 	case HDMI_I2S:
+ 		conf1 |= HDMI_AUD_CONF1_MODE_I2S;
+ 		break;
+@@ -110,32 +130,75 @@ static int dw_hdmi_i2s_hw_params(struct device *dev, void *data,
+ 	 * AUD_CONF2 rather than from the stream.  dw-hdmi-gp-audio.c already
+ 	 * derives it the same way for the GP path.
+ 	 */
+-	if (hparms->iec.status[0] & IEC958_AES0_NONAUDIO) {
++	/*
++	 * HBR (TrueHD, DTS-HD MA) is the same IEC61937 payload spread over all
++	 * of the lanes at four times the rate, and the controller packetises
++	 * it differently -- HBR and NLPCM select the packet type, so they are
++	 * alternatives, not flags to combine.  Eight non-PCM channels is what
++	 * distinguishes them; dw-hdmi-qp makes the same 8-channel decision.
++	 */
++	hbr = (hparms->iec.status[0] & IEC958_AES0_NONAUDIO) &&
++	      hparms->channels == 8;
++
++	if (hparms->iec.status[0] & IEC958_AES0_NONAUDIO)
++		conf2 |= hbr ? HDMI_AUD_CONF2_HBR : HDMI_AUD_CONF2_NLPCM;
++
++	if (spdif) {
+ 		/*
+-		 * HBR (TrueHD, DTS-HD MA) is the same IEC61937 payload spread
+-		 * over all four I2S lanes at four times the rate, and the
+-		 * controller packetises it differently -- HBR and NLPCM select
+-		 * the packet type, so they are alternatives, not flags to
+-		 * combine.  Eight non-PCM channels is what distinguishes them;
+-		 * dw-hdmi-qp makes the same 8-channel decision.
++		 * The SPDIF sampler takes C, U and V from the stream, so the
++		 * non-PCM bit arrives in the incoming channel status rather
++		 * than from AUD_CONF2.
++		 *
++		 * A frame carries one subframe per channel, so the input
++		 * clock runs at 64 times the channel count: an HBR stream
++		 * fills all eight subframes and arrives at four times the
++		 * rate of a stereo frame.
+ 		 */
+-		if (hparms->channels == 8)
+-			conf2 |= HDMI_AUD_CONF2_HBR;
+-		else
+-			conf2 |= HDMI_AUD_CONF2_NLPCM;
++		switch (hparms->channels) {
++		case 1 ... 2:
++			inputclkfs = HDMI_AUD_INPUTCLKFS_128FS;
++			break;
++		case 4:
++			inputclkfs = HDMI_AUD_INPUTCLKFS_256FS;
++			break;
++		case 8:
++			inputclkfs = HDMI_AUD_INPUTCLKFS_512FS;
++			break;
++		default:
++			dev_err(dev, "unsupported channel count for spdif: %u\n",
++				hparms->channels);
++			return -EINVAL;
++		}
++		conf0 = 0;
++		conf2 = 0;
+ 	}
+ 
+ 	dw_hdmi_set_sample_rate(hdmi, hparms->sample_rate);
+-	dw_hdmi_set_channel_status(hdmi, hparms->iec.status,
+-				   conf2 & HDMI_AUD_CONF2_HBR);
++	dw_hdmi_set_channel_status(hdmi, hparms->iec.status, hbr);
+ 	dw_hdmi_set_channel_count(hdmi, hparms->channels);
+-	dw_hdmi_set_channel_allocation(hdmi, hparms->cea.channel_allocation);
++	dw_hdmi_set_channel_allocation(hdmi, hbr ? DW_HDMI_HBR_CHANNEL_ALLOCATION :
++					     hparms->cea.channel_allocation);
+ 
+ 	hdmi_write(audio, inputclkfs, HDMI_AUD_INPUTCLKFS);
+ 	hdmi_write(audio, conf0, HDMI_AUD_CONF0);
+ 	hdmi_write(audio, conf1, HDMI_AUD_CONF1);
+ 	/* written unconditionally so a passthrough->PCM switch clears NLPCM */
+ 	hdmi_write(audio, conf2, HDMI_AUD_CONF2);
++	if (spdif) {
++		/*
++		 * The SPDIF sampler takes the non-PCM bit from the incoming
++		 * channel status, but an HBR stream is packetised differently
++		 * and has to be named here.
++		 */
++		spdif1 = 24 & HDMI_AUD_SPDIF1_WIDTH_MASK;
++		if (hbr)
++			spdif1 |= HDMI_AUD_SPDIF1_SETNLPCM |
++				  HDMI_AUD_SPDIF1_HBR;
++		hdmi_write(audio, spdif1, HDMI_AUD_SPDIF1);
++		hdmi_write(audio, spdif0 | HDMI_AUD_SPDIF0_SW_RESET,
++			   HDMI_AUD_SPDIF0);
++		hdmi_write(audio, spdif0, HDMI_AUD_SPDIF0);
++	}
+ 
+ 	return 0;
+ }
+@@ -225,6 +288,7 @@ static int snd_dw_hdmi_probe(struct platform_device *pdev)
+ 	pdata.ops		= &dw_hdmi_i2s_ops;
+ 	pdata.i2s		= 1;
+ 	pdata.max_i2s_channels	= 8;
++	pdata.spdif		= 1;
+ 	pdata.data		= audio;
+ 
+ 	memset(&pdevinfo, 0, sizeof(pdevinfo));
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.h b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.h
+index b95f67daef98..1975892f74ca 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.h
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.h
+@@ -402,6 +402,8 @@
+ #define HDMI_AUD_CTS2                           0x3204
+ #define HDMI_AUD_CTS3                           0x3205
+ #define HDMI_AUD_INPUTCLKFS                     0x3206
++#define HDMI_AUD_SPDIF0				0x3300
++#define HDMI_AUD_SPDIF1				0x3301
+ #define HDMI_AUD_SPDIFINT			0x3302
+ #define HDMI_AUD_CONF0_HBR                      0x3400
+ #define HDMI_AUD_HBR_STATUS                     0x3401
+@@ -955,6 +957,14 @@ enum {
+ 	HDMI_AUD_INPUTCLKFS_512FS = 2,
+ 	HDMI_AUD_INPUTCLKFS_64FS = 4,
+ 
++/* HDMI_AUD_SPDIF0 field values */
++	HDMI_AUD_SPDIF0_SW_RESET = 0x80,
++
++/* HDMI_AUD_SPDIF1 field values */
++	HDMI_AUD_SPDIF1_SETNLPCM = 0x80,
++	HDMI_AUD_SPDIF1_HBR = 0x40,
++	HDMI_AUD_SPDIF1_WIDTH_MASK = 0x1f,
++
+ /* AHB_DMA_CONF0 field values */
+ 	HDMI_AHB_DMA_CONF0_SW_FIFO_RST_OFFSET = 7,
+ 	HDMI_AHB_DMA_CONF0_SW_FIFO_RST_MASK = 0x80,
+@@ -1000,6 +1010,7 @@ enum {
+ 
+ /* MC_SWRSTZ field values */
+ 	HDMI_MC_SWRSTZ_I2SSWRST_REQ = 0x08,
++	HDMI_MC_SWRSTZ_SPDIFSWRST_REQ = 0x10,
+ 	HDMI_MC_SWRSTZ_TMDSSWRST_REQ = 0x02,
+ 
+ /* MC_FLOWCTRL field values */
+-- 
+2.43.0
+
