@@ -1,0 +1,479 @@
+From e76306b9ad8be7664083505722bc42407d2b7c68 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 076/145] media: meson: vdec: extend the reset discipline to
+ VDEC_1
+
+The DMC park/scrub bracket added for VDEC_HEVC applies just as much to
+VDEC_1 (MPEG1/2, H.264): a session can end with a sub-engine stuck
+mid-transaction, and resetting or power-gating in that state wedges the
+unit's DDR-controller port and takes the SoC down past even a hardware
+watchdog reset.  VDEC_1 currently has none of the discipline - it fires
+a blanket DOS_SW_RESET0 = 0xfffffffc with the port live and no drain of
+any kind, which is precisely the pattern that proved lethal on HEVC.
+
+The port to park is DMC_REQ_CTRL BIT(21).  The A311D datasheet's memory
+interface chapter names it "ambus chan 5, DOS VDEC interface", and it
+is confirmed on silicon: sampling DMC_CHAN_STS per channel, bit 21
+reads busy in 72% of samples during an H.264 decode and is completely
+idle otherwise, while the VDEC_HEVC channels (axibus 4 "hevc front" and
+8 "hevc_b") are idle throughout - and under HEVC exactly the reverse,
+at 11.7% and 76.9%.  Pre-G12A parts use bit 13 for the same port; only
+G12A+ is wired up here because that is what has been validated.
+
+Since both units now need them, the DMC park/unpark and the G12B DMC
+pipeline pulse move to vdec_helpers as mask-taking helpers, and
+vdec_hevc.c uses them for its own mask.  No behavioural change there.
+
+VDEC_1 gains:
+ - vdec_1_stop_armrisc(): halt MPSR/CPSR and drain the IMEM and LMEM
+   DMA engines before anything resets (vendor vdec_stop_armrisc()),
+ - a targeted sub-engine reset set - vld(3), vld_part(4), vfifo(5),
+   mc(7), dblk(8), pic_dc(9) - per the vendor's vdec_reset_core(),
+   notably excluding ddr(13) and mcpu/ccpu(11/12),
+ - the park/scrub bracket at both power edges, with the park taken
+   before the domain comes up (that register is outside the domain) and
+   the scrub run only once memories are powered and isolation removed,
+ - the firmware-load poll converted from a bare iteration spin to real
+   delays with a 1 s budget; declaring success while the IMEM DMA is
+   still running starts the processor on half-loaded microcode.
+
+Validated on a VIM3 (G12B), ACPI mode: H.264 1080p and 4K are
+frame-md5 exact against software decode (300/300, 300/300, 150/150),
+HEVC 4K Main10 is unregressed at 91 fps, and 30 alternating
+VDEC_1/VDEC_HEVC teardown cycles run with zero failures and no kernel
+warnings.
+---
+ drivers/staging/media/meson/vdec/vdec_1.c     | 131 +++++++++++++++++-
+ .../staging/media/meson/vdec/vdec_helpers.c   |  76 ++++++++++
+ .../staging/media/meson/vdec/vdec_helpers.h   |  19 +++
+ drivers/staging/media/meson/vdec/vdec_hevc.c  |  65 +++------
+ 4 files changed, 241 insertions(+), 50 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec_1.c b/drivers/staging/media/meson/vdec/vdec_1.c
+index a65cb4959446..06c47b6b9c5d 100644
+--- a/drivers/staging/media/meson/vdec/vdec_1.c
++++ b/drivers/staging/media/meson/vdec/vdec_1.c
+@@ -9,6 +9,7 @@
+ 
+ #include <linux/firmware.h>
+ #include <linux/clk.h>
++#include <linux/delay.h>
+ 
+ #include "vdec_1.h"
+ #include "vdec_helpers.h"
+@@ -22,6 +23,92 @@
+ 
+ #define MC_SIZE			(4096 * 4)
+ 
++/*
++ * DMC request port of this unit: ambus channel 5, "DOS VDEC interface"
++ * (A311D datasheet, memory-interface chapter).  Confirmed on silicon:
++ * the channel reads busy in 72 % of samples during an H.264 decode and
++ * is completely idle otherwise, while the VDEC_HEVC channels (4 and 8)
++ * stay idle throughout - and vice versa.
++ *
++ * Pre-G12A parts use bit 13 for the same port; only G12A+ is wired up
++ * here because that is what has been validated.
++ */
++#define DMC_REQ_VDEC_1		BIT(21)
++
++/*
++ * Targeted VDEC_1 sub-engine reset set (vendor vdec_reset_core()):
++ * vld(3), vld_part(4), vfifo(5), mc(7), dblk(8), pic_dc(9).  Notably
++ * this does NOT include ddr(13) or mcpu/ccpu(11/12) - the blanket
++ * DOS_SW_RESET0 that mainline fires does, which is exactly what makes
++ * an unparked reset lethal.
++ */
++#define DOS_SW_RESET0_VDEC_1_QUIESCE					\
++	(BIT(3) | BIT(4) | BIT(5) | BIT(7) | BIT(8) | BIT(9))
++
++static bool vdec_1_is_g12(struct amvdec_core *core)
++{
++	return core->platform->revision == VDEC_REVISION_G12A ||
++	       core->platform->revision == VDEC_REVISION_SM1;
++}
++
++/*
++ * Stop the AMRISC processors and wait for their DMA engines to drain
++ * (vendor vdec_stop_armrisc()).  Resetting or power-gating with these
++ * in flight wedges the unit's DDR-controller port - fatally, beyond
++ * even a watchdog reset.
++ */
++static void vdec_1_stop_armrisc(struct amvdec_core *core)
++{
++	int i;
++
++	amvdec_write_dos(core, MPSR, 0);
++	amvdec_write_dos(core, CPSR, 0);
++
++	for (i = 0; i < 1000; i++) {
++		if (!(amvdec_read_dos(core, IMEM_DMA_CTRL) & 0x8000))
++			break;
++		udelay(10);
++	}
++	for (i = 0; i < 1000; i++) {
++		if (!(amvdec_read_dos(core, LMEM_DMA_CTRL) & 0x8000))
++			break;
++		udelay(10);
++	}
++	if (i == 1000)
++		dev_warn(core->dev, "VDEC_1 LMEM DMA did not drain\n");
++}
++
++/*
++ * Scrub the VDEC_1 sub-engines: targeted reset plus the G12B DMC
++ * pipeline pulse.  Touches DOS registers, so the power domain MUST be
++ * fully up (memories powered, isolation removed).  Call only between
++ * park and unpark.
++ */
++static void vdec_1_core_scrub(struct amvdec_core *core)
++{
++	amvdec_write_dos(core, DOS_SW_RESET0, DOS_SW_RESET0_VDEC_1_QUIESCE);
++	udelay(10);
++	amvdec_write_dos(core, DOS_SW_RESET0, 0);
++
++	amvdec_dmc_pipeline_reset(core);
++}
++
++/*
++ * Full bracket for use when the power domain is up.  Harmless on a
++ * healthy, idle core.
++ */
++static void vdec_1_quiesce_reset(struct amvdec_core *core)
++{
++	if (!vdec_1_is_g12(core)) {
++		vdec_1_core_scrub(core);
++		return;
++	}
++
++	amvdec_dmc_park(core, DMC_REQ_VDEC_1);
++	vdec_1_core_scrub(core);
++	amvdec_dmc_unpark(core, DMC_REQ_VDEC_1);
++}
++
+ static int
+ vdec_1_load_firmware(struct amvdec_session *sess, const char *fwname)
+ {
+@@ -63,7 +150,18 @@ vdec_1_load_firmware(struct amvdec_session *sess, const char *fwname)
+ 	amvdec_write_dos(core, IMEM_DMA_COUNT, MC_SIZE / 4);
+ 	amvdec_write_dos(core, IMEM_DMA_CTRL, (0x8000 | (7 << 16)));
+ 
+-	while (--i && amvdec_read_dos(core, IMEM_DMA_CTRL) & 0x8000);
++	/*
++	 * The vendor waits up to a full second with real delays; a bare
++	 * iteration spin can declare success while the IMEM DMA is still
++	 * running, and starting the processor on half-loaded microcode
++	 * means arbitrary DMA from a bus master - a fatal DMC wedge on a
++	 * session restart.
++	 */
++	i = 100000;
++	while (i && (amvdec_read_dos(core, IMEM_DMA_CTRL) & 0x8000)) {
++		udelay(10);
++		i--;
++	}
+ 
+ 	if (i == 0) {
+ 		dev_err(dev, "Firmware load fail (DMA hang?)\n");
+@@ -134,14 +232,23 @@ static void __vdec_1_stop(struct amvdec_session *sess)
+ 	struct amvdec_core *core = sess->core;
+ 	struct amvdec_codec_ops *codec_ops = sess->fmt_out->codec_ops;
+ 
+-	amvdec_write_dos(core, MPSR, 0);
+-	amvdec_write_dos(core, CPSR, 0);
+ 	amvdec_write_dos(core, ASSIST_MBOX1_MASK, 0);
+ 
++	/* Stop the firmware processors and drain their DMA first */
++	vdec_1_stop_armrisc(core);
++
+ 	amvdec_write_dos(core, DOS_SW_RESET0, BIT(12) | BIT(11));
+ 	amvdec_write_dos(core, DOS_SW_RESET0, 0);
+ 	amvdec_read_dos(core, DOS_SW_RESET0);
+ 
++	/*
++	 * A session can end with a sub-engine stuck mid-transaction.
++	 * Power-gating in that state wedges the DDR-controller port and
++	 * locks the SoC solid, beyond even a hardware watchdog reset, so
++	 * park the port and scrub the core before the domain goes down.
++	 */
++	vdec_1_quiesce_reset(core);
++
+ 	/* enable vdec1 isolation */
+ 	if (core->platform->revision == VDEC_REVISION_SM1)
+ 		regmap_update_bits(core->regmap_ao, AO_RTI_GEN_PWR_ISO0,
+@@ -194,6 +301,18 @@ static int vdec_1_start(struct amvdec_session *sess)
+ 				   GEN_PWR_VDEC_1, 0);
+ 	usleep_range(10, 20);
+ 
++	/*
++	 * The previous session may have died with sub-engines stuck
++	 * mid-transaction.  NEVER pulse a reset with the DMC request port
++	 * live - park it first (that register is outside this power
++	 * domain, so it is safe while the domain is still down), power
++	 * the domain up, THEN scrub the core and reconnect.  DOS
++	 * registers must not be touched before the memories are powered
++	 * and isolation is removed.
++	 */
++	if (vdec_1_is_g12(core))
++		amvdec_dmc_park(core, DMC_REQ_VDEC_1);
++
+ 	/* Reset VDEC1 */
+ 	amvdec_write_dos(core, DOS_SW_RESET0, 0xfffffffc);
+ 	amvdec_write_dos(core, DOS_SW_RESET0, 0x00000000);
+@@ -208,6 +327,12 @@ static int vdec_1_start(struct amvdec_session *sess)
+ 				   GEN_PWR_VDEC_1_SM1, 0);
+ 	else
+ 		regmap_write(core->regmap_ao, AO_RTI_GEN_PWR_ISO0, 0);
++
++	/* Domain fully up: scrub the sub-engines, then reconnect DDR */
++	vdec_1_core_scrub(core);
++	if (vdec_1_is_g12(core))
++		amvdec_dmc_unpark(core, DMC_REQ_VDEC_1);
++
+ 	/* Reset DOS top registers */
+ 	amvdec_write_dos(core, DOS_VDEC_MCRCC_STALL_CTRL, 0);
+ 
+diff --git a/drivers/staging/media/meson/vdec/vdec_helpers.c b/drivers/staging/media/meson/vdec/vdec_helpers.c
+index 5f74182b90aa..c64bf394074a 100644
+--- a/drivers/staging/media/meson/vdec/vdec_helpers.c
++++ b/drivers/staging/media/meson/vdec/vdec_helpers.c
+@@ -5,6 +5,8 @@
+  */
+ 
+ #include <linux/gcd.h>
++#include <linux/delay.h>
++#include <linux/io.h>
+ #include <media/v4l2-mem2mem.h>
+ #include <media/v4l2-event.h>
+ #include <media/videobuf2-dma-contig.h>
+@@ -14,6 +16,80 @@
+ #define NUM_CANVAS_NV12 2
+ #define NUM_CANVAS_YUV420 3
+ 
++/*
++ * DDR memory controller, G12 family.  The DMC is documented by WORD
++ * offset: byte address = base + offset * 4.  DMC_REQ_CTRL is word 0,
++ * DMC_CHAN_STS is word 0x36 = byte 0xd8 - NOT 0xc8, which is word 0x32
++ * (DMC_STICKY_50, a scratch register reading a constant 0xffffffff: an
++ * idle poll against it is satisfied on its first read and never waits).
++ *
++ * Both registers use the same bit numbering: bits 15:0 are the axibus
++ * channels, bits 23:16 the ambus channels.  In DMC_CHAN_STS a set bit
++ * means the channel is IDLE.
++ */
++#define G12A_DMC_BASE		0xff638000
++#define G12A_DMC_SIZE		0x100
++	#define DMC_REQ_CTRL	0x00
++	#define DMC_CHAN_STS	0xd8
++
++/* RESET7 pulse register; bits 15:11 are the DMC decode pipelines */
++#define G12A_RESET7_ADDR	0xffd01020
++	#define RESET7_DMC_PIPEL	GENMASK(15, 11)
++
++static void __iomem *amvdec_map(u64 addr, u32 size, void __iomem **cache)
++{
++	if (!*cache)
++		*cache = ioremap(addr, size);
++	return *cache;
++}
++
++void amvdec_dmc_park(struct amvdec_core *core, u32 mask)
++{
++	static void __iomem *dmc_base;
++	u32 val;
++	int i;
++
++	if (!amvdec_map(G12A_DMC_BASE, G12A_DMC_SIZE, &dmc_base))
++		return;
++
++	val = readl(dmc_base + DMC_REQ_CTRL);
++	writel(val & ~mask, dmc_base + DMC_REQ_CTRL);
++
++	for (i = 0; i < 100; i++) {
++		if ((readl(dmc_base + DMC_CHAN_STS) & mask) == mask)
++			break;
++		udelay(10);
++	}
++	if (i == 100)
++		dev_warn(core->dev,
++			 "DMC ports %08x did not idle before reset\n", mask);
++}
++EXPORT_SYMBOL_GPL(amvdec_dmc_park);
++
++void amvdec_dmc_unpark(struct amvdec_core *core, u32 mask)
++{
++	static void __iomem *dmc_base;
++	u32 val;
++
++	if (!amvdec_map(G12A_DMC_BASE, G12A_DMC_SIZE, &dmc_base))
++		return;
++
++	val = readl(dmc_base + DMC_REQ_CTRL);
++	writel(val | mask, dmc_base + DMC_REQ_CTRL);
++}
++EXPORT_SYMBOL_GPL(amvdec_dmc_unpark);
++
++void amvdec_dmc_pipeline_reset(struct amvdec_core *core)
++{
++	static void __iomem *reset7;
++
++	if (!amvdec_map(G12A_RESET7_ADDR, 4, &reset7))
++		return;
++
++	writel(RESET7_DMC_PIPEL, reset7);
++}
++EXPORT_SYMBOL_GPL(amvdec_dmc_pipeline_reset);
++
+ u32 amvdec_read_dos(struct amvdec_core *core, u32 reg)
+ {
+ 	return readl_relaxed(core->dos_base + reg);
+diff --git a/drivers/staging/media/meson/vdec/vdec_helpers.h b/drivers/staging/media/meson/vdec/vdec_helpers.h
+index 1a711679d26a..fb557e2983d3 100644
+--- a/drivers/staging/media/meson/vdec/vdec_helpers.h
++++ b/drivers/staging/media/meson/vdec/vdec_helpers.h
+@@ -27,6 +27,25 @@ void amvdec_clear_dos_bits(struct amvdec_core *core, u32 reg, u32 val);
+ u32 amvdec_read_parser(struct amvdec_core *core, u32 reg);
+ void amvdec_write_parser(struct amvdec_core *core, u32 reg, u32 val);
+ 
++/*
++ * DDR-controller request-port control.
++ *
++ * Every decoder reset or power transition must happen with the unit's
++ * DMC request ports parked, or a sub-engine stuck mid-transaction wedges
++ * the port and takes the whole SoC down - past even a watchdog reset.
++ * The masks are the DMC channel bits of the unit (see vdec_1.c /
++ * vdec_hevc.c); DMC_REQ_CTRL and DMC_CHAN_STS share one bit numbering.
++ *
++ * These registers live OUTSIDE every decoder power domain and are safe
++ * to touch at any point of a power transition - unlike the DOS-space
++ * registers, which must not be touched before the memories are powered
++ * and isolation is removed.
++ */
++void amvdec_dmc_park(struct amvdec_core *core, u32 mask);
++void amvdec_dmc_unpark(struct amvdec_core *core, u32 mask);
++/* G12B latches DMC-side decode pipeline state; pulse it before unparking */
++void amvdec_dmc_pipeline_reset(struct amvdec_core *core);
++
+ /* Helpers for the Amlogic compressed framebuffer format */
+ u32 amvdec_amfbc_body_size(u32 width, u32 height, u32 is_10bit, u32 use_mmu);
+ u32 amvdec_amfbc_head_size(u32 width, u32 height);
+diff --git a/drivers/staging/media/meson/vdec/vdec_hevc.c b/drivers/staging/media/meson/vdec/vdec_hevc.c
+index d69149183ea7..2a940beafb35 100644
+--- a/drivers/staging/media/meson/vdec/vdec_hevc.c
++++ b/drivers/staging/media/meson/vdec/vdec_hevc.c
+@@ -26,16 +26,14 @@
+ #define MC_SIZE	(4096 * 4)
+ 
+ /*
+- * DMC glue for safely stopping a wedged core.  The DMC is documented by
+- * WORD offset: byte = base + offset*4, so CHAN_STS (0x36) is at 0xd8.
++ * DMC request ports of this unit: axibus channel 4 ("hevc front") and
++ * channel 8 ("hevc_b").  Confirmed against the A311D datasheet and on
++ * silicon - under a 4K Main10 decode these two channels read busy 11.7 %
++ * and 76.9 % of samples respectively, while every other decode channel
++ * stays idle.  The park/unpark helpers live in vdec_helpers.c.
+  */
+-#define G12A_DMC_BASE		0xff638000
+-#define G12A_DMC_SIZE		0x100
+-	#define DMC_REQ_CTRL	0x00
+-	#define DMC_CHAN_STS	0xd8
+-	#define DMC_REQ_HEVC	(BIT(4) | BIT(8))  /* hevc + hevcb ports */
+-#define G12A_RESET7_ADDR	0xffd01020	/* pulse register */
+-	#define RESET7_DMC_PIPEL	GENMASK(15, 11)
++#define DMC_REQ_HEVC		(BIT(4) | BIT(8))
++
+ #define G12B_RESET7_LEVEL_ADDR	0xffd0109c	/* level register (low = reset) */
+ 	#define RESET7_LEVEL_HEVC_DMC	(BIT(14) | BIT(13))
+ 
+@@ -208,14 +206,6 @@ static void vdec_hevc_stop_armrisc(struct amvdec_core *core)
+  * responses -> release SAO/MMU -> G12B DMC-pipeline level+pulse
+  * resets -> reconnect.  Harmless on a healthy, idle core.
+  */
+-static void __iomem *vdec_hevc_map(u64 addr, u32 size,
+-				   void __iomem **cache)
+-{
+-	if (!*cache)
+-		*cache = ioremap(addr, size);
+-	return *cache;
+-}
+-
+ static bool vdec_hevc_is_g12(struct amvdec_core *core)
+ {
+ 	return core->platform->revision == VDEC_REVISION_G12A ||
+@@ -229,39 +219,18 @@ static bool vdec_hevc_is_g12(struct amvdec_core *core)
+  */
+ static void vdec_hevc_dmc_park(struct amvdec_core *core)
+ {
+-	static void __iomem *dmc_base;
+-	u32 val;
+-	int i;
+-
+-	if (!vdec_hevc_is_g12(core) ||
+-	    !vdec_hevc_map(G12A_DMC_BASE, G12A_DMC_SIZE, &dmc_base))
++	if (!vdec_hevc_is_g12(core))
+ 		return;
+ 
+-	val = readl(dmc_base + DMC_REQ_CTRL);
+-	writel(val & ~DMC_REQ_HEVC, dmc_base + DMC_REQ_CTRL);
+-
+-	for (i = 0; i < 100; i++) {
+-		if ((readl(dmc_base + DMC_CHAN_STS) & DMC_REQ_HEVC) ==
+-		    DMC_REQ_HEVC)
+-			break;
+-		udelay(10);
+-	}
+-	if (i == 100)
+-		dev_warn(core->dev,
+-			 "HEVC DMC ports did not idle before reset\n");
++	amvdec_dmc_park(core, DMC_REQ_HEVC);
+ }
+ 
+ static void vdec_hevc_dmc_unpark(struct amvdec_core *core)
+ {
+-	static void __iomem *dmc_base;
+-	u32 val;
+-
+-	if (!vdec_hevc_is_g12(core) ||
+-	    !vdec_hevc_map(G12A_DMC_BASE, G12A_DMC_SIZE, &dmc_base))
++	if (!vdec_hevc_is_g12(core))
+ 		return;
+ 
+-	val = readl(dmc_base + DMC_REQ_CTRL);
+-	writel(val | DMC_REQ_HEVC, dmc_base + DMC_REQ_CTRL);
++	amvdec_dmc_unpark(core, DMC_REQ_HEVC);
+ }
+ 
+ /*
+@@ -272,14 +241,16 @@ static void vdec_hevc_dmc_unpark(struct amvdec_core *core)
+  */
+ static void vdec_hevc_core_scrub(struct amvdec_core *core)
+ {
+-	static void __iomem *reset7;
+ 	static void __iomem *reset7_lvl;
+ 	u32 val;
+ 	int i;
+ 
+-	if (!vdec_hevc_is_g12(core) ||
+-	    !vdec_hevc_map(G12A_RESET7_ADDR, 4, &reset7) ||
+-	    !vdec_hevc_map(G12B_RESET7_LEVEL_ADDR, 4, &reset7_lvl))
++	if (!vdec_hevc_is_g12(core))
++		return;
++
++	if (!reset7_lvl)
++		reset7_lvl = ioremap(G12B_RESET7_LEVEL_ADDR, 4);
++	if (!reset7_lvl)
+ 		return;
+ 
+ 	/* Stop the stream fetch engine */
+@@ -311,7 +282,7 @@ static void vdec_hevc_core_scrub(struct amvdec_core *core)
+ 	writel(val & ~RESET7_LEVEL_HEVC_DMC, reset7_lvl);
+ 	udelay(10);
+ 	writel(val | RESET7_LEVEL_HEVC_DMC, reset7_lvl);
+-	writel(RESET7_DMC_PIPEL, reset7);
++	amvdec_dmc_pipeline_reset(core);
+ }
+ 
+ /* Full bracket for use when the power domain is up (session stop,
+-- 
+2.43.0
+

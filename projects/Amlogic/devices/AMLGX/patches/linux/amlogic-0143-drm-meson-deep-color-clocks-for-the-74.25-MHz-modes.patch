@@ -1,0 +1,92 @@
+From 3900823a10bfb4798b796cbe534b35d334658a53 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 13:45:13 +0000
+Subject: [PATCH 143/145] drm/meson: deep color clocks for the 74.25 MHz modes
+
+The deep-color clock entries cover 148.5, 297 and 594 MHz pixel clocks -
+1080p50/60, 4K30 and 4K60 YUV420 - but not 74.25 MHz, which is every
+1080p24, 1080p25 and 1080p30 mode, and so every film-rate mode a player
+switches to.  At those rates deep color has no clock to run on.
+
+Add the two the PLL can reach.  Both VCOs are already wired up for
+G12A, including their 1000/1001 alternates, so this is only the divider
+chain, and it follows from the relation documented above the table -
+PHY = VCO / od1 / od2, vclk = PHY / od3 / vid_pll_div / vclk_div:
+
+  10-bit: 3712.5 /2 /2 /1 /6.25 /2 -> PHY 928.125 MHz = 74.25 x 12.5
+  12-bit: 4455   /2 /2 /1 /7.5  /2 -> PHY 1113.75 MHz = 74.25 x 15
+
+Untested: written to let 1080p24/25/30 deep color be tried at all.  It
+is not a fix for the modeset failure it was written alongside - a sink
+losing lock when a G12B board switches to 1080p23.98 - because that
+failure produces no "invalid HDMI vclk freq" error, so the lookup was
+finding an entry and falling back to 8-bit rather than failing.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/gpu/drm/meson/meson_vclk.c | 28 ++++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/drivers/gpu/drm/meson/meson_vclk.c b/drivers/gpu/drm/meson/meson_vclk.c
+index 1c2c1014c535..efea4bdd4d17 100644
+--- a/drivers/gpu/drm/meson/meson_vclk.c
++++ b/drivers/gpu/drm/meson/meson_vclk.c
+@@ -363,12 +363,16 @@ enum {
+  * this file's DOC block always said were the missing piece.
+  * PHY = VCO / od1 / od2;  vclk = PHY / od3 / vid_pll_div / vclk_div.
+  */
++/* 3712.5 /2 /2 /1 /6.25 /2  => /1 /1   1080p24/25/30 @ 10-bit */
++	MESON_VCLK_HDMI_74250_10B,
+ /* 3712.5 /2 /1 /1 /6.25 /2  => /1 /1   1080p @ 10-bit */
+ 	MESON_VCLK_HDMI_148500_10B,
+ /* 3712.5 /1 /1 /1 /6.25 /2  => /1 /1   4K30-class @ 10-bit */
+ 	MESON_VCLK_HDMI_297000_10B,
+ /* 3712.5 /1 /1 /1 /6.25 /1  => /1 /2   4K60 YUV420 @ 10-bit */
+ 	MESON_VCLK_HDMI_594000_YUV420_10B,
++/* 4455 /2 /2 /1 /7.5 /2  => /1 /1      1080p24/25/30 @ 12-bit */
++	MESON_VCLK_HDMI_74250_12B,
+ /* 4455 /2 /1 /1 /7.5 /2  => /1 /1      1080p @ 12-bit */
+ 	MESON_VCLK_HDMI_148500_12B,
+ /* 4455 /1 /1 /1 /7.5 /1  => /1 /2      4K60 YUV420 @ 12-bit */
+@@ -483,6 +487,18 @@ struct meson_vclk_params {
+ 		.vid_pll_div = VID_PLL_DIV_5,
+ 		.vclk_div = 1,
+ 	},
++	[MESON_VCLK_HDMI_74250_10B] = {
++		.pll_freq = 3712500000,
++		.phy_freq = 928125000,
++		.venc_freq = 74250000,
++		.vclk_freq = 74250000,
++		.pixel_freq = 74250000,
++		.pll_od1 = 2,
++		.pll_od2 = 2,
++		.pll_od3 = 1,
++		.vid_pll_div = VID_PLL_DIV_6p25,
++		.vclk_div = 2,
++	},
+ 	[MESON_VCLK_HDMI_148500_10B] = {
+ 		.pll_freq = 3712500000,
+ 		.phy_freq = 1856250000,
+@@ -519,6 +535,18 @@ struct meson_vclk_params {
+ 		.vid_pll_div = VID_PLL_DIV_6p25,
+ 		.vclk_div = 1,
+ 	},
++	[MESON_VCLK_HDMI_74250_12B] = {
++		.pll_freq = 4455000000,
++		.phy_freq = 1113750000,
++		.venc_freq = 74250000,
++		.vclk_freq = 74250000,
++		.pixel_freq = 74250000,
++		.pll_od1 = 2,
++		.pll_od2 = 2,
++		.pll_od3 = 1,
++		.vid_pll_div = VID_PLL_DIV_7p5,
++		.vclk_div = 2,
++	},
+ 	[MESON_VCLK_HDMI_148500_12B] = {
+ 		.pll_freq = 4455000000,
+ 		.phy_freq = 2227500000,
+-- 
+2.43.0
+

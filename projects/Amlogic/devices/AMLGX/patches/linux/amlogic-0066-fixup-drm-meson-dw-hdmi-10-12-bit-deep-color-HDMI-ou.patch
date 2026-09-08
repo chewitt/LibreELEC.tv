@@ -1,0 +1,39 @@
+From 19f96e8e77e57d4ae7b785cac41ce18b9a926ee3 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 7 Sep 2026 13:36:13 +0000
+Subject: [PATCH 066/145] fixup! drm/meson + dw-hdmi: 10/12-bit deep color HDMI
+ output for G12A
+
+Do not steal the 4320 MHz PLL into the deep-color analog band.
+
+The new G12A band branch is gated on "m >= 0x9a", inserted between the
+existing "m >= 0xf7" case and the low-band else.  But the deep-color
+VCOs are m=0x9a (3712.5 MHz) and m=0xb9 (4455 MHz), and the
+pre-existing 4320 MHz base frequency sits between them at m=0xb4
+(0xb3 for the alternate clock).  MESON_VCLK_HDMI_ENCI_54000 and
+MESON_VCLK_HDMI_DDR_54000 - the 480i/576i modes - therefore moved off
+the low-band parameters they have always used onto the mid-band
+deep-color ones, an 8-bit regression with no compiler complaint.
+
+Match the two deep-color VCOs exactly, restoring the previous register
+writes for every mode that already worked.
+---
+ drivers/gpu/drm/meson/meson_vclk.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/meson/meson_vclk.c b/drivers/gpu/drm/meson/meson_vclk.c
+index c79d87e7c211..117beea74b6f 100644
+--- a/drivers/gpu/drm/meson/meson_vclk.c
++++ b/drivers/gpu/drm/meson/meson_vclk.c
+@@ -619,7 +619,7 @@ static void meson_hdmi_pll_set_params(struct meson_drm *priv, unsigned int m,
+ 			}
+ 			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL6, 0x39272000);
+ 			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL7, 0x55540000);
+-		} else if (m >= 0x9a) {
++		} else if (m == 0x9a || m == 0xb9) {
+ 			/*
+ 			 * 3.7125-4.455 GHz VCO band (the deep-color rates):
+ 			 * per the vendor hdmitx hw_g12a.c cases 3712500 and
+-- 
+2.43.0
+

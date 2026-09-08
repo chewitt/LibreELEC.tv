@@ -1,0 +1,706 @@
+From 1141d8640b63197f7661a4f8ec63ce2a62215dda Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 064/145] drm/meson + dw-hdmi: 10/12-bit deep color HDMI output
+ for G12A
+
+Implement HDMI deep color (30/36-bit) on Amlogic G12A-family SoCs,
+validated on a VIM3 (G12B) against sinks advertising DC_30/DC_36 with
+YCbCr444 deep color: full-chroma YUV444 at 10 and 12 bpc negotiates,
+locks and signals correctly (TX_INVID0 0x0B/0x0D, VP_PR_CD 0x50/0x60),
+and 8-bit sinks negotiate exactly what they always did.
+
+meson_vclk:
+- New clock-tree entries for the deep-color TMDS rates using the
+  previously-unused fractional vid_pll dividers: 1080p-class @10-bit
+  (PLL 3712.5 MHz, /6.25), 4K30-class @10-bit, 4K60-YUV420 @10-bit,
+  1080p-class @12-bit (PLL 4455 MHz, /7.5).  4K60 RGB/444 deep color
+  is impossible on this PLL (would need 7.425 GHz VCO > 6 GHz max).
+- G12A m/frac cases for the new PLL base frequencies (values match the
+  vendor hdmitx hw_g12a.c), including the 1000/1001 alternate clocks.
+  Without a case the switch fell through and programmed m=0 - a dead
+  PLL, no pixel clock, and an atomic commit stuck forever.
+- G12A analog band parameters for the 3.7125-4.455 GHz VCO range (the
+  low-band parameters do not lock there; vendor mid-band values).
+- Bound the G12A lock-retry loop (100 tries + pr_err).  The unbounded
+  loop turned any mis-programmed PLL into a silent boot hang.
+
+meson_encoder_hdmi:
+- Offer YUV444-10/12, YUV422-10 and YUV420-10 output bus formats;
+  factor depth/chroma helpers and make the TMDS clock computation
+  depth-aware (x1.25 / x1.5; 422 carries deep color at the 8-bit rate).
+- Gate deep formats on a matching vclk table entry for the exact mode,
+  and on G12A-family (older SoCs' PLL switches have no deep cases).
+- Program the VPU output stage per the vendor recipe:
+  VPU_HDMI_FMT_CTRL [4]/[10] and VPU_HDMI_DITH_CNTL [4] - deep color
+  passes 10/12 bits through untouched; 8-bit wire now rounds+dithers
+  where mainline truncated (less banding on ordinary sinks too).
+  Sync flags migrate from VPU_HDMI_SETTING[3:2] to DITH_CNTL[3:2]
+  when the dither block is in the data path.
+- Attach max_bpc 8-12 instead of 8-8.
+
+meson_dw_hdmi:
+- Key the PHY band/swing tables and the >340 MHz div40/TMDS-pattern
+  logic on the real TMDS character rate (new dw_hdmi_get_tmds_clock()
+  accessor) instead of the pixel clock, which under-provisioned the
+  PHY for every deep-color mode.
+
+dw-hdmi bridge:
+- Move the RGB888 fallback below the deep-color blocks in the output
+  format list.  The bridge-chain selector takes the first resolvable
+  format, so with RGB888 at index 0 deep color could never win; 8-bit
+  sinks still negotiate exactly as before.  Within each depth prefer
+  full-chroma 444 over 422.
+- Add dw_hdmi_get_tmds_clock() (negotiated TMDS character rate).
+
+drm_bridge_connector:
+- Restore the max_requested_bpc default in the connector reset hook.
+  Bridge connectors have no driver reset that re-applies it, so the
+  drm_mode_config_reset() that follows attach left it at 0, and
+  userspace can never set a value below the property minimum of 8 -
+  deep color was unreachable on every bridge-connector driver.
+
+Validated: 1080p60 444-10 and 444-12 (registers + KVM capture at 10),
+1080p50 both depths, 8-bit regression on a non-deep sink, HDR10
+infoframe chain at 10-bit (EOTF=PQ + BT2020_YCC), reboot persistence
+straight into 10-bit, no PLL lock failures.
+
+drm/meson deep-color negotiation gate (added after first contact with
+a real HDMI 2.0 sink): deep formats are offered only for CEA/VIC modes
+and only when the deeper TMDS character rate stays at or below BOTH
+the 340 MHz no-scramble ceiling and the sink's declared TMDS limit.
+Without this an LG ultrawide advertising HF-VSDB deep-color-4:2:0
+negotiated 4K60 YUV420 @ 10-bit (371.25 MHz, scrambled domain) - a
+combination that negotiates cleanly and shows NO SIGNAL.  Scrambled
+deep-color modes stay future work; 8-bit 4K60 at 594 MHz (scrambled)
+is unaffected and verified working on the same sink.
+---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.c     |  39 +++-
+ .../gpu/drm/display/drm_bridge_connector.c    |  13 ++
+ drivers/gpu/drm/meson/meson_dw_hdmi.c         |  19 +-
+ drivers/gpu/drm/meson/meson_encoder_hdmi.c    | 198 ++++++++++++++++--
+ drivers/gpu/drm/meson/meson_registers.h       |   1 +
+ drivers/gpu/drm/meson/meson_vclk.c            | 133 ++++++++++--
+ include/drm/bridge/dw_hdmi.h                  |   1 +
+ 7 files changed, 358 insertions(+), 46 deletions(-)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+index f3dbd9665ff9..3fb830899cf0 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+@@ -2647,11 +2647,12 @@ static u32 *dw_hdmi_bridge_atomic_get_output_bus_fmts(struct drm_bridge *bridge,
+ 	/*
+ 	 * Order bus formats from 16bit to 8bit and from YUV422 to RGB
+ 	 * if supported. In any case the default RGB888 format is added
++	 * before the 8-bit YUV formats, so sinks without deep-color
++	 * support negotiate exactly what they always did - but deep
++	 * color entries must come FIRST or the bridge-chain selector
++	 * (first resolvable wins) can never pick them.
+ 	 */
+ 
+-	/* Default 8bit RGB fallback */
+-	output_fmts[i++] = MEDIA_BUS_FMT_RGB888_1X24;
+-
+ 	if (max_bpc >= 16 && info->bpc == 16) {
+ 		if (info->color_formats & BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR444))
+ 			output_fmts[i++] = MEDIA_BUS_FMT_YUV16_1X48;
+@@ -2660,25 +2661,33 @@ static u32 *dw_hdmi_bridge_atomic_get_output_bus_fmts(struct drm_bridge *bridge,
+ 	}
+ 
+ 	if (max_bpc >= 12 && info->bpc >= 12) {
+-		if (info->color_formats & BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR422))
+-			output_fmts[i++] = MEDIA_BUS_FMT_UYVY12_1X24;
+-
+ 		if (info->color_formats & BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR444))
+ 			output_fmts[i++] = MEDIA_BUS_FMT_YUV12_1X36;
+ 
+ 		output_fmts[i++] = MEDIA_BUS_FMT_RGB121212_1X36;
+-	}
+ 
+-	if (max_bpc >= 10 && info->bpc >= 10) {
+ 		if (info->color_formats & BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR422))
+-			output_fmts[i++] = MEDIA_BUS_FMT_UYVY10_1X20;
++			output_fmts[i++] = MEDIA_BUS_FMT_UYVY12_1X24;
++	}
+ 
++	if (max_bpc >= 10 && info->bpc >= 10) {
++		/*
++		 * Full-chroma formats first: 4:2:2 carries 10-bit at the
++		 * 8-bit TMDS rate (cheaper), but halves chroma - prefer
++		 * it only as the fallback within the depth.
++		 */
+ 		if (info->color_formats & BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR444))
+ 			output_fmts[i++] = MEDIA_BUS_FMT_YUV10_1X30;
+ 
+ 		output_fmts[i++] = MEDIA_BUS_FMT_RGB101010_1X30;
++
++		if (info->color_formats & BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR422))
++			output_fmts[i++] = MEDIA_BUS_FMT_UYVY10_1X20;
+ 	}
+ 
++	/* Default 8bit RGB fallback */
++	output_fmts[i++] = MEDIA_BUS_FMT_RGB888_1X24;
++
+ 	if (info->color_formats & BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR422))
+ 		output_fmts[i++] = MEDIA_BUS_FMT_UYVY8_1X16;
+ 
+@@ -3209,6 +3218,18 @@ bool dw_hdmi_bus_fmt_is_420(struct dw_hdmi *hdmi)
+ }
+ EXPORT_SYMBOL_GPL(dw_hdmi_bus_fmt_is_420);
+ 
++/*
++ * The negotiated TMDS character clock in kHz, valid once the bridge has
++ * been set up (hdmi_av_composer computes it from the mode and the
++ * negotiated output depth).  Platform PHY drivers need it to pick the
++ * correct band/swing configuration for deep-color rates.
++ */
++unsigned long dw_hdmi_get_tmds_clock(struct dw_hdmi *hdmi)
++{
++	return hdmi->hdmi_data.video_mode.mtmdsclock / 1000;
++}
++EXPORT_SYMBOL_GPL(dw_hdmi_get_tmds_clock);
++
+ struct dw_hdmi *dw_hdmi_probe(struct platform_device *pdev,
+ 			      const struct dw_hdmi_plat_data *plat_data)
+ {
+diff --git a/drivers/gpu/drm/display/drm_bridge_connector.c b/drivers/gpu/drm/display/drm_bridge_connector.c
+index 8b54069fa53a..47fcc043170e 100644
+--- a/drivers/gpu/drm/display/drm_bridge_connector.c
++++ b/drivers/gpu/drm/display/drm_bridge_connector.c
+@@ -276,6 +276,19 @@ drm_bridge_connector_create_state(struct drm_connector *connector)
+ 	if (IS_ERR(conn_state))
+ 		return conn_state;
+ 
++	/*
++	 * Bridge connectors have no driver reset hook to re-apply the "max
++	 * bpc" default the encoder chose at attach time, so a freshly created
++	 * state leaves max_requested_bpc at 0 - a value userspace can never
++	 * set, since the property range starts at 8 - and downstream bridges
++	 * then refuse every deep-color format.  Restore the attach-time
++	 * default: a range property stores [min, max] and the helper attaches
++	 * with the max as the default.
++	 */
++	if (connector->max_bpc_property)
++		conn_state->max_requested_bpc =
++			connector->max_bpc_property->values[1];
++
+ 	if (bridge_connector->bridge_hdmi)
+ 		__drm_atomic_helper_connector_hdmi_state_init(connector,
+ 							      conn_state);
+diff --git a/drivers/gpu/drm/meson/meson_dw_hdmi.c b/drivers/gpu/drm/meson/meson_dw_hdmi.c
+index 16f15466a6f4..a142ef4a1f5e 100644
+--- a/drivers/gpu/drm/meson/meson_dw_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_dw_hdmi.c
+@@ -280,10 +280,21 @@ static void meson_hdmi_phy_setup_mode(struct meson_dw_hdmi *dw_hdmi,
+ {
+ 	struct meson_drm *priv = dw_hdmi->priv;
+ 	unsigned int pixel_clock = mode->clock;
++	unsigned long tmds_clock;
+ 
+ 	/* For 420, pixel clock is half unlike venc clock */
+ 	if (mode_is_420) pixel_clock /= 2;
+ 
++	/*
++	 * The PHY band/swing tables below are keyed by the TMDS character
++	 * rate, which equals the pixel clock only at 8 bpc.  For deep
++	 * color dw-hdmi has already computed the real rate - use it, so
++	 * e.g. 1080p60 @ 10-bit (185.625 MHz TMDS) picks the right band.
++	 */
++	tmds_clock = dw_hdmi_get_tmds_clock(dw_hdmi->hdmi);
++	if (tmds_clock)
++		pixel_clock = tmds_clock;
++
+ 	if (dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
+ 	    dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxm-dw-hdmi")) {
+ 		if (pixel_clock >= 371250) {
+@@ -363,10 +374,14 @@ static int dw_hdmi_phy_init(struct dw_hdmi *hdmi, void *data,
+ 	struct meson_drm *priv = dw_hdmi->priv;
+ 	unsigned int wr_clk =
+ 		readl_relaxed(priv->io_base + _REG(VPU_HDMI_SETTING));
++	unsigned long tmds_clock = dw_hdmi_get_tmds_clock(hdmi);
+ 	bool mode_is_420 = false;
+ 
++	if (!tmds_clock)
++		tmds_clock = mode->clock;
++
+ 	DRM_DEBUG_DRIVER("\"%s\" div%d\n", mode->name,
+-			 mode->clock > 340000 ? 40 : 10);
++			 tmds_clock > 340000 ? 40 : 10);
+ 
+ 	if (drm_mode_is_420_only(display, mode) ||
+ 	    (!is_hdmi2_sink && drm_mode_is_420_also(display, mode)) ||
+@@ -374,7 +389,7 @@ static int dw_hdmi_phy_init(struct dw_hdmi *hdmi, void *data,
+ 		mode_is_420 = true;
+ 
+ 	/* TMDS pattern setup */
+-	if (mode->clock > 340000 && !mode_is_420) {
++	if (tmds_clock > 340000 && !mode_is_420) {
+ 		dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_01,
+ 				  0);
+ 		dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_23,
+diff --git a/drivers/gpu/drm/meson/meson_encoder_hdmi.c b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+index b663b3c6deee..693d12cc5bd6 100644
+--- a/drivers/gpu/drm/meson/meson_encoder_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+@@ -54,6 +54,62 @@ static int meson_encoder_hdmi_attach(struct drm_bridge *bridge,
+ 				 &encoder_hdmi->bridge, flags);
+ }
+ 
++static void meson_encoder_hdmi_detach(struct drm_bridge *bridge)
++{
++	struct meson_encoder_hdmi *encoder_hdmi = bridge_to_meson_encoder_hdmi(bridge);
++
++	cec_notifier_conn_unregister(encoder_hdmi->cec_notifier);
++	encoder_hdmi->cec_notifier = NULL;
++}
++
++/*
++ * Bus-format classification.  The VENC->HDMI-TX bus is 3x10-bit
++ * natively; what varies per format is the chroma layout and the wire
++ * (TMDS) depth dw-hdmi will serialise at.
++ */
++static bool meson_encoder_hdmi_fmt_is_420(u32 fmt)
++{
++	return fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24 ||
++	       fmt == MEDIA_BUS_FMT_UYYVYY10_0_5X30;
++}
++
++static bool meson_encoder_hdmi_fmt_is_422(u32 fmt)
++{
++	return fmt == MEDIA_BUS_FMT_UYVY8_1X16 ||
++	       fmt == MEDIA_BUS_FMT_UYVY10_1X20;
++}
++
++static unsigned int meson_encoder_hdmi_fmt_depth(u32 fmt)
++{
++	switch (fmt) {
++	case MEDIA_BUS_FMT_YUV10_1X30:
++	case MEDIA_BUS_FMT_UYVY10_1X20:
++	case MEDIA_BUS_FMT_UYYVYY10_0_5X30:
++		return 10;
++	case MEDIA_BUS_FMT_YUV12_1X36:
++		return 12;
++	default:
++		return 8;
++	}
++}
++
++/*
++ * TMDS (PHY bit) clock from the pixel clock and the negotiated bus
++ * format, mirroring dw-hdmi's hdmi_av_composer(): YUV422 carries deep
++ * color in the 8-bit-per-component stream (no clock increase); other
++ * formats scale by depth/8.
++ */
++static unsigned long long
++meson_encoder_hdmi_phy_freq(unsigned long long vclk_freq, u32 fmt)
++{
++	unsigned int depth = meson_encoder_hdmi_fmt_depth(fmt);
++
++	if (meson_encoder_hdmi_fmt_is_422(fmt) || depth == 8)
++		return vclk_freq * 10;
++
++	return DIV_ROUND_CLOSEST_ULL(vclk_freq * 10 * depth, 8);
++}
++
+ static void meson_encoder_hdmi_set_vclk(struct meson_encoder_hdmi *encoder_hdmi,
+ 					const struct drm_display_mode *mode)
+ {
+@@ -67,11 +123,12 @@ static void meson_encoder_hdmi_set_vclk(struct meson_encoder_hdmi *encoder_hdmi,
+ 	vclk_freq = mode->clock * 1000ULL;
+ 
+ 	/* For 420, pixel clock is half unlike venc clock */
+-	if (encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
++	if (meson_encoder_hdmi_fmt_is_420(encoder_hdmi->output_bus_fmt))
+ 		vclk_freq /= 2;
+ 
+-	/* TMDS clock is pixel_clock * 10 */
+-	phy_freq = vclk_freq * 10;
++	/* TMDS clock is pixel_clock * 10 (* depth/8 for deep color) */
++	phy_freq = meson_encoder_hdmi_phy_freq(vclk_freq,
++					       encoder_hdmi->output_bus_fmt);
+ 
+ 	if (!vic) {
+ 		meson_vclk_setup(priv, MESON_VCLK_TARGET_DMT, phy_freq,
+@@ -88,7 +145,7 @@ static void meson_encoder_hdmi_set_vclk(struct meson_encoder_hdmi *encoder_hdmi,
+ 
+ 	/* VENC double pixels for 1080i, 720p and YUV420 modes */
+ 	if (meson_venc_hdmi_venc_repeat(vic) ||
+-	    encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
++	    meson_encoder_hdmi_fmt_is_420(encoder_hdmi->output_bus_fmt))
+ 		venc_freq *= 2;
+ 
+ 	vclk_freq = max(venc_freq, hdmi_freq);
+@@ -208,10 +265,10 @@ static void meson_encoder_hdmi_atomic_enable(struct drm_bridge *bridge,
+ 
+ 	dev_dbg(priv->dev, "\"%s\" vic %d\n", mode->name, vic);
+ 
+-	if (encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24) {
++	if (meson_encoder_hdmi_fmt_is_420(encoder_hdmi->output_bus_fmt)) {
+ 		ycrcb_map = VPU_HDMI_OUTPUT_CRYCB;
+ 		yuv420_mode = true;
+-	} else if (encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYVY8_1X16)
++	} else if (meson_encoder_hdmi_fmt_is_422(encoder_hdmi->output_bus_fmt))
+ 		ycrcb_map = VPU_HDMI_OUTPUT_CRYCB;
+ 
+ 	/* VENC + VENC-DVI Mode setup */
+@@ -220,17 +277,53 @@ static void meson_encoder_hdmi_atomic_enable(struct drm_bridge *bridge,
+ 	/* VCLK Set clock */
+ 	meson_encoder_hdmi_set_vclk(encoder_hdmi, mode);
+ 
+-	if (encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
+-		/* Setup YUV420 to HDMI-TX, no 10bit diphering */
+-		writel_relaxed(2 | (2 << 2),
+-			       priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
+-	else if (encoder_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYVY8_1X16)
+-		/* Setup YUV422 to HDMI-TX, no 10bit diphering */
+-		writel_relaxed(1 | (2 << 2),
+-				priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
+-	else
+-		/* Setup YUV444 to HDMI-TX, no 10bit diphering */
+-		writel_relaxed(0, priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
++	/*
++	 * VPU_HDMI_FMT_CTRL (per the vendor hdmitx driver):
++	 *   [1:0] chroma format (0=444, 1=422, 2=420)
++	 *   [3:2] chroma_dnsmp (2 = average)
++	 *   [4]   12->10 dither enable
++	 *   [10]  12->10 rounding enable
++	 * VPU_HDMI_DITH_CNTL:
++	 *   [4]   10->8 dither enable
++	 *   [3:2] hsync/vsync flags (moved here from VPU_HDMI_SETTING
++	 *         [3:2] when the dither block is in the data path)
++	 *
++	 * 8-bit wire: round 12->10 and DITHER 10->8 (the vendor default;
++	 * mainline used to truncate, which is where 8-bit banding came
++	 * from).  Deep color wire: everything off, pass 10/12 bits
++	 * through untouched.
++	 */
++	{
++		unsigned int depth =
++			meson_encoder_hdmi_fmt_depth(encoder_hdmi->output_bus_fmt);
++		u32 fmt;
++
++		if (meson_encoder_hdmi_fmt_is_420(encoder_hdmi->output_bus_fmt))
++			fmt = 2;
++		else if (meson_encoder_hdmi_fmt_is_422(encoder_hdmi->output_bus_fmt))
++			fmt = 1;
++		else
++			fmt = 0;
++
++		if (depth > 8) {
++			u32 hs_flag;
++
++			writel_relaxed(fmt | (2 << 2),
++				       priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
++			/* sync flags ride the dither block in this mode */
++			hs_flag = (readl_relaxed(priv->io_base +
++					_REG(VPU_HDMI_SETTING)) >> 2) & 0x3;
++			writel_bits_relaxed(0x3 << 2, 0,
++					priv->io_base + _REG(VPU_HDMI_SETTING));
++			writel_bits_relaxed(BIT(4) | (0x3 << 2), hs_flag << 2,
++					priv->io_base + _REG(VPU_HDMI_DITH_CNTL));
++		} else {
++			writel_relaxed(fmt | (2 << 2) | BIT(10),
++				       priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
++			writel_bits_relaxed(BIT(4) | (0x3 << 2), BIT(4),
++					priv->io_base + _REG(VPU_HDMI_DITH_CNTL));
++		}
++	}
+ 
+ 	dev_dbg(priv->dev, "%s\n", priv->venc.hdmi_use_enci ? "VENCI" : "VENCP");
+ 
+@@ -257,6 +350,10 @@ static const u32 meson_encoder_hdmi_out_bus_fmts[] = {
+ 	MEDIA_BUS_FMT_YUV8_1X24,
+ 	MEDIA_BUS_FMT_UYVY8_1X16,
+ 	MEDIA_BUS_FMT_UYYVYY8_0_5X24,
++	MEDIA_BUS_FMT_YUV10_1X30,
++	MEDIA_BUS_FMT_UYVY10_1X20,
++	MEDIA_BUS_FMT_UYYVYY10_0_5X30,
++	MEDIA_BUS_FMT_YUV12_1X36,
+ };
+ 
+ static u32 *
+@@ -267,11 +364,76 @@ meson_encoder_hdmi_get_inp_bus_fmts(struct drm_bridge *bridge,
+ 					u32 output_fmt,
+ 					unsigned int *num_input_fmts)
+ {
++	struct meson_encoder_hdmi *encoder_hdmi = bridge_to_meson_encoder_hdmi(bridge);
+ 	u32 *input_fmts = NULL;
+ 	int i;
+ 
+ 	*num_input_fmts = 0;
+ 
++	/*
++	 * Deep color is implemented (PLL m/frac cases, analog band
++	 * parameters, VPU dither block) for G12A-family only; on older
++	 * SoCs the clock code would program a dead PLL.
++	 */
++	if (meson_encoder_hdmi_fmt_depth(output_fmt) > 8 &&
++	    !meson_vpu_is_compatible(encoder_hdmi->priv, VPU_COMPATIBLE_G12A))
++		return NULL;
++
++	/*
++	 * Deep-color wire formats are offered only when:
++	 * - the mode is a CEA/VIC mode (the CEA frame phase and the
++	 *   clock tree entries are what we validated; PC/DMT sinks
++	 *   frequently accept RGB/YCbCr-8 only at their native modes);
++	 * - the deeper TMDS character rate stays at or below BOTH the
++	 *   340 MHz no-scramble ceiling and the sink's declared TMDS
++	 *   limit.  Scrambled deep-color combinations (e.g. 4K60
++	 *   YUV420 @ 10-bit = 371.25 MHz) negotiate cleanly but were
++	 *   never validated against real silicon+sink; a sink that
++	 *   accepts the mode at 8-bit then shows NO SIGNAL at depth.
++	 * - (non-422) this exact mode has a clock-tree entry at the
++	 *   deeper TMDS rate; otherwise the bridge chain would
++	 *   negotiate a depth the modeset cannot deliver.  422 carries
++	 *   deep color at the 8-bit TMDS rate and needs no clock gate.
++	 */
++	if (meson_encoder_hdmi_fmt_depth(output_fmt) > 8) {
++		const struct drm_display_mode *mode = &crtc_state->adjusted_mode;
++		const struct drm_display_info *info =
++			&conn_state->connector->display_info;
++		unsigned long long vclk_freq = mode->clock * 1000ULL;
++		unsigned long long phy_freq;
++		unsigned long long tmds_khz;
++		unsigned int max_tmds_khz = 340000;
++		int vic = drm_match_cea_mode(mode);
++
++		if (!vic)
++			return NULL;
++
++		if (meson_encoder_hdmi_fmt_is_420(output_fmt)) {
++			/* pixel clock halves; the vclk table entry keeps
++			 * the full venc rate (see mode_valid's math)
++			 */
++			phy_freq = meson_encoder_hdmi_phy_freq(vclk_freq / 2,
++							       output_fmt);
++		} else {
++			phy_freq = meson_encoder_hdmi_phy_freq(vclk_freq,
++							       output_fmt);
++		}
++
++		/* phy_freq is the TMDS bit rate (character rate x10) */
++		tmds_khz = div_u64(phy_freq, 10000);
++		if (info->max_tmds_clock &&
++		    info->max_tmds_clock < max_tmds_khz)
++			max_tmds_khz = info->max_tmds_clock;
++		if (tmds_khz > max_tmds_khz)
++			return NULL;
++
++		if (!meson_encoder_hdmi_fmt_is_422(output_fmt) &&
++		    meson_vclk_vic_supported_freq(encoder_hdmi->priv,
++						  phy_freq,
++						  vclk_freq) != MODE_OK)
++			return NULL;
++	}
++
+ 	for (i = 0 ; i < ARRAY_SIZE(meson_encoder_hdmi_out_bus_fmts) ; ++i) {
+ 		if (output_fmt == meson_encoder_hdmi_out_bus_fmts[i]) {
+ 			*num_input_fmts = 1;
+@@ -419,7 +581,7 @@ int meson_encoder_hdmi_probe(struct meson_drm *priv)
+ 			drm_connector_attach_colorspace_property(meson_encoder_hdmi->connector);
+ 	}
+ 
+-	drm_connector_attach_max_bpc_property(meson_encoder_hdmi->connector, 8, 8);
++	drm_connector_attach_max_bpc_property(meson_encoder_hdmi->connector, 8, 12);
+ 
+ 	priv->encoders[MESON_ENC_HDMI] = meson_encoder_hdmi;
+ 
+diff --git a/drivers/gpu/drm/meson/meson_registers.h b/drivers/gpu/drm/meson/meson_registers.h
+index 3d73d00a1f4c..8f55efe891a8 100644
+--- a/drivers/gpu/drm/meson/meson_registers.h
++++ b/drivers/gpu/drm/meson/meson_registers.h
+@@ -1637,6 +1637,7 @@
+ #define VPU_ISP_GCLK_CTRL0 0x2741
+ #define VPU_ISP_GCLK_CTRL1 0x2742
+ #define VPU_HDMI_FMT_CTRL 0x2743
++#define VPU_HDMI_DITH_CNTL 0x27fc
+ #define VPU_VDIN_ASYNC_HOLD_CTRL 0x2743
+ #define VPU_VDISP_ASYNC_HOLD_CTRL 0x2744
+ #define VPU_VPUARB2_ASYNC_HOLD_CTRL 0x2745
+diff --git a/drivers/gpu/drm/meson/meson_vclk.c b/drivers/gpu/drm/meson/meson_vclk.c
+index c0be0b7655bf..c79d87e7c211 100644
+--- a/drivers/gpu/drm/meson/meson_vclk.c
++++ b/drivers/gpu/drm/meson/meson_vclk.c
+@@ -357,6 +357,20 @@ enum {
+ 	MESON_VCLK_HDMI_594000,
+ /* 2970 /1 /1 /1 /5 /1  => /1 /2 */
+ 	MESON_VCLK_HDMI_594000_YUV420,
++/*
++ * Deep color (10/12-bit) entries: TMDS runs at pixel * 1.25 (10-bit)
++ * or * 1.5 (12-bit), realised with the fractional vid_pll dividers
++ * this file's DOC block always said were the missing piece.
++ * PHY = VCO / od1 / od2;  vclk = PHY / od3 / vid_pll_div / vclk_div.
++ */
++/* 3712.5 /2 /1 /1 /6.25 /2  => /1 /1   1080p @ 10-bit */
++	MESON_VCLK_HDMI_148500_10B,
++/* 3712.5 /1 /1 /1 /6.25 /2  => /1 /1   4K30-class @ 10-bit */
++	MESON_VCLK_HDMI_297000_10B,
++/* 3712.5 /1 /1 /1 /6.25 /1  => /1 /2   4K60 YUV420 @ 10-bit */
++	MESON_VCLK_HDMI_594000_YUV420_10B,
++/* 4455 /2 /1 /1 /7.5 /2  => /1 /1      1080p @ 12-bit */
++	MESON_VCLK_HDMI_148500_12B,
+ };
+ 
+ struct meson_vclk_params {
+@@ -467,6 +481,54 @@ struct meson_vclk_params {
+ 		.vid_pll_div = VID_PLL_DIV_5,
+ 		.vclk_div = 1,
+ 	},
++	[MESON_VCLK_HDMI_148500_10B] = {
++		.pll_freq = 3712500000,
++		.phy_freq = 1856250000,
++		.venc_freq = 148500000,
++		.vclk_freq = 148500000,
++		.pixel_freq = 148500000,
++		.pll_od1 = 2,
++		.pll_od2 = 1,
++		.pll_od3 = 1,
++		.vid_pll_div = VID_PLL_DIV_6p25,
++		.vclk_div = 2,
++	},
++	[MESON_VCLK_HDMI_297000_10B] = {
++		.pll_freq = 3712500000,
++		.phy_freq = 3712500000,
++		.venc_freq = 297000000,
++		.vclk_freq = 297000000,
++		.pixel_freq = 297000000,
++		.pll_od1 = 1,
++		.pll_od2 = 1,
++		.pll_od3 = 1,
++		.vid_pll_div = VID_PLL_DIV_6p25,
++		.vclk_div = 2,
++	},
++	[MESON_VCLK_HDMI_594000_YUV420_10B] = {
++		.pll_freq = 3712500000,
++		.phy_freq = 3712500000,
++		.venc_freq = 594000000,
++		.vclk_freq = 594000000,
++		.pixel_freq = 297000000,
++		.pll_od1 = 1,
++		.pll_od2 = 1,
++		.pll_od3 = 1,
++		.vid_pll_div = VID_PLL_DIV_6p25,
++		.vclk_div = 1,
++	},
++	[MESON_VCLK_HDMI_148500_12B] = {
++		.pll_freq = 4455000000,
++		.phy_freq = 2227500000,
++		.venc_freq = 148500000,
++		.vclk_freq = 148500000,
++		.pixel_freq = 148500000,
++		.pll_od1 = 2,
++		.pll_od2 = 1,
++		.pll_od3 = 1,
++		.vid_pll_div = VID_PLL_DIV_7p5,
++		.vclk_div = 2,
++	},
+ 	{ /* sentinel */ },
+ };
+ 
+@@ -557,6 +619,18 @@ static void meson_hdmi_pll_set_params(struct meson_drm *priv, unsigned int m,
+ 			}
+ 			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL6, 0x39272000);
+ 			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL7, 0x55540000);
++		} else if (m >= 0x9a) {
++			/*
++			 * 3.7125-4.455 GHz VCO band (the deep-color rates):
++			 * per the vendor hdmitx hw_g12a.c cases 3712500 and
++			 * 4455000 - the low-band analog parameters below do
++			 * NOT lock at these frequencies (proven on a VIM3:
++			 * the lock poll spun forever and hung boot).
++			 */
++			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL4, 0x6a685c00);
++			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL5, 0x43231290);
++			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL6, 0x29272000);
++			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL7, 0x56540028);
+ 		} else {
+ 			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL4, 0x0a691c00);
+ 			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL5, 0x33771290);
+@@ -564,23 +638,36 @@ static void meson_hdmi_pll_set_params(struct meson_drm *priv, unsigned int m,
+ 			regmap_write(priv->hhi, HHI_HDMI_PLL_CNTL7, 0x50540000);
+ 		}
+ 
+-		do {
+-			/* Reset PLL */
+-			regmap_update_bits(priv->hhi, HHI_HDMI_PLL_CNTL,
+-					HDMI_PLL_RESET_G12A, HDMI_PLL_RESET_G12A);
+-
+-			/* UN-Reset PLL */
+-			regmap_update_bits(priv->hhi, HHI_HDMI_PLL_CNTL,
+-					HDMI_PLL_RESET_G12A, 0);
+-
+-			/* Poll for lock bits */
+-			if (!regmap_read_poll_timeout(priv->hhi,
+-						      HHI_HDMI_PLL_CNTL, val,
+-						      ((val & HDMI_PLL_LOCK_G12A)
+-						        == HDMI_PLL_LOCK_G12A),
+-						      10, 100))
+-				break;
+-		} while(1);
++		{
++			int lock_tries = 100;
++
++			do {
++				/* Reset PLL */
++				regmap_update_bits(priv->hhi, HHI_HDMI_PLL_CNTL,
++						HDMI_PLL_RESET_G12A, HDMI_PLL_RESET_G12A);
++
++				/* UN-Reset PLL */
++				regmap_update_bits(priv->hhi, HHI_HDMI_PLL_CNTL,
++						HDMI_PLL_RESET_G12A, 0);
++
++				/* Poll for lock bits */
++				if (!regmap_read_poll_timeout(priv->hhi,
++							      HHI_HDMI_PLL_CNTL, val,
++							      ((val & HDMI_PLL_LOCK_G12A)
++							        == HDMI_PLL_LOCK_G12A),
++							      10, 100))
++					break;
++			} while (--lock_tries);
++
++			/*
++			 * An unbounded loop here hangs the whole boot with no
++			 * console if the analog parameters are wrong for the
++			 * requested VCO.  A broken mode beats a dead board.
++			 */
++			if (!lock_tries)
++				pr_err("HDMI PLL failed to lock for m=0x%x frac=0x%x\n",
++				       m, frac);
++		}
+ 	}
+ 
+ 	if (meson_vpu_is_compatible(priv, VPU_COMPATIBLE_GXBB))
+@@ -890,6 +977,18 @@ static void meson_vclk_set(struct meson_drm *priv,
+ 			m = vic_alternate_clock ? 0xb3 : 0xb4;
+ 			frac = vic_alternate_clock ? 0x1a3ee : 0;
+ 			break;
++		case 3712500000:
++			/* deep color: TMDS x1.25 rates (vendor hw_g12a.c
++			 * case 3712500 uses the same m/frac)
++			 */
++			m = 0x9a;
++			frac = vic_alternate_clock ? 0x110e1 : 0x16000;
++			break;
++		case 4455000000:
++			/* deep color: TMDS x1.5 rates */
++			m = 0xb9;
++			frac = vic_alternate_clock ? 0xe113 : 0x14000;
++			break;
+ 		case 5940000000:
+ 			m = 0xf7;
+ 			frac = vic_alternate_clock ? 0x8148 : 0x10000;
+diff --git a/include/drm/bridge/dw_hdmi.h b/include/drm/bridge/dw_hdmi.h
+index c56d1775f04a..046968cf348a 100644
+--- a/include/drm/bridge/dw_hdmi.h
++++ b/include/drm/bridge/dw_hdmi.h
+@@ -216,6 +216,7 @@ enum drm_connector_status dw_hdmi_phy_read_hpd(struct dw_hdmi *hdmi,
+ void dw_hdmi_phy_setup_hpd(struct dw_hdmi *hdmi, void *data);
+ 
+ bool dw_hdmi_bus_fmt_is_420(struct dw_hdmi *hdmi);
++unsigned long dw_hdmi_get_tmds_clock(struct dw_hdmi *hdmi);
+ 
+ const struct dw_hdmi_plat_data *dw_hdmi_to_plat_data(struct dw_hdmi *hdmi);
+ 
+-- 
+2.43.0
+

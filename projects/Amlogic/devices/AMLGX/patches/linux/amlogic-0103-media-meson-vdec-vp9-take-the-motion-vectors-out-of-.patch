@@ -1,0 +1,195 @@
+From 7dc1fd32c7d8c872fbe97988a125a88eb426abaf Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Mon, 7 Sep 2026 14:42:38 -0700
+Subject: [PATCH 103/145] media: meson: vdec: vp9: take the motion vectors out
+ of the workspace
+
+Same change as the previous patch makes to HEVC, and for the same reason:
+27 MiB of VP9's 28.62 MiB workspace was per-frame motion-vector buffers,
+which never needed to live there.  The hardware is handed each frame's
+address individually through HEVC_MPRED_MV_WR_START_ADDR and
+HEVC_MPRED_MV_RD_START_ADDR, so the buffers only have to be individually
+contiguous.  Split out, the workspace is 1.62 MiB.
+
+VP9 needs this at least as much as HEVC does.  It has no workspace cache
+- every session allocates a fresh one - and its own comment records what
+that costs: the workspace "is the first thing a session asks CMA for",
+and a previous session's FBC chunks can still be holding CMA in 1 MiB
+pieces, "always, on a seek", leaving no run long enough.  That is why
+codec_vp9_start() calls codec_hevc_fbc_pool_reclaim() first.  Both that
+and the HEVC workspace cache are workarounds for a 28 MiB contiguous
+demand that did not need to be 28 MiB.
+
+Measured against the CMA region the driver allocates from, fragmented to
+434 MiB free with no run above 4 MiB:
+
+  old workspace  28.69 MiB contiguous : FAILED
+  new workspace   1.62 MiB contiguous : ALLOCATED
+  new MV buffers  1.125 MiB x 24      : 24 of 24 ALLOCATED
+
+Verified on hardware with the decoder's correctness oracle, hardware
+against software, on the module built from this series - and unchanged
+from the stock module to six decimal places:
+
+  vp9-1080p60              BIT-EXACT 24/24
+  vp9p2-10bit-2160p60      PSNR 54.153062 dB avg / 54.136200 min
+  hevc8-1080p              BIT-EXACT 24/24
+  h264-1080p               BIT-EXACT 24/24
+
+Zero faults.  The buffers are freed inside the same locked region that
+NULLs workspace_vaddr, so the threaded ISR's existing guard - which tests
+that pointer under the lock before reading anything - covers them too.
+
+Total memory is unchanged; this changes the shape of the demand.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_vp9.c | 80 ++++++++++++++++++--
+ 1 file changed, 74 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_vp9.c b/drivers/staging/media/meson/vdec/codec_vp9.c
+index fdf77b060e7e..b92bfc86b3ba 100644
+--- a/drivers/staging/media/meson/vdec/codec_vp9.c
++++ b/drivers/staging/media/meson/vdec/codec_vp9.c
+@@ -73,7 +73,6 @@ enum FRAME_TYPE {
+ #define COUNT_SIZE	0x3000
+ #define MMU_VBH_SIZE	0x5000
+ #define MPRED_ABV_SIZE	0x10000
+-#define MPRED_MV_SIZE	(MPRED_MV_BUF_SIZE * MAX_REF_PIC_NUM)
+ #define RPM_BUF_SIZE	0x100
+ #define LMEM_SIZE	0x800
+ 
+@@ -95,8 +94,16 @@ enum FRAME_TYPE {
+ #define COUNT_OFFSET     (PROB_OFFSET + PROB_SIZE)
+ #define MMU_VBH_OFFSET   (COUNT_OFFSET + COUNT_SIZE)
+ #define MPRED_ABV_OFFSET (MMU_VBH_OFFSET + MMU_VBH_SIZE)
+-#define MPRED_MV_OFFSET  (MPRED_ABV_OFFSET + MPRED_ABV_SIZE)
+-#define RPM_OFFSET       (MPRED_MV_OFFSET + MPRED_MV_SIZE)
++/*
++ * The per-frame motion-vector buffers are deliberately NOT in the workspace,
++ * for the same reason as in codec_hevc.c: they were 27 MiB of its 28.62 MiB,
++ * which made the workspace the hardest contiguous allocation here and the one
++ * that fails first, to -EBUSY - an isolation failure, so fragmentation rather
++ * than exhaustion.  The hardware takes each frame's MV address individually
++ * (HEVC_MPRED_MV_WR/RD_START_ADDR), so they need only be individually
++ * contiguous.  Splitting them out leaves a 1.62 MiB workspace.
++ */
++#define RPM_OFFSET       (MPRED_ABV_OFFSET + MPRED_ABV_SIZE)
+ #define LMEM_OFFSET      (RPM_OFFSET + RPM_BUF_SIZE)
+ 
+ #define SIZE_WORKSPACE	ALIGN(LMEM_OFFSET + LMEM_SIZE, 64 * SZ_1K)
+@@ -445,6 +452,14 @@ struct codec_vp9 {
+ 	void      *workspace_vaddr;
+ 	dma_addr_t workspace_paddr;
+ 
++	/*
++	 * Per-frame motion-vector buffers, indexed by capture-buffer index
++	 * (vp9_frame.index is the vb2 index).  Split out of the workspace;
++	 * see the RPM_OFFSET comment above.
++	 */
++	void      *mv_vaddr[MAX_REF_PIC_NUM];
++	dma_addr_t mv_paddr[MAX_REF_PIC_NUM];
++
+ 	/* Contains many information parsed from the bitstream */
+ 	union rpm_param rpm_param;
+ 
+@@ -688,9 +703,27 @@ static u32 codec_vp9_num_pending_bufs(struct amvdec_session *sess)
+ 	return vp9->frames_num;
+ }
+ 
++static void codec_vp9_free_mv_buffers(struct amvdec_core *core,
++				      struct codec_vp9 *vp9)
++{
++	int i;
++
++	for (i = 0; i < MAX_REF_PIC_NUM; ++i) {
++		if (!vp9->mv_vaddr[i])
++			continue;
++
++		dma_free_coherent(core->dev, MPRED_MV_BUF_SIZE,
++				  vp9->mv_vaddr[i], vp9->mv_paddr[i]);
++		vp9->mv_vaddr[i] = NULL;
++		vp9->mv_paddr[i] = 0;
++	}
++}
++
+ static int codec_vp9_alloc_workspace(struct amvdec_core *core,
+ 				     struct codec_vp9 *vp9)
+ {
++	int i;
++
+ 	/* Allocate some memory for the VP9 decoder's state */
+ 	vp9->workspace_vaddr = dma_alloc_coherent(core->dev, SIZE_WORKSPACE,
+ 						  &vp9->workspace_paddr,
+@@ -700,6 +733,28 @@ static int codec_vp9_alloc_workspace(struct amvdec_core *core,
+ 		return -ENOMEM;
+ 	}
+ 
++	/*
++	 * All of them up front and all-or-nothing:
++	 * codec_vp9_get_frame_mv_paddr() is reached from the threaded ISR and
++	 * hands an address straight to the hardware, so there is nowhere sane
++	 * to fail later and a missing buffer would be a wild DMA target.
++	 */
++	for (i = 0; i < MAX_REF_PIC_NUM; ++i) {
++		vp9->mv_vaddr[i] = dma_alloc_coherent(core->dev,
++						      MPRED_MV_BUF_SIZE,
++						      &vp9->mv_paddr[i],
++						      GFP_KERNEL);
++		if (!vp9->mv_vaddr[i]) {
++			dev_err(core->dev, "Failed to allocate VP9 MV buffer\n");
++			codec_vp9_free_mv_buffers(core, vp9);
++			dma_free_coherent(core->dev, SIZE_WORKSPACE,
++					  vp9->workspace_vaddr,
++					  vp9->workspace_paddr);
++			vp9->workspace_vaddr = NULL;
++			return -ENOMEM;
++		}
++	}
++
+ 	return 0;
+ }
+ 
+@@ -852,6 +907,13 @@ static int codec_vp9_stop(struct amvdec_session *sess)
+ 				  vp9->workspace_vaddr,
+ 				  vp9->workspace_paddr);
+ 		vp9->workspace_vaddr = NULL;
++		/*
++		 * Inside the same locked region, and only once
++		 * workspace_vaddr is NULL: the threaded ISR tests that under
++		 * this lock before touching either, so the MV buffers are
++		 * covered by the same guard.
++		 */
++		codec_vp9_free_mv_buffers(core, vp9);
+ 	}
+ 
+ 	codec_hevc_free_fbc_buffers(sess, &vp9->common);
+@@ -999,8 +1061,12 @@ static void codec_vp9_set_sao(struct amvdec_session *sess,
+ static dma_addr_t codec_vp9_get_frame_mv_paddr(struct codec_vp9 *vp9,
+ 					       struct vp9_frame *frame)
+ {
+-	return vp9->workspace_paddr + MPRED_MV_OFFSET +
+-	       (frame->index * MPRED_MV_BUF_SIZE);
++	u32 idx = frame->index;
++
++	if (WARN_ON_ONCE(idx >= MAX_REF_PIC_NUM))
++		idx = 0;
++
++	return vp9->mv_paddr[idx];
+ }
+ 
+ static void codec_vp9_set_mpred_mv(struct amvdec_core *core,
+@@ -2128,7 +2194,9 @@ static irqreturn_t codec_vp9_threaded_isr(struct amvdec_session *sess)
+ 	if (!vp9->workspace_vaddr) {
+ 		/*
+ 		 * codec_vp9_stop() ran while this interrupt was in flight and
+-		 * took the lock first.  Everything below reads the workspace.
++		 * took the lock first.  Everything below reads the workspace,
++		 * and the per-frame MV buffers are freed under this same lock
++		 * once this pointer is NULL, so they are covered too.
+ 		 */
+ 		goto unlock;
+ 	}
+-- 
+2.43.0
+

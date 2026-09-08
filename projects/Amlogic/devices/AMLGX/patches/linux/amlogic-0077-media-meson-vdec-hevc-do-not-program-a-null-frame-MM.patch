@@ -1,0 +1,73 @@
+From 8afaa023020b8c91a1cce41cc487a3b3f8671504 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 077/145] media: meson: vdec: hevc: do not program a null frame
+ MMU map
+
+codec_hevc_use_mmu() keys on the capture pixel format as well as the
+bit depth, so with a compressed capture format (AM21C) MMU mode is
+selected from the moment the format is set - including at
+codec_hevc_start(), which runs codec_hevc_setup_workspace() before any
+buffers exist.  The frame MMU map is allocated later, by
+codec_hevc_setup_buffers() during resume(), so the start-time pass
+writes HEVC_ASSIST_MMU_MAP_ADDR = 0, handing the hardware a pointer to
+physical page 0.
+
+This is defensive rather than a fix for an observed failure: nothing
+decodes before resume(), and resume() reprograms the workspace
+registers after allocating the map, so in practice the null pointer is
+overwritten before the hardware acts on it (AM21C playback was
+verified working both with and without this change).  But a register
+that selects a DMA target should never be armed with a known-invalid
+address - the same class of mistake, reached through the bit depth
+instead of the pixel format, previously took the whole SoC down with
+an SP/PC alignment exception.
+
+Skip the map registers until there is a map to point at.
+
+Validated on a VIM3 (G12B): Kodi plays HEVC Main10 at 1080p and 4K
+with the VD1 overlay on YU10 + MOD_AMLOGIC_FBC(SCATTER), and the NV12M
+paths stay regression-exact (H.264 1080p x2 and 4K frame-md5 identical
+to software decode).
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 24 ++++++++++++++-----
+ 1 file changed, 18 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index 4c5df8c6fa45..c6e977c13b31 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -592,12 +592,24 @@ codec_hevc_setup_workspace(struct amvdec_session *sess,
+ 		amvdec_write_dos(core, HEVC_SAO_MMU_VH1_ADDR,
+ 				 wkaddr + MMU_VBH_OFFSET + (MMU_VBH_SIZE / 2));
+ 
+-		if (revision >= VDEC_REVISION_G12A)
+-			amvdec_write_dos(core, HEVC_ASSIST_MMU_MAP_ADDR,
+-					 hevc->common.mmu_map_paddr);
+-		else
+-			amvdec_write_dos(core, H265_MMU_MAP_BUFFER,
+-					 hevc->common.mmu_map_paddr);
++		/*
++		 * The frame MMU map is allocated by codec_hevc_setup_buffers(),
++		 * which cannot run before the capture queue is negotiated.
++		 * With a compressed capture format (AM21C) the pixel format
++		 * alone selects MMU mode, so this runs at session start with
++		 * no map allocated yet - and programming 0 points the hardware
++		 * at physical page 0.  Only header parsing happens before
++		 * resume(), which reprograms these registers after allocating,
++		 * so leave them alone until there is a map to point at.
++		 */
++		if (hevc->common.mmu_map_paddr) {
++			if (revision >= VDEC_REVISION_G12A)
++				amvdec_write_dos(core, HEVC_ASSIST_MMU_MAP_ADDR,
++						 hevc->common.mmu_map_paddr);
++			else
++				amvdec_write_dos(core, H265_MMU_MAP_BUFFER,
++						 hevc->common.mmu_map_paddr);
++		}
+ 	} else if (revision < VDEC_REVISION_G12A) {
+ 		amvdec_write_dos(core, HEVC_STREAM_SWAP_BUFFER,
+ 				 wkaddr + SWAP_BUF_OFFSET);
+-- 
+2.43.0
+

@@ -1,0 +1,68 @@
+From bdea22dbe757a47113ed8076c3c0ebf3e643a606 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 079/145] media: meson: vdec: only parse MPEG1/2 sequence
+ headers
+
+The driver-side sequence-header parse that supplies the initial
+SOURCE_CHANGE for codecs whose firmware raises no header interrupt is
+gated on the absence of a .resume op.  That was accurate when MPEG1/2
+was the only such codec, but it is the wrong predicate: it selects "no
+resume op", when what the parser actually requires is "this is an
+MPEG1/2 stream".
+
+vdec_parse_mpeg_seq_header() scans for the MPEG1/2 sequence header start
+code 00 00 01 B3 and reads the next three bytes as a 12-bit width and
+height.  MPEG-4 Part 2 uses that identical start code for
+group_of_vop_start_code, where the following bytes are a time code.
+Parsing them yields a nonsense coded size - 1x7 for the stream this was
+found with.
+
+The consequence is not a cosmetic one.  sess->width/height feed
+amvdec_set_canvases(), so the capture canvases are built for the bogus
+size while the microcode still decodes a full-size picture into them.
+The decode runs off the end of every canvas: a wild bus-master write
+that takes out the DDR controller, with no oops and nothing on the
+console - only a physical reset recovers the board.
+
+Nothing hits this today because MPEG1/2 is the only codec without a
+resume op, so this is a latent trap rather than a live bug: it arms
+itself for whoever adds the next such codec.  Gate on the pixel format
+instead.
+
+Found while bringing up MPEG-4 Part 2 on this driver, which wedged the
+SoC twice before the cause was traced with a serial console.
+---
+ drivers/staging/media/meson/vdec/vdec.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index 1240be46959d..b8c73703fdda 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -340,9 +340,21 @@ static void vdec_vb2_buf_queue(struct vb2_buffer *vb)
+ 
+ 	v4l2_m2m_buf_queue(m2m_ctx, vbuf);
+ 
++	/*
++	 * Only MPEG1/2 may take this path.  The parser below looks for the
++	 * MPEG1/2 sequence header 00 00 01 B3 - but MPEG-4 Part 2 uses that
++	 * very start code for group_of_vop, whose following bytes are a time
++	 * code, not a size.  Parsing it yields a nonsense resolution, the
++	 * canvases are then built for that size, and the microcode decodes a
++	 * full-size picture straight past the end of them: a wild DMA that
++	 * wedges the DDR controller.  Gate on the codec, not on the absence
++	 * of a resume op.
++	 */
+ 	if (vb->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
+ 	    !sess->fmt_out->codec_ops->resume &&
+-	    !sess->init_src_change_done)
++	    !sess->init_src_change_done &&
++	    (sess->fmt_out->pixfmt == V4L2_PIX_FMT_MPEG1 ||
++	     sess->fmt_out->pixfmt == V4L2_PIX_FMT_MPEG2))
+ 		vdec_init_src_change(sess, vb);
+ 
+ 	if (!sess->streamon_out)
+-- 
+2.43.0
+

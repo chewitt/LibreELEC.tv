@@ -1,0 +1,101 @@
+From 3fba62e9cdaab17d1c57f65b49e205eb2a06f00b Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 22:20:00 -0700
+Subject: [PATCH 100/145] media: meson: vdec: wait out the interrupt handler
+ before tearing a session down
+
+vdec_poweroff() stops the decoder and frees the codec's workspace, and
+vdec_stop_streaming() then frees sess->priv itself.  Neither waits for the
+decoder's interrupt handler, which reads both.
+
+vdec_wait_inactive() looks like it covers this, but it only sleeps until
+50 ms have passed with no new interrupt.  That says nothing about a
+handler already running - and with IRQF_ONESHOT the line stays masked
+while the threaded handler runs, so a long-running handler actively makes
+vdec_wait_inactive() return sooner, not later.
+
+The window is real.  Delaying the VP9 threaded handler by 60 ms between
+entry and its mutex_lock, then ending the session, faults it every few
+attempts on a VIM3 (G12B):
+
+  Unable to handle kernel read from unreadable memory at virtual address 3f0
+  CPU: 0 PID: 512 Comm: irq/33-vdec
+  pc : codec_vp9_threaded_isr+0x128/0xe1c [meson_vdec]
+  genirq: exiting task "irq/33-vdec" (512) is an active IRQ thread (irq 33)
+
+and the last line is the part that hurts: the threaded handler for the
+decoder's interrupt is gone for good.  The machine stays up and
+/dev/video0 still opens, but no decode completion is ever processed
+again - every later session, in any codec, streams on and returns zero
+frames until reboot.
+
+Detach the session and wait the handler out before anything is freed.
+This goes after ->drain(), which still needs its interrupts, and after
+esparser_quiesce(), so no new work can be submitted.  Nothing holds a
+codec lock at that point, so synchronize_irq() cannot deadlock against a
+handler blocked on one.
+
+Requires the interrupt number to outlive probe(), so keep it on the core.
+
+Fixes: 3e7f51bd9607 ("media: meson: add v4l2 m2m video decoder driver")
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/vdec.c | 20 ++++++++++++++++++++
+ drivers/staging/media/meson/vdec/vdec.h |  3 +++
+ 2 files changed, 23 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index e324320b3d8a..7099a9ccf3fd 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -161,6 +161,25 @@ static void vdec_poweroff(struct amvdec_session *sess)
+ 		codec_ops->drain(sess);
+ 
+ 	esparser_quiesce(sess->core);
++
++	/*
++	 * Nothing more will be decoded from here, so no further interrupt is
++	 * expected - but one can already be in flight, and everything below
++	 * frees memory an interrupt handler reads: the codec workspace in
++	 * ->stop(), then sess->priv itself in vdec_stop_streaming().
++	 *
++	 * Detach the session so a late or spurious interrupt finds nothing
++	 * (both handlers return IRQ_NONE on a NULL cur_sess), then wait for
++	 * any handler already running to leave.  Only after that is it safe
++	 * to free.
++	 *
++	 * This has to come after ->drain(), which still needs its interrupts.
++	 * Nothing holds a codec lock here, so synchronize_irq() cannot
++	 * deadlock against a handler waiting for one.
++	 */
++	sess->core->cur_sess = NULL;
++	synchronize_irq(sess->core->irq);
++
+ 	vdec_ops->stop(sess);
+ 	clk_disable_unprepare(sess->core->dos_clk);
+ 	clk_disable_unprepare(sess->core->dos_parser_clk);
+@@ -1280,6 +1299,7 @@ static int vdec_probe(struct platform_device *pdev)
+ 		return PTR_ERR(core->vdec_hevc_clk);
+ 
+ 	irq = platform_get_irq_byname(pdev, "vdec");
++	core->irq = irq;
+ 	if (irq < 0)
+ 		return irq;
+ 
+diff --git a/drivers/staging/media/meson/vdec/vdec.h b/drivers/staging/media/meson/vdec/vdec.h
+index a5b33fa8c40a..99c2fffef534 100644
+--- a/drivers/staging/media/meson/vdec/vdec.h
++++ b/drivers/staging/media/meson/vdec/vdec.h
+@@ -103,6 +103,9 @@ struct amvdec_core {
+ 
+ 	struct amvdec_session *cur_sess;
+ 	struct mutex lock;
++
++	/* kept so teardown can wait an in-flight handler out */
++	int irq;
+ };
+ 
+ /**
+-- 
+2.43.0
+

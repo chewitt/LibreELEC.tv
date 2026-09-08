@@ -1,0 +1,89 @@
+From b2d8110f0b8acd872da5414f8812633bec2aef6d Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:15:05 -0700
+Subject: [PATCH 093/145] media: meson: vdec: hevc: never recycle the on-screen
+ FBC generation
+
+Under real CMA exhaustion the board took a page-allocator BUG in an
+unrelated process - a 2 GiB write, no video playing, 49 minutes after the
+decoder had been driven hard:
+
+  Oops  pc: is_free_buddy_page  Comm: dd
+    expand -> __rmqueue_pcplist -> get_page_from_freelist
+    -> __folio_alloc -> ext4_da_write_begin -> vfs_write
+  CMA: => 6212 free of 229376 pages
+
+Reproduced deliberately with debug_pagealloc=on slub_debug=FZP: a seek
+storm to drain CMA followed by a heavy write faults in the buddy
+allocator's own integrity check.  slub_debug stayed quiet, so it is not a
+slab overflow; debug_pagealloc did not trap a store, so it is not the CPU
+writing through a stale pointer.  A corrupted struct page found later by
+expand() is what a page freed while still in use looks like.
+
+fbc_chunk_get_pressure_locked() recycles park[0] as well as park[1].
+park[0] is the generation the session that just stopped was displaying -
+its chunks back CAPTURE buffers that can still be on screen, which is the
+entire reason it is parked rather than freed.  Splicing it onto the free
+list does two things: a new session's firmware is handed memory the
+display is scanning out, and the chunks become reachable from the free
+list, so the next codec_hevc_free_fbc_buffers() - which ends in
+fbc_chunks_release_locked(&fbc_pool.free) - dma_free_coherent()s them
+while they are still referenced.  Those pages return to CMA live, and the
+corruption surfaces whenever the allocator next hands them out.
+
+Recycle only park[1].  It has already been displaced by a newer
+generation and is precisely what free_fbc_buffers() releases on the next
+session stop, so reusing it under pressure matches that lifetime.  When
+that is not enough, fail the allocation: -ENOMEM propagates out of
+codec_hevc_setup_buffers() and fails the session cleanly, which is a far
+better outcome than corrupting memory the driver does not own.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ .../media/meson/vdec/codec_hevc_common.c      | 27 ++++++++++++++++---
+ 1 file changed, 24 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc_common.c b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+index 0fadc53c1fac..55e0704cc565 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc_common.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+@@ -150,12 +150,33 @@ static struct fbc_chunk *fbc_chunk_get_pressure_locked(struct device *dev)
+ 	if (c)
+ 		return c;
+ 
+-	if (list_empty(&fbc_pool.park[0]) && list_empty(&fbc_pool.park[1]))
++	/*
++	 * Only the aged-out generation may be recycled.
++	 *
++	 * park[0] is what the session that just stopped was displaying, and
++	 * the CAPTURE buffers it backs can still be on screen - that is the
++	 * entire reason it is parked instead of freed.  Handing those chunks
++	 * to a new session lets its firmware DMA into memory the display is
++	 * scanning out and, worse, leaves them on the pool's free list, where
++	 * the next codec_hevc_free_fbc_buffers() dma_free_coherent()s them
++	 * while they are still referenced.  Those pages go back to CMA live,
++	 * and the damage surfaces later in whatever the allocator hands them
++	 * to next - a BUG in set_buddy_order()/is_free_buddy_page() reached
++	 * from an unrelated process's write path.
++	 *
++	 * park[1] has already been displaced by a newer generation, and is
++	 * exactly what free_fbc_buffers() releases on the next session stop,
++	 * so reusing it here matches that lifetime.
++	 *
++	 * If that is not enough, fail: a clean -ENOMEM is a far better
++	 * outcome than corrupting memory this driver does not own.
++	 */
++	if (list_empty(&fbc_pool.park[1]))
+ 		return NULL;
+ 
+ 	list_splice_tail_init(&fbc_pool.park[1], &fbc_pool.free);
+-	list_splice_tail_init(&fbc_pool.park[0], &fbc_pool.free);
+-	dev_warn_once(dev, "CMA pressure: recycled parked FBC chunks\n");
++	dev_warn_once(dev,
++		      "CMA pressure: recycled the aged-out FBC generation\n");
+ 
+ 	return fbc_chunk_get_locked(dev);
+ }
+-- 
+2.43.0
+

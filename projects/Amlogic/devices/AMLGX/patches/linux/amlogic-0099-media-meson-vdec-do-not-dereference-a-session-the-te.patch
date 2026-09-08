@@ -1,0 +1,70 @@
+From c736e2259046d584533bd606ef7e05d98c6332a7 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 22:10:00 -0700
+Subject: [PATCH 099/145] media: meson: vdec: do not dereference a session the
+ teardown already cleared
+
+vdec_isr() and vdec_threaded_isr() both take core->cur_sess and use it
+without checking it:
+
+	struct amvdec_session *sess = core->cur_sess;
+	sess->last_irq_jiffies = get_jiffies_64();
+	return sess->fmt_out->codec_ops->isr(sess);
+
+vdec_stop_streaming() sets core->cur_sess = NULL while the decoder's
+interrupt is still requested and the hardware may still have one to
+raise.  A late interrupt then writes through a NULL pointer in the hard
+handler before it can reach any codec at all.  The interrupt is also
+shared-capable in the sense that it stays requested for the lifetime of
+the driver, so a spurious one outside any session hits the same path.
+
+Return IRQ_NONE instead, which is what a handler with no work owes the
+core.
+
+This does not close the whole teardown window - a session freed after
+cur_sess is read is still a use-after-free, and the structural fix is to
+quiesce the threaded handler (synchronize_irq()) before vdec_poweroff()
+frees anything.  That needs the irq number kept in amvdec_core, which it
+currently is not, and it needs care not to deadlock against a handler
+blocked on a codec lock, so it is left for a separate change.  This one
+is the unconditional NULL dereference, which needs no timing at all.
+
+Fixes: 3e7f51bd9607 ("media: meson: add v4l2 m2m video decoder driver")
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/vdec.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index dd15d9894255..e324320b3d8a 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -1175,6 +1175,15 @@ static irqreturn_t vdec_isr(int irq, void *data)
+ {
+ 	struct amvdec_core *core = data;
+ 	struct amvdec_session *sess = core->cur_sess;
++
++	/*
++	 * vdec_stop_streaming() clears cur_sess while the hardware may still
++	 * have an interrupt to raise - a late or spurious one then arrives
++	 * with no session at all.
++	 */
++	if (!sess)
++		return IRQ_NONE;
++
+ 	sess->last_irq_jiffies = get_jiffies_64();
+ 
+ 	return sess->fmt_out->codec_ops->isr(sess);
+@@ -1185,6 +1194,9 @@ static irqreturn_t vdec_threaded_isr(int irq, void *data)
+ 	struct amvdec_core *core = data;
+ 	struct amvdec_session *sess = core->cur_sess;
+ 
++	if (!sess)
++		return IRQ_NONE;
++
+ 	return sess->fmt_out->codec_ops->threaded_isr(sess);
+ }
+ 
+-- 
+2.43.0
+

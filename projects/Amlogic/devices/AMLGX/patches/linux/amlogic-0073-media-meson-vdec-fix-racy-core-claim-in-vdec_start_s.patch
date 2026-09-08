@@ -1,0 +1,75 @@
+From 65cbf44f16ee20aa9391052d94a87e503fdd5c32 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 073/145] media: meson: vdec: fix racy core claim in
+ vdec_start_streaming()
+
+The check for a busy core and the claim of it were separated by sixty
+lines and several sleeping allocations, with no lock held.  vb2 queues
+serialize on the per-session lock, so two sessions can execute this
+window concurrently: both observe core->cur_sess as NULL, both proceed,
+and both initialize the single hardware decoder.  The result is
+register state from two codec instances interleaved on one core -
+observed as garbage output from the very first frame when a player
+probes a file and then opens it for decoding.
+
+Check and claim under core->lock, and release the claim when the
+session's last queue stops streaming.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/vdec.c | 20 +++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index 64058a0b8264..750aec9cd69f 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -363,10 +363,22 @@ static int vdec_start_streaming(struct vb2_queue *q, unsigned int count)
+ 	struct vb2_v4l2_buffer *buf;
+ 	int ret;
+ 
++	/*
++	 * Sessions serialize on per-session vb2 locks, so two opens can
++	 * race this gate concurrently - and the claim used to happen 60
++	 * lines (and several sleeps) later.  Two winners = two codecs
++	 * initializing the one HEVC core = garbage decode from frame 0.
++	 * Check and claim atomically.
++	 */
++	mutex_lock(&core->lock);
+ 	if (core->cur_sess && core->cur_sess != sess) {
++		mutex_unlock(&core->lock);
+ 		ret = -EBUSY;
+ 		goto bufs_done;
+ 	}
++	core->cur_sess = sess;
++	mutex_unlock(&core->lock);
++
+ 
+ 	if (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+ 		sess->streamon_out = 1;
+@@ -433,7 +445,6 @@ static int vdec_start_streaming(struct vb2_queue *q, unsigned int count)
+ 						   "vdec_recycle");
+ 
+ 	sess->status = STATUS_INIT;
+-	core->cur_sess = sess;
+ 	schedule_work(&sess->esparser_queue_work);
+ 	return 0;
+ 
+@@ -528,6 +539,13 @@ static void vdec_stop_streaming(struct vb2_queue *q)
+ 
+ 		sess->streamon_cap = 0;
+ 	}
++
++	/* Release an early claim once this session is fully off */
++	mutex_lock(&core->lock);
++	if (!sess->streamon_out && !sess->streamon_cap &&
++	    core->cur_sess == sess)
++		core->cur_sess = NULL;
++	mutex_unlock(&core->lock);
+ }
+ 
+ static int vdec_vb2_buf_prepare(struct vb2_buffer *vb)
+-- 
+2.43.0
+

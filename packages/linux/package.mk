@@ -16,8 +16,8 @@ PKG_PATCH_DIRS="${LINUX}"
 
 case "${LINUX}" in
   amlogic)
-    PKG_VERSION="8d3ae59288f1e7d58d76558a6ee96d533bc5019f" # 7.2.0
-    PKG_SHA256="2aa2222302771165aa398c30bf66aca1a2433dd1a3b36db43e7157689a090a97"
+    PKG_VERSION="df2908090cda368b01ff43709f51890076c56157" # 7.3-rc2
+    PKG_SHA256="2d332686af1ef82ec1b961ebb3b67685a8e0592c84ba9d5b21bab712e274a37e"
     PKG_URL="https://github.com/torvalds/linux/archive/${PKG_VERSION}.tar.gz"
     PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
     PKG_PATCH_DIRS="default dvb"

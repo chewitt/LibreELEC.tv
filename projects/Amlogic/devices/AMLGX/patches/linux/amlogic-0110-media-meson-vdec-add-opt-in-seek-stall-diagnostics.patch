@@ -1,0 +1,181 @@
+From f54fc4de84821b00d134fb9cb981937cab062ee9 Mon Sep 17 00:00:00 2001
+From: gus bourg <gus@bourg.net>
+Date: Fri, 11 Sep 2026 07:29:09 -0700
+Subject: [PATCH 110/145] media: meson: vdec: add opt-in seek stall diagnostics
+
+---
+ drivers/staging/media/meson/vdec/codec_h264.c |  7 ++++--
+ drivers/staging/media/meson/vdec/esparser.c   | 18 ++++++++++++++-
+ drivers/staging/media/meson/vdec/vdec.c       | 23 +++++++++++++++++++
+ .../staging/media/meson/vdec/vdec_helpers.c   |  3 +++
+ 4 files changed, 48 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_h264.c b/drivers/staging/media/meson/vdec/codec_h264.c
+index 5882e5f3ba58..6ccd8791bcac 100644
+--- a/drivers/staging/media/meson/vdec/codec_h264.c
++++ b/drivers/staging/media/meson/vdec/codec_h264.c
+@@ -161,6 +161,7 @@ static void codec_h264_recycle(struct amvdec_core *core, u32 buf_idx)
+ 		amvdec_write_dos(core, AV_SCRATCH_7, buf_idx + 1);
+ 	else
+ 		amvdec_write_dos(core, AV_SCRATCH_8, buf_idx + 1);
++	dev_dbg(core->dev, "krn16 h264-recycle fw_idx=%u\n", buf_idx);
+ }
+ 
+ static int codec_h264_start(struct amvdec_session *sess)
+@@ -320,8 +321,8 @@ static void codec_h264_resume(struct amvdec_session *sess)
+ 		return;
+ 	}
+ 
+-	dev_dbg(core->dev, "max_refs = %u; actual_dpb_size = %u\n",
+-		h264->max_refs, sess->num_fw_bufs);
++	dev_dbg(core->dev, "krn16 h264-resume sess=%p refs=%u fw_bufs=%u\n",
++		sess, h264->max_refs, sess->num_fw_bufs);
+ 
+ 	/* Align to a multiple of 4 macroblocks */
+ 	mb_width = ALIGN(h264->mb_width, 4);
+@@ -452,6 +453,8 @@ static irqreturn_t codec_h264_threaded_isr(struct amvdec_session *sess)
+ 
+ 	status = amvdec_read_dos(core, AV_SCRATCH_0);
+ 	cmd = status & CMD_MASK;
++	dev_dbg(core->dev, "krn16 h264-irq sess=%p status=%#x cmd=%u\n",
++		sess, status, cmd);
+ 
+ 	switch (cmd) {
+ 	case CMD_SRC_CHANGE:
+diff --git a/drivers/staging/media/meson/vdec/esparser.c b/drivers/staging/media/meson/vdec/esparser.c
+index ff5afa4e1b4a..1ad68e427419 100644
+--- a/drivers/staging/media/meson/vdec/esparser.c
++++ b/drivers/staging/media/meson/vdec/esparser.c
+@@ -244,6 +244,11 @@ static u32 esparser_vififo_get_free_space(struct amvdec_session *sess)
+ 	vififo_usage += amvdec_read_parser(core, PARSER_VIDEO_HOLE);
+ 	vififo_usage += (6 * SZ_1K); // 6 KiB internal fifo
+ 
++	dev_dbg(core->dev,
++		"krn16 fifo sess=%p usage=%u size=%u offset=%u wraps=%u\n",
++		sess, vififo_usage, sess->vififo_size,
++		sess->last_offset, sess->wrap_count);
++
+ 	if (vififo_usage > sess->vififo_size) {
+ 		dev_warn(sess->core->dev,
+ 			 "VIFIFO usage (%u) > VIFIFO size (%u)\n",
+@@ -306,6 +311,9 @@ esparser_queue(struct amvdec_session *sess, struct vb2_v4l2_buffer *vbuf)
+ 	u32 offset;
+ 	u32 pad_size;
+ 
++	dev_dbg(core->dev, "krn16 feed-attempt sess=%p idx=%u bytes=%u\n",
++		sess, vb->index, payload_size);
++
+ 	/*
+ 	 * When max ref frame is held by VP9, this should be -= 3 to prevent a
+ 	 * shortage of CAPTURE buffers on the decoder side.
+@@ -359,8 +367,13 @@ esparser_queue(struct amvdec_session *sess, struct vb2_v4l2_buffer *vbuf)
+ 		 * above still bounds how much input can be in flight.
+ 		 */
+ 		if (!sess->resyncing &&
+-		    atomic_read(&sess->esparser_queued_bufs) >= num_dst_bufs)
++		    atomic_read(&sess->esparser_queued_bufs) >= num_dst_bufs) {
++			dev_dbg(core->dev,
++				"krn16 credit-block sess=%p credit=%d limit=%u\n",
++				sess, atomic_read(&sess->esparser_queued_bufs),
++				num_dst_bufs);
+ 			return -EAGAIN;
++		}
+ 
+ 	} else if (esparser_vififo_get_free_space(sess) < payload_size) {
+ 		return -EAGAIN;
+@@ -417,6 +430,9 @@ esparser_queue(struct amvdec_session *sess, struct vb2_v4l2_buffer *vbuf)
+ 		return 0;
+ 	}
+ 
++	dev_dbg(core->dev,
++		"krn16 feed sess=%p idx=%u ts=%llu offset=%u bytes=%u parser_ret=%d\n",
++		sess, vb->index, vb->timestamp, offset, payload_size, ret);
+ 	atomic_inc(&sess->esparser_queued_bufs);
+ 	v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_DONE);
+ 
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index 1b0e4c70f69c..ce1b5cfa9086 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -567,6 +567,22 @@ static void vdec_init_src_change(struct amvdec_session *sess,
+ 	sess->init_src_change_done = 1;
+ }
+ 
++/* Software-only snapshots: safe even when the decoder is powered down. */
++static void vdec_debug_state(struct amvdec_session *sess, const char *event,
++			     u32 type, u32 value)
++{
++	dev_dbg(sess->core->dev,
++		"krn16 %s sess=%p type=%u value=%#x status=%u stream=%u/%u stop=%u src_ready=%u dst_ready=%u seq=%u/%u credit=%d irq_jiffies=%llu\n",
++		event, sess, type, value, READ_ONCE(sess->status),
++		READ_ONCE(sess->streamon_out), READ_ONCE(sess->streamon_cap),
++		READ_ONCE(sess->should_stop),
++		v4l2_m2m_num_src_bufs_ready(sess->m2m_ctx),
++		v4l2_m2m_num_dst_bufs_ready(sess->m2m_ctx),
++		READ_ONCE(sess->sequence_out), READ_ONCE(sess->sequence_cap),
++		atomic_read(&sess->esparser_queued_bufs),
++		READ_ONCE(sess->last_irq_jiffies));
++}
++
+ static void vdec_vb2_buf_queue(struct vb2_buffer *vb)
+ {
+ 	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+@@ -574,6 +590,7 @@ static void vdec_vb2_buf_queue(struct vb2_buffer *vb)
+ 	struct v4l2_m2m_ctx *m2m_ctx = sess->m2m_ctx;
+ 
+ 	v4l2_m2m_buf_queue(m2m_ctx, vbuf);
++	vdec_debug_state(sess, "qbuf", vb->type, vb->index);
+ 
+ 	/*
+ 	 * Only MPEG1/2 may take this path.  The parser below looks for the
+@@ -618,6 +635,8 @@ static int vdec_start_streaming(struct vb2_queue *q, unsigned int count)
+ 	struct vb2_v4l2_buffer *buf;
+ 	int ret;
+ 
++	vdec_debug_state(sess, "streamon-enter", q->type, count);
++
+ 	/*
+ 	 * Sessions serialize on per-session vb2 locks, so two opens can
+ 	 * race this gate concurrently - and the claim used to happen 60
+@@ -774,6 +793,8 @@ static void vdec_stop_streaming(struct vb2_queue *q)
+ 	struct amvdec_core *core = sess->core;
+ 	struct vb2_v4l2_buffer *buf;
+ 
++	vdec_debug_state(sess, "streamoff-enter", q->type, 0);
++
+ 	if (sess->status == STATUS_RUNNING ||
+ 	    sess->status == STATUS_INIT ||
+ 	    (sess->status == STATUS_NEEDS_RESUME &&
+@@ -818,6 +839,7 @@ static void vdec_stop_streaming(struct vb2_queue *q)
+ 	    core->cur_sess == sess)
+ 		core->cur_sess = NULL;
+ 	mutex_unlock(&core->lock);
++	vdec_debug_state(sess, "streamoff-exit", q->type, 0);
+ }
+ 
+ static int vdec_vb2_buf_prepare(struct vb2_buffer *vb)
+@@ -1368,6 +1390,7 @@ static __poll_t vdec_fop_poll(struct file *file, poll_table *wait)
+ 	if (!sess->streamon_cap && (ret & EPOLLERR))
+ 		ret &= ~EPOLLERR;
+ 
++	vdec_debug_state(sess, "poll", 0, (__force u32)ret);
+ 	return ret;
+ }
+ 
+diff --git a/drivers/staging/media/meson/vdec/vdec_helpers.c b/drivers/staging/media/meson/vdec/vdec_helpers.c
+index 952d10915d27..fd9ba1dc8e62 100644
+--- a/drivers/staging/media/meson/vdec/vdec_helpers.c
++++ b/drivers/staging/media/meson/vdec/vdec_helpers.c
+@@ -504,6 +504,9 @@ void amvdec_dst_buf_done_offset(struct amvdec_session *sess,
+ 	}
+ 	spin_unlock_irqrestore(&sess->ts_spinlock, flags);
+ 
++	dev_dbg(dev,
++		"krn16 offset-done sess=%p idx=%u offset=%u matched=%u ts=%llu\n",
++		sess, vbuf->vb2_buf.index, offset, !!match, timestamp);
+ 	dst_buf_done(sess, vbuf, field, timestamp, timecode, vbuf_flags);
+ 	/* A completed frame releases input credit even without a timestamp. */
+ 	atomic_dec(&sess->esparser_queued_bufs);
+-- 
+2.43.0
+

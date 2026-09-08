@@ -1,0 +1,69 @@
+From 08d7185e49ae1ee5ac8e15108edb7be9453a67f6 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:14:49 -0700
+Subject: [PATCH 081/145] media: meson: vdec: hevc: validate the ref list
+ modification entries
+
+codec_hevc_update_frame_refs() takes ref_pic_list_modification entries
+straight from the RPM and uses them to subscript ref_picset0[] and
+ref_picset1[], which are MAX_REF_ACTIVE (16) entry arrays on the kernel
+stack:
+
+	if (params->p.modification_flag & 0x1)
+		cidx = mod_list[i];
+	...
+	cidx >= num_neg ? ref_picset1[cidx - num_neg] : ref_picset0[cidx];
+
+The index into modification_list[] is bounded - both num_ref_idx_l*_active
+are clamped to MAX_REF_ACTIVE, so it reaches at most 31 of 32 entries - but
+the u16 *read out of it* is not bounded at all. H.265 requires
+list_entry_l0[]/list_entry_l1[] to index the current reference picture set,
+yet a corrupt or hostile stream can carry any value up to 65535, reading a
+quarter of a megabyte past a stack array. With VMAP_STACK that lands on the
+guard page.
+
+Fall back to the unmodified order when the entry is out of range, which is
+what the modification_flag == 0 path already computes, so a bad entry costs
+the wrong reference rather than an out-of-bounds read.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index b157c52e654a..56f5c64cdc80 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -388,6 +388,17 @@ static void codec_hevc_update_frame_refs(struct amvdec_session *sess,
+ 		else
+ 			cidx = i % total_num;
+ 
++		/*
++		 * list_entry_l0[] is a bitstream field that the hardware RPM
++		 * hands over unvalidated, and ref_picset0/1 are 16-entry
++		 * arrays on the kernel stack.  H.265 requires the entry to
++		 * index the current reference picture set; a stream that
++		 * says otherwise would read hundreds of kilobytes past them.
++		 * Fall back to the unmodified order rather than trusting it.
++		 */
++		if (cidx >= total_num)
++			cidx = i % total_num;
++
+ 		frame->ref_poc_list[0][frame->cur_slice_idx][i] =
+ 			cidx >= num_neg ? ref_picset1[cidx - num_neg] :
+ 			ref_picset0[cidx];
+@@ -405,6 +416,10 @@ static void codec_hevc_update_frame_refs(struct amvdec_session *sess,
+ 			else
+ 				cidx = mod_list[i];
+ 
++			/* see the l0 loop */
++			if (cidx >= total_num)
++				cidx = i % total_num;
++
+ 			frame->ref_poc_list[1][frame->cur_slice_idx][i] =
+ 				(cidx >= num_pos) ? ref_picset0[cidx - num_pos]
+ 				: ref_picset1[cidx];
+-- 
+2.43.0
+

@@ -1,0 +1,575 @@
+From 5676c0c77a0866c4df86dd769db61227e3e430c8 Mon Sep 17 00:00:00 2001
+From: gus bourg <gus@bourg.net>
+Date: Tue, 8 Sep 2026 20:02:13 -0700
+Subject: [PATCH 105/145] media: meson: vdec: MPEG-4 Part 2 and H.263 decode on
+ G12A/G12B
+
+Add codec_mpeg4, driving the vendor's legacy free-running microcode on
+VDEC_1, and offer V4L2_PIX_FMT_MPEG4 and V4L2_PIX_FMT_H263 on G12A/G12B.
+
+MPEG-4 was previously believed to be unsupportable here: bringing it up
+wedged the SoC hard - no oops, nothing on the console, only a physical
+reset - even when the esparser had rejected the input and not one byte of
+bitstream had reached the microcode.  The conclusion drawn at the time was
+that the blob must be a "multi" microcode needing a per-frame host
+handshake this driver does not implement.
+
+That was wrong, and the real cause is worth stating because it is not
+guessable from the register list.  This microcode addresses its DC/AC
+prediction, MV and CBP scratch buffers at a FIXED physical base,
+DCAC_BUFF_START_IP (0x02b00000), plus an offset it is handed in
+AV_SCRATCH_F.  Leaving AV_SCRATCH_F unwritten does not disable that - it
+aims the microcode at physical 0x02b00000, which on this SoC is ordinary
+kernel memory (00000000-04ffffff : System RAM).  The microcode initialises
+that region at start, before it needs any bitstream, so codec start alone
+is a bus-master write into the running kernel.  That is the wedge.
+
+Two further things the MPEG1/2 layout gets wrong for this codec:
+
+  - The eight decode buffers are described by canvas triplets in
+    AV_SCRATCH_0..3 and AV_SCRATCH_G..J, which are not contiguous.  Writing
+    eight consecutive entries from AV_SCRATCH_0 - what MPEG1/2 does - lands
+    on AV_SCRATCH_7, which is MP4_PIC_WH, and leaves buffers 4..7 pointing
+    at canvas 0.
+
+  - Buffers are recycled by writing the complement of a one-hot mask to
+    MREG_BUFFERIN, not the 1-based index MPEG1/2 uses.
+
+The geometry needs the same care.  vdec_s_fmt() assigns sess->width/height
+from whatever the CAPTURE S_FMT carried, and a client that sets CAPTURE
+before it knows the coded size - ffmpeg does, with a 256x144 placeholder -
+leaves that behind.  MPEG1/2 recovers via its sequence-header parse; MPEG-4
+had no equivalent, so the placeholder went into MP4_PIC_WH and the canvas
+sizes while the microcode decoded at the real size.  Parse the
+video_object_layer_header instead, so the stream describes itself.
+
+Tested on a Khadas VIM3 (A311D, G12B), 1280x720 Xvid in AVI: 24/24 frames,
+PSNR y 64.83 dB / average 65.90 dB / min 62.78 dB against ffmpeg's software
+decoder.  Bit-exactness is deliberately not the gate - MPEG-4 Part 2 does
+not specify a bit-exact IDCT, so a conforming hardware IDCT differs from
+software within IEEE 1180 limits.  H.264, HEVC, MPEG-1 and MPEG-2 all still
+decode 24/24 with the change in place.
+
+The "multi" blobs (gxl_xvid_multi, sm1_xvid_multi) were tried too: they
+emit one frame and then wait forever for the per-frame handshake, which
+confirms the original reading of that protocol - it was only the
+identification of the shipped blob that was wrong.  They do not wedge the
+SoC, and the decoder recovers fully afterwards.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/Makefile     |   2 +-
+ .../staging/media/meson/vdec/codec_mpeg4.c    | 240 ++++++++++++++++++
+ .../staging/media/meson/vdec/codec_mpeg4.h    |  13 +
+ drivers/staging/media/meson/vdec/vdec.c       | 154 ++++++++++-
+ .../staging/media/meson/vdec/vdec_platform.c  |  23 ++
+ 5 files changed, 429 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/staging/media/meson/vdec/codec_mpeg4.c
+ create mode 100644 drivers/staging/media/meson/vdec/codec_mpeg4.h
+
+diff --git a/drivers/staging/media/meson/vdec/Makefile b/drivers/staging/media/meson/vdec/Makefile
+index 16f848e456b9..c7573ca2a0a4 100644
+--- a/drivers/staging/media/meson/vdec/Makefile
++++ b/drivers/staging/media/meson/vdec/Makefile
+@@ -3,6 +3,6 @@
+ 
+ meson-vdec-objs = esparser.o vdec.o vdec_helpers.o vdec_platform.o
+ meson-vdec-objs += vdec_1.o vdec_hevc.o
+-meson-vdec-objs += codec_mpeg12.o codec_h264.o codec_hevc_common.o codec_vp9.o codec_hevc.o
++meson-vdec-objs += codec_mpeg12.o codec_mpeg4.o codec_h264.o codec_hevc_common.o codec_vp9.o codec_hevc.o
+ 
+ obj-$(CONFIG_VIDEO_MESON_VDEC) += meson-vdec.o
+diff --git a/drivers/staging/media/meson/vdec/codec_mpeg4.c b/drivers/staging/media/meson/vdec/codec_mpeg4.c
+new file mode 100644
+index 000000000000..f689c49c5c0c
+--- /dev/null
++++ b/drivers/staging/media/meson/vdec/codec_mpeg4.c
+@@ -0,0 +1,240 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * Copyright (C) 2026 Gus Bourg <gus@bourg.net>
++ *
++ * MPEG-4 Part 2 (DivX/Xvid) and H.263 support for the Amlogic VDEC_1 engine,
++ * driving the vendor's "legacy" free-running microcode.
++ *
++ * Two properties of this microcode differ from MPEG1/2 and must be honoured
++ * exactly, because getting either wrong is silent and catastrophic rather
++ * than merely wrong:
++ *
++ *  - It addresses its DC/AC prediction, MV and CBP scratch buffers at the
++ *    FIXED physical base DCAC_BUFF_START_IP plus the offset handed to it in
++ *    AV_SCRATCH_F.  Leaving AV_SCRATCH_F at zero does not disable the
++ *    feature: the microcode then writes to physical 0x02b00000, which on
++ *    this SoC is ordinary kernel memory.  That is a bus-master write into
++ *    the running kernel, and it happens at codec start before a single byte
++ *    of bitstream is parsed.
++ *
++ *  - Its eight decode buffers are described by canvas index triplets in
++ *    AV_SCRATCH_0..3 and AV_SCRATCH_G..J, which are NOT contiguous.  The
++ *    four registers in between are AV_SCRATCH_4..7, and AV_SCRATCH_7 is
++ *    MP4_PIC_WH, the picture geometry.  Writing eight consecutive canvas
++ *    entries from AV_SCRATCH_0 - the layout MPEG1/2 uses - therefore both
++ *    overwrites the geometry and leaves buffers 4..7 pointing at canvas 0.
++ */
++
++#include <media/v4l2-mem2mem.h>
++#include <media/videobuf2-dma-contig.h>
++
++#include "codec_mpeg4.h"
++#include "dos_regs.h"
++#include "vdec_helpers.h"
++
++/*
++ * Scratch region for the microcode's own state.  The vendor driver allocates
++ * exactly this much as the last of its buffers and derives AV_SCRATCH_F from
++ * where it landed.
++ */
++#define SIZE_WORKSPACE		SZ_1M
++
++/*
++ * Physical base the microcode adds AV_SCRATCH_F to when addressing that
++ * region.  Not a hint and not a default - the value is baked into the blob.
++ */
++#define DCAC_BUFF_START_IP	0x02b00000
++
++/* map firmware registers to known MPEG-4 functions */
++#define MP4_RATE		AV_SCRATCH_3
++#define MP4_PIC_RATIO		AV_SCRATCH_5
++#define MP4_ERR_COUNT		AV_SCRATCH_6
++#define MP4_PIC_WH		AV_SCRATCH_7
++#define MREG_BUFFERIN		AV_SCRATCH_8
++#define MREG_BUFFEROUT		AV_SCRATCH_9
++#define MP4_NOT_CODED_CNT	AV_SCRATCH_A
++#define MP4_VOP_TIME_INC	AV_SCRATCH_B
++#define MP4_OFFSET_REG		AV_SCRATCH_C
++#define MP4_SYS_RATE		AV_SCRATCH_E
++#define MREG_BUF_OFFSET		AV_SCRATCH_F
++#define MREG_FATAL_ERROR	AV_SCRATCH_L
++
++#define INTERLACE_FLAG		0x80
++
++/* Widest picture this microcode is built for */
++#define MP4_MAX_WIDTH		1920
++#define MP4_MAX_HEIGHT		1088
++
++struct codec_mpeg4 {
++	void	  *workspace_vaddr;
++	dma_addr_t workspace_paddr;
++};
++
++static const u8 eos_sequence[SZ_1K] = { 0x00, 0x00, 0x01, 0xB1 };
++
++static const u8 *codec_mpeg4_eos_sequence(u32 *len)
++{
++	*len = ARRAY_SIZE(eos_sequence);
++	return eos_sequence;
++}
++
++static int codec_mpeg4_can_recycle(struct amvdec_core *core)
++{
++	return !amvdec_read_dos(core, MREG_BUFFERIN);
++}
++
++static void codec_mpeg4_recycle(struct amvdec_core *core, u32 buf_idx)
++{
++	/*
++	 * Unlike MPEG1/2, which takes a 1-based index, this microcode takes
++	 * the complement of a one-hot mask.
++	 */
++	amvdec_write_dos(core, MREG_BUFFERIN, ~(1 << buf_idx));
++}
++
++static int codec_mpeg4_start(struct amvdec_session *sess)
++{
++	struct amvdec_core *core = sess->core;
++	struct codec_mpeg4 *mpeg4;
++	u32 buf_offset;
++	int ret;
++
++	/*
++	 * The geometry goes straight into the canvas setup and into
++	 * MP4_PIC_WH.  A bogus value here means the microcode decodes a
++	 * full-size picture into undersized canvases, which is a wild write.
++	 * There is no in-band source for it on this codec - it comes from the
++	 * client's S_FMT - so validate it rather than trust it.
++	 */
++	if (sess->width < 16 || sess->height < 16 ||
++	    sess->width > MP4_MAX_WIDTH || sess->height > MP4_MAX_HEIGHT) {
++		dev_err(core->dev, "MPEG-4: refusing implausible geometry %ux%u\n",
++			sess->width, sess->height);
++		return -EINVAL;
++	}
++
++	mpeg4 = kzalloc_obj(*mpeg4);
++	if (!mpeg4)
++		return -ENOMEM;
++
++	mpeg4->workspace_vaddr = dma_alloc_coherent(core->dev, SIZE_WORKSPACE,
++						    &mpeg4->workspace_paddr,
++						    GFP_KERNEL);
++	if (!mpeg4->workspace_vaddr) {
++		dev_err(core->dev, "Failed to request MPEG-4 workspace\n");
++		ret = -ENOMEM;
++		goto free_mpeg4;
++	}
++
++	/*
++	 * AV_SCRATCH_F is an unsigned offset added to a fixed base, so a
++	 * workspace below that base would wrap and send the microcode
++	 * somewhere arbitrary.  Refuse instead.
++	 */
++	if (mpeg4->workspace_paddr < DCAC_BUFF_START_IP) {
++		dev_err(core->dev,
++			"MPEG-4: workspace at %pad is below the microcode's base %#x\n",
++			&mpeg4->workspace_paddr, DCAC_BUFF_START_IP);
++		ret = -ERANGE;
++		goto free_workspace;
++	}
++	buf_offset = mpeg4->workspace_paddr - DCAC_BUFF_START_IP;
++
++	/* Buffers 0..3 in AV_SCRATCH_0..3, buffers 4..7 in AV_SCRATCH_G..J */
++	ret = amvdec_set_canvases(sess, (u32[]){ AV_SCRATCH_0, AV_SCRATCH_G, 0 },
++					(u32[]){ 4, 4, 0 });
++	if (ret)
++		goto free_workspace;
++
++	amvdec_write_dos(core, POWER_CTL_VLD, BIT(4));
++
++	/* Tell the microcode where its scratch region actually is */
++	amvdec_write_dos(core, MREG_BUF_OFFSET, buf_offset);
++
++	/* disable PSCALE for hardware sharing */
++	amvdec_write_dos(core, PSCALE_CTRL, 0);
++
++	amvdec_write_dos(core, MP4_NOT_CODED_CNT, 0);
++	amvdec_write_dos(core, MREG_BUFFERIN, 0);
++	amvdec_write_dos(core, MREG_BUFFEROUT, 0);
++	amvdec_write_dos(core, MREG_FATAL_ERROR, 0);
++
++	amvdec_write_dos(core, MDEC_PIC_DC_THRESH, 0x404038aa);
++	amvdec_write_dos(core, MP4_PIC_WH,
++			 (sess->width << 16) | sess->height);
++	amvdec_write_dos(core, MP4_SYS_RATE, 0);
++
++	sess->keyframe_found = 1;
++	sess->priv = mpeg4;
++
++	return 0;
++
++free_workspace:
++	dma_free_coherent(core->dev, SIZE_WORKSPACE, mpeg4->workspace_vaddr,
++			  mpeg4->workspace_paddr);
++free_mpeg4:
++	kfree(mpeg4);
++
++	return ret;
++}
++
++static int codec_mpeg4_stop(struct amvdec_session *sess)
++{
++	struct codec_mpeg4 *mpeg4 = sess->priv;
++	struct amvdec_core *core = sess->core;
++
++	if (mpeg4 && mpeg4->workspace_vaddr) {
++		dma_free_coherent(core->dev, SIZE_WORKSPACE,
++				  mpeg4->workspace_vaddr,
++				  mpeg4->workspace_paddr);
++		mpeg4->workspace_vaddr = NULL;
++	}
++
++	return 0;
++}
++
++static irqreturn_t codec_mpeg4_threaded_isr(struct amvdec_session *sess)
++{
++	struct amvdec_core *core = sess->core;
++	u32 reg;
++	u32 buffer_index;
++	u32 field = V4L2_FIELD_NONE;
++	u32 offset;
++
++	amvdec_write_dos(core, ASSIST_MBOX1_CLR_REG, 1);
++
++	if (amvdec_read_dos(core, MREG_FATAL_ERROR) == 1) {
++		dev_err(core->dev, "MPEG-4 fatal error\n");
++		amvdec_abort(sess);
++		return IRQ_HANDLED;
++	}
++
++	reg = amvdec_read_dos(core, MREG_BUFFEROUT);
++	if (!reg)
++		return IRQ_HANDLED;
++
++	buffer_index = reg & 0x7;
++	if (reg & INTERLACE_FLAG)
++		field = V4L2_FIELD_INTERLACED_TB;
++
++	offset = amvdec_read_dos(core, MP4_OFFSET_REG);
++	amvdec_dst_buf_done_idx(sess, buffer_index, offset, field);
++
++	amvdec_write_dos(core, MREG_BUFFEROUT, 0);
++	return IRQ_HANDLED;
++}
++
++static irqreturn_t codec_mpeg4_isr(struct amvdec_session *sess)
++{
++	return IRQ_WAKE_THREAD;
++}
++
++struct amvdec_codec_ops codec_mpeg4_ops = {
++	.start = codec_mpeg4_start,
++	.stop = codec_mpeg4_stop,
++	.isr = codec_mpeg4_isr,
++	.threaded_isr = codec_mpeg4_threaded_isr,
++	.can_recycle = codec_mpeg4_can_recycle,
++	.recycle = codec_mpeg4_recycle,
++	.eos_sequence = codec_mpeg4_eos_sequence,
++};
+diff --git a/drivers/staging/media/meson/vdec/codec_mpeg4.h b/drivers/staging/media/meson/vdec/codec_mpeg4.h
+new file mode 100644
+index 000000000000..38092d6ebabf
+--- /dev/null
++++ b/drivers/staging/media/meson/vdec/codec_mpeg4.h
+@@ -0,0 +1,13 @@
++/* SPDX-License-Identifier: GPL-2.0+ */
++/*
++ * Copyright (C) 2026 Gus Bourg <gus@bourg.net>
++ */
++
++#ifndef __MESON_VDEC_CODEC_MPEG4_H_
++#define __MESON_VDEC_CODEC_MPEG4_H_
++
++#include "vdec.h"
++
++extern struct amvdec_codec_ops codec_mpeg4_ops;
++
++#endif
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index 7099a9ccf3fd..58fb27b4bb70 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -380,6 +380,136 @@ static bool vdec_parse_mpeg_seq_header(struct amvdec_session *sess,
+ 	return false;
+ }
+ 
++/* Minimal MSB-first bit reader over one OUTPUT buffer */
++struct vdec_bitreader {
++	const u8 *data;
++	u32 len;	/* bytes */
++	u32 pos;	/* bits consumed */
++};
++
++static u32 vdec_br_bits(struct vdec_bitreader *br, u8 n)
++{
++	u32 v = 0;
++
++	while (n--) {
++		u32 byte = br->pos >> 3;
++
++		if (byte >= br->len)
++			return v << (n + 1);	/* ran off the end */
++
++		v = (v << 1) | ((br->data[byte] >> (7 - (br->pos & 7))) & 1);
++		br->pos++;
++	}
++
++	return v;
++}
++
++/*
++ * MPEG-4 Part 2 video_object_layer_header (ISO/IEC 14496-2 sec. 6.2.3).
++ *
++ * The geometry cannot be taken from the client here.  vdec_s_fmt() assigns
++ * sess->width/height from whatever dimensions the CAPTURE S_FMT carried, and
++ * a client that sets CAPTURE before it knows the coded size - ffmpeg does -
++ * leaves a placeholder behind.  For MPEG1/2 the sequence-header parse above
++ * corrects that; MPEG-4 has no equivalent, so a placeholder would go straight
++ * into MP4_PIC_WH and into the canvas sizes while the microcode decodes at
++ * the real size.  That is the wild write this driver has been bitten by
++ * before, so parse the real thing.
++ */
++static bool vdec_parse_mpeg4_vol_header(struct amvdec_session *sess,
++					struct vb2_buffer *vb)
++{
++	const u8 *data = vb2_plane_vaddr(vb, 0);
++	u32 len = vb2_get_plane_payload(vb, 0);
++	struct vdec_bitreader br;
++	u32 i, verid = 1, shape, w, h;
++
++	if (!data)
++		return false;
++
++	for (i = 0; i + 4 < len; i++) {
++		if (data[i] != 0x00 || data[i + 1] != 0x00 ||
++		    data[i + 2] != 0x01 ||
++		    data[i + 3] < 0x20 || data[i + 3] > 0x2f)
++			continue;
++
++		br.data = data;
++		br.len = len;
++		br.pos = (i + 4) * 8;
++
++		vdec_br_bits(&br, 1);		/* random_accessible_vol */
++		vdec_br_bits(&br, 8);		/* video_object_type_indication */
++
++		if (vdec_br_bits(&br, 1)) {	/* is_object_layer_identifier */
++			verid = vdec_br_bits(&br, 4);
++			vdec_br_bits(&br, 3);	/* priority */
++		}
++
++		if (vdec_br_bits(&br, 4) == 15)	/* aspect_ratio_info */
++			vdec_br_bits(&br, 16);	/* par_width, par_height */
++
++		if (vdec_br_bits(&br, 1)) {	/* vol_control_parameters */
++			vdec_br_bits(&br, 3);	/* chroma_format, low_delay */
++			if (vdec_br_bits(&br, 1)) {	/* vbv_parameters */
++				vdec_br_bits(&br, 15);	/* first_half_bit_rate */
++				vdec_br_bits(&br, 1);
++				vdec_br_bits(&br, 15);	/* latter_half_bit_rate */
++				vdec_br_bits(&br, 1);
++				vdec_br_bits(&br, 15);	/* first_half_vbv_buf */
++				vdec_br_bits(&br, 1);
++				vdec_br_bits(&br, 3);	/* latter_half_vbv_buf */
++				vdec_br_bits(&br, 11);	/* first_half_vbv_occ */
++				vdec_br_bits(&br, 1);
++				vdec_br_bits(&br, 15);	/* latter_half_vbv_occ */
++				vdec_br_bits(&br, 1);
++			}
++		}
++
++		shape = vdec_br_bits(&br, 2);	/* video_object_layer_shape */
++		if (shape == 3 && verid != 1)
++			vdec_br_bits(&br, 4);	/* shape_extension */
++
++		vdec_br_bits(&br, 1);		/* marker_bit */
++		if (vdec_br_bits(&br, 16)) {	/* vop_time_increment_resolution */
++			u32 res = 1, bits = 1;
++
++			/*
++			 * fixed_vop_time_increment is
++			 * ceil(log2(vop_time_increment_resolution)) bits wide,
++			 * so it can only be skipped by recomputing that width.
++			 */
++			br.pos -= 16;
++			res = vdec_br_bits(&br, 16);
++			while ((1U << bits) < res && bits < 16)
++				bits++;
++			vdec_br_bits(&br, 1);		/* marker_bit */
++			if (vdec_br_bits(&br, 1))	/* fixed_vop_rate */
++				vdec_br_bits(&br, bits);
++		} else {
++			vdec_br_bits(&br, 1);		/* marker_bit */
++			vdec_br_bits(&br, 1);		/* fixed_vop_rate */
++		}
++
++		if (shape != 0)			/* not rectangular */
++			return false;
++
++		vdec_br_bits(&br, 1);		/* marker_bit */
++		w = vdec_br_bits(&br, 13);
++		vdec_br_bits(&br, 1);		/* marker_bit */
++		h = vdec_br_bits(&br, 13);
++
++		if (!w || !h)
++			return false;
++
++		sess->width = w;
++		sess->height = h;
++		dev_dbg(sess->core->dev, "mpeg4 VOL header: %ux%u\n", w, h);
++		return true;
++	}
++
++	return false;
++}
++
+ static void vdec_init_src_change(struct amvdec_session *sess,
+ 				 struct vb2_buffer *vb)
+ {
+@@ -387,8 +517,22 @@ static void vdec_init_src_change(struct amvdec_session *sess,
+ 		.type = V4L2_EVENT_SOURCE_CHANGE,
+ 		.u.src_change.changes = V4L2_EVENT_SRC_CH_RESOLUTION };
+ 
+-	if (!vdec_parse_mpeg_seq_header(sess, vb))
++	if (sess->fmt_out->pixfmt == V4L2_PIX_FMT_MPEG1 ||
++	    sess->fmt_out->pixfmt == V4L2_PIX_FMT_MPEG2) {
++		if (!vdec_parse_mpeg_seq_header(sess, vb))
++			return;
++	} else if (sess->fmt_out->pixfmt == V4L2_PIX_FMT_MPEG4) {
++		if (!vdec_parse_mpeg4_vol_header(sess, vb))
++			return;
++	} else if (!sess->width || !sess->height) {
++		/*
++		 * H.263 carries its size in each picture header rather than a
++		 * sequence header, so it still relies on the client's S_FMT.
++		 * If none was supplied there is nothing to announce, and
++		 * starting anyway would size the canvases from zero.
++		 */
+ 		return;
++	}
+ 
+ 	v4l2_ctrl_s_ctrl(sess->ctrl_min_buf_capture,
+ 			 sess->fmt_out->min_buffers);
+@@ -413,12 +557,18 @@ static void vdec_vb2_buf_queue(struct vb2_buffer *vb)
+ 	 * full-size picture straight past the end of them: a wild DMA that
+ 	 * wedges the DDR controller.  Gate on the codec, not on the absence
+ 	 * of a resume op.
++	 *
++	 * MPEG-4 and H.263 are listed here as well, but they take the
++	 * client-supplied geometry branch in vdec_init_src_change() and never
++	 * reach that parser.
+ 	 */
+ 	if (vb->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
+ 	    !sess->fmt_out->codec_ops->resume &&
+ 	    !sess->init_src_change_done &&
+ 	    (sess->fmt_out->pixfmt == V4L2_PIX_FMT_MPEG1 ||
+-	     sess->fmt_out->pixfmt == V4L2_PIX_FMT_MPEG2))
++	     sess->fmt_out->pixfmt == V4L2_PIX_FMT_MPEG2 ||
++	     sess->fmt_out->pixfmt == V4L2_PIX_FMT_MPEG4 ||
++	     sess->fmt_out->pixfmt == V4L2_PIX_FMT_H263))
+ 		vdec_init_src_change(sess, vb);
+ 
+ 	if (!sess->streamon_out)
+diff --git a/drivers/staging/media/meson/vdec/vdec_platform.c b/drivers/staging/media/meson/vdec/vdec_platform.c
+index cdb142f46507..359049b4d58d 100644
+--- a/drivers/staging/media/meson/vdec/vdec_platform.c
++++ b/drivers/staging/media/meson/vdec/vdec_platform.c
+@@ -10,6 +10,7 @@
+ #include "vdec_1.h"
+ #include "vdec_hevc.h"
+ #include "codec_mpeg12.h"
++#include "codec_mpeg4.h"
+ #include "codec_h264.h"
+ #include "codec_hevc.h"
+ #include "codec_vp9.h"
+@@ -313,6 +314,28 @@ static const struct amvdec_format vdec_formats_g12a[] = {
+ 		.firmware_path = "meson/vdec/gxl_mpeg12.bin",
+ 		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, V4L2_PIX_FMT_YUV420M, 0 },
+ 		.flags = V4L2_FMT_FLAG_COMPRESSED,
++	}, {
++		.pixfmt = V4L2_PIX_FMT_MPEG4,
++		.min_buffers = 8,
++		.max_buffers = 8,
++		.max_width = 1920,
++		.max_height = 1088,
++		.vdec_ops = &vdec_1_ops,
++		.codec_ops = &codec_mpeg4_ops,
++		.firmware_path = "meson/vdec/gxl_mpeg4_5.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, V4L2_PIX_FMT_YUV420M, 0 },
++		.flags = V4L2_FMT_FLAG_COMPRESSED,
++	}, {
++		.pixfmt = V4L2_PIX_FMT_H263,
++		.min_buffers = 8,
++		.max_buffers = 8,
++		.max_width = 1920,
++		.max_height = 1088,
++		.vdec_ops = &vdec_1_ops,
++		.codec_ops = &codec_mpeg4_ops,
++		.firmware_path = "meson/vdec/gxl_h263.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, V4L2_PIX_FMT_YUV420M, 0 },
++		.flags = V4L2_FMT_FLAG_COMPRESSED,
+ 	},
+ };
+ 
+-- 
+2.43.0
+

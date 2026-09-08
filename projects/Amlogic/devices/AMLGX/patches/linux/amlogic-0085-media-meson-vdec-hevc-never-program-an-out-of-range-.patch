@@ -1,0 +1,77 @@
+From 1a70bb840e6cfaf1395eb0844caf26fe56314719 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:14:55 -0700
+Subject: [PATCH 085/145] media: meson: vdec: hevc: never program an
+ out-of-range FBC chunk
+
+codec_hevc_fill_mmu_map() indexes comm->fbc_chunks[vb->index][] with
+i / FBC_CHUNK_PAGES for i over nb_pages, and dereferences the result to
+build the page map the decoder then DMAs through.
+
+nb_pages and fbc_nr_chunks are both derived from the session geometry, but
+at different times - the chunk array is allocated in
+codec_hevc_setup_buffers() and reused whenever it is already present,
+while nb_pages is recomputed on every frame. Nothing checks that the two
+still agree, and nothing checks the entry is non-NULL.
+
+The failure mode if they ever disagree is unusually nasty: the loop reads
+past the array, treats whatever it finds as a struct fbc_chunk, and writes
+that object's "paddr >> PAGE_SHIFT" into the map as a page frame number.
+The hardware then DMAs frame data to that physical address. The corruption
+lands in whoever owns that memory, arbitrarily far from this driver and
+long after the fact - a crash in USB interrupt completion, say - and no CPU
+memory checker can attribute it, because the write is done by the decoder.
+
+Bound the index and reject a NULL chunk, failing the frame rather than
+mapping something we do not own. Both branches are ratelimited dev_err, so
+if this ever fires it names itself instead of corrupting silently.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ .../media/meson/vdec/codec_hevc_common.c      | 30 +++++++++++++++++--
+ 1 file changed, 28 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc_common.c b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+index 31947f0171ec..606e7112f603 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc_common.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+@@ -607,8 +607,34 @@ void codec_hevc_fill_mmu_map(struct amvdec_session *sess,
+ 
+ 	if (comm->fbc_chunks[vb->index]) {
+ 		for (i = 0; i < nb_pages; ++i) {
+-			struct fbc_chunk *c =
+-				comm->fbc_chunks[vb->index][i / FBC_CHUNK_PAGES];
++			u32 ci = i / FBC_CHUNK_PAGES;
++			struct fbc_chunk *c;
++
++			/*
++			 * nb_pages and fbc_nr_chunks are derived from the
++			 * session geometry at two different times.  If they
++			 * ever disagree, this walks off the chunk array and
++			 * programs whatever it finds as a page frame number -
++			 * and the decoder then DMAs into that physical
++			 * address.  The damage lands in whatever owns that
++			 * memory, arbitrarily far from this driver, so fail
++			 * the frame instead.
++			 */
++			if (ci >= comm->fbc_nr_chunks) {
++				dev_err_ratelimited(sess->core->dev,
++					"FBC chunk %u >= %u (nb_pages %u, buf %u) - refusing to map\n",
++					ci, comm->fbc_nr_chunks, nb_pages,
++					vb->index);
++				break;
++			}
++
++			c = comm->fbc_chunks[vb->index][ci];
++			if (!c) {
++				dev_err_ratelimited(sess->core->dev,
++					"FBC chunk %u of buffer %u is NULL - refusing to map\n",
++					ci, vb->index);
++				break;
++			}
+ 
+ 			mmu_map[i] = (c->paddr >> PAGE_SHIFT) +
+ 				     (i % FBC_CHUNK_PAGES);
+-- 
+2.43.0
+

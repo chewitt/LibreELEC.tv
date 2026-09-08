@@ -1,0 +1,84 @@
+From 45dcf1b530c6e065b4caf496ddd9399bc102d7ac Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 21:45:00 -0700
+Subject: [PATCH 098/145] media: meson: vdec: vp9: do not touch the workspace
+ after freeing it
+
+codec_vp9_stop() frees the workspace but leaves vp9->workspace_vaddr
+pointing at it.  codec_vp9_threaded_isr() reads that workspace in four
+places - the adaptive-probability blocks, and codec_vp9_fetch_rpm(),
+which walks RPM_BUF_SIZE u16s out of it.  Both take vp9->lock, so an
+interrupt already blocked on the lock when the session is torn down
+proceeds the moment stop() releases it, and reads memory that
+dma_free_coherent() has just unmapped.
+
+On a VIM3 (G12B) that is a hard oops in the interrupt thread:
+
+  Unable to handle kernel paging request at virtual address ffff80008f138806
+  FSC = 0x07: level 3 translation fault
+  CPU: 0 PID: 507 Comm: irq/33-vdec
+  pc : codec_vp9_threaded_isr+0x12c/0xddc [meson_vdec]
+  Call trace:
+   codec_vp9_threaded_isr+0x12c/0xddc [meson_vdec]
+   vdec_threaded_isr+0x1c/0x24 [meson_vdec]
+   irq_thread_fn+0x24/0xa0
+  genirq: exiting task "irq/33-vdec" (507) is an active IRQ thread (irq 33)
+
+The faulting instruction is the ldrh in codec_vp9_fetch_rpm() and the
+address is the freed coherent mapping.
+
+The last line is what makes this more than a splat: the threaded handler
+for irq 33 is gone.  The machine stays up and /dev/video0 still opens,
+but no decode completion is ever processed again - every later session,
+in any codec, streams on and returns zero frames until the box is
+rebooted.  It presents as "the decoder stopped working", nothing points
+at VP9, and the oops may already have scrolled away.
+
+Reached by ending a VP9 session while a decode interrupt is outstanding,
+which is what a player does on stop, on a seek, and on any abnormal exit.
+
+Clear the pointer under the lock and have the interrupt handler give up
+when the workspace has gone.
+
+Fixes: 00c43088aa68 ("media: meson: vdec: add VP9 decoder support")
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_vp9.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_vp9.c b/drivers/staging/media/meson/vdec/codec_vp9.c
+index b0c3fea107d3..fdf77b060e7e 100644
+--- a/drivers/staging/media/meson/vdec/codec_vp9.c
++++ b/drivers/staging/media/meson/vdec/codec_vp9.c
+@@ -847,10 +847,12 @@ static int codec_vp9_stop(struct amvdec_session *sess)
+ 	struct codec_vp9 *vp9 = sess->priv;
+ 
+ 	mutex_lock(&vp9->lock);
+-	if (vp9->workspace_vaddr)
++	if (vp9->workspace_vaddr) {
+ 		dma_free_coherent(core->dev, SIZE_WORKSPACE,
+ 				  vp9->workspace_vaddr,
+ 				  vp9->workspace_paddr);
++		vp9->workspace_vaddr = NULL;
++	}
+ 
+ 	codec_hevc_free_fbc_buffers(sess, &vp9->common);
+ 	mutex_unlock(&vp9->lock);
+@@ -2123,6 +2125,14 @@ static irqreturn_t codec_vp9_threaded_isr(struct amvdec_session *sess)
+ 		return IRQ_HANDLED;
+ 
+ 	mutex_lock(&vp9->lock);
++	if (!vp9->workspace_vaddr) {
++		/*
++		 * codec_vp9_stop() ran while this interrupt was in flight and
++		 * took the lock first.  Everything below reads the workspace.
++		 */
++		goto unlock;
++	}
++
+ 	if (dec_status != VP9_HEAD_PARSER_DONE) {
+ 		dev_err(core->dev_dec, "Unrecognized dec_status: %08X\n",
+ 			dec_status);
+-- 
+2.43.0
+

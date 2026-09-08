@@ -1,0 +1,65 @@
+From 61996db868dc3bafbbb947e05624df1e97096b7d Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 09:56:13 +0000
+Subject: [PATCH 134/145] media: meson: vdec: hevc: zero the POC MSB of a
+ stream-opening CRA
+
+Seeking into a stream whose random-access points are CRA pictures ends
+playback.  The first slice after the seek reports a POC of -37, every
+reference lookup for the GOP misses ("Couldn't find ref. frame
+4294967259"), and the firmware then stalls on the garbage it is asked
+to decode - 31 in-place recoveries in a row, ending in "No dst buffer
+available" and an aborted session.  A stream with IDR random-access
+points seeks in both directions without a single driver message.
+
+-37 is 219 - 256: a CRA carrying POClsb 219, with
+log2_max_pic_order_cnt_lsb_minus4 = 4, run through the MSB wrap rule
+against a prev_tid0_poc of 0.  The rule does not apply here.  H.265
+8.3.1 gives an IRAP picture with NoRaslOutputFlag equal to 1 a
+PicOrderCntMsb of 0, and that is exactly what the picture the demuxer
+hands over after a seek is: the decoder has no state before it.  BLA is
+already exempt because NoRaslOutputFlag is always 1 there; a CRA needs
+the same treatment whenever it is the first IRAP the session sees,
+which is what seen_irap tracks - it is still clear at this point,
+process_segment() sets it from the same slice moments later.
+
+Playing from the start works because a CRA's POClsb is small enough
+there for the wrap rule to be a no-op, so this only ever appears after
+a seek.
+
+Fixes: a2494e69efa4 ("media: meson: vdec: HEVC decode on G12A/G12B (8-bit and 10-bit)")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index e5cdc46e212a..8e8f72354170 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -1677,9 +1677,20 @@ static void codec_hevc_update_pocs(struct amvdec_session *sess)
+ 	else
+ 		poc_msb = prev_poc_msb;
+ 
++	/*
++	 * H.265 8.3.1: an IRAP picture with NoRaslOutputFlag equal to 1 has
++	 * PicOrderCntMsb 0.  That is every BLA, and a CRA that opens the
++	 * stream the decoder is looking at - which after a seek is the
++	 * picture the demuxer delivered first.  prev_tid0_poc is 0 there,
++	 * so without this the wrap rule above reads a CRA's POClsb as a
++	 * counter that has wrapped and subtracts max_poc_lsb from it,
++	 * putting the whole GOP at a negative POC that no reference lookup
++	 * can match.
++	 */
+ 	if (nal_unit_type == NAL_UNIT_CODED_SLICE_BLA   ||
+ 	    nal_unit_type == NAL_UNIT_CODED_SLICE_BLANT ||
+-	    nal_unit_type == NAL_UNIT_CODED_SLICE_BLA_N_LP)
++	    nal_unit_type == NAL_UNIT_CODED_SLICE_BLA_N_LP ||
++	    (nal_unit_type == NAL_UNIT_CODED_SLICE_CRA && !hevc->seen_irap))
+ 		poc_msb = 0;
+ 
+ 	hevc->curr_poc = (poc_msb + poc_lsb);
+-- 
+2.43.0
+

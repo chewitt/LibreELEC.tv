@@ -1,0 +1,116 @@
+From 197892028ae2e5dd87555c7c164544c9707eae28 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:14:49 -0700
+Subject: [PATCH 082/145] media: meson: vdec: hevc: do not declare a stall from
+ a single sample
+
+codec_hevc_stall_work() polls HEVC_DEC_STATUS_REG every 200ms and treats
+four values as benign - SLICE_SEGMENT_DONE, DECPIC_DATA_DONE, ACTION_DONE
+and idle - while HEVC_CODED_SLICE_SEGMENT_DAT gets an LCU-progress grace
+protocol. Every other value claims a stall immediately.
+
+But the other values are not error states. 0x1/0x2/0x3 are VPS/SPS/PPS
+header parse, 0x4 is coded slice segment, 0x6 is slice decode, 0x7/0xc/0xd
+are SEI, 0x9 is NAL search - all states the firmware passes through during
+a normal decode. The poll is asynchronous to that decode, so sampling one
+carries no information on its own. A stall is an absence of progress over
+time and cannot be judged from one observation.
+
+The consequence is not a spurious log line. A false stall runs
+codec_hevc_stall_recover(), which drops the in-flight frame; every later
+frame that referenced it then fails its lookup and gets a substitute
+frame, so a perfectly healthy stream visibly corrupts until the next IRAP.
+
+Seen on a 127s 3840x2160 HDR10 59.94fps stream: one sample of status 0x4
+(HEVC_NAL_UNIT_CODED_SLICE_SEGMENT) at t=383s, immediately followed by 32
+"Couldn't find ref. frame 63" and visible corruption. Shorter clips of the
+same profile decode cleanly, which fits - they offer far fewer samples.
+
+Extend the progress requirement to every non-benign status: remember the
+status alongside the LCU counter, treat a change in either as progress,
+and only claim the stall once both have held still across consecutive
+samples. A genuine wedge is still caught, just one grace period later.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 50 +++++++++++++------
+ 1 file changed, 35 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index 56f5c64cdc80..597cef06454c 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -264,6 +264,7 @@ struct codec_hevc {
+ 	struct delayed_work stall_work;
+ 	atomic_t stall_state;
+ 	u32 stall_lcu;
++	u32 stall_status;
+ 	u32 stall_ticks;
+ 	u32 stall_recoveries;
+ 
+@@ -1462,6 +1463,7 @@ static void codec_hevc_stall_arm(struct codec_hevc *hevc)
+ 	if (atomic_read(&hevc->stall_state) == STALL_DISABLED)
+ 		return;
+ 	hevc->stall_lcu = 0xffffffff;
++	hevc->stall_status = 0xffffffff;
+ 	hevc->stall_ticks = 0;
+ 	atomic_set(&hevc->stall_state, STALL_ARMED);
+ 	mod_delayed_work(system_wq, &hevc->stall_work,
+@@ -1569,21 +1571,39 @@ static void codec_hevc_stall_work(struct work_struct *work)
+ 		return;
+ 	}
+ 
+-	/* CABAC slice-data decode gets an LCU-progress grace protocol */
+-	if (status == HEVC_CODED_SLICE_SEGMENT_DAT) {
+-		lcu = amvdec_read_dos(core, HEVC_PARSER_LCU_START) & 0xffffff;
+-		if (lcu != hevc->stall_lcu) {
+-			hevc->stall_lcu = lcu;
+-			hevc->stall_ticks = 0;
+-			mod_delayed_work(system_wq, &hevc->stall_work,
+-					 msecs_to_jiffies(STALL_TIMEOUT_MS));
+-			return;
+-		}
+-		if (++hevc->stall_ticks < 2) {
+-			mod_delayed_work(system_wq, &hevc->stall_work,
+-					 msecs_to_jiffies(STALL_GRACE_MS));
+-			return;
+-		}
++	/*
++	 * Everything else is one of the firmware's in-flight states - NAL
++	 * header parse (VPS/SPS/PPS/SEI/slice segment), slice decode, NAL
++	 * search.  They are all perfectly normal, and this poll runs
++	 * asynchronously to the decode, so landing on one says nothing on
++	 * its own.  A stall is by definition an absence of progress over
++	 * time, so never claim one from a single observation: require the
++	 * status AND the LCU counter to be unchanged across consecutive
++	 * samples first.
++	 *
++	 * Getting this wrong is expensive rather than merely noisy.  A
++	 * false stall runs the recovery, which drops the in-flight frame;
++	 * every later frame that referenced it then misses
++	 * ("Couldn't find ref. frame N") and gets a substitute, so a
++	 * healthy stream visibly corrupts until the next IRAP.  Observed
++	 * on a 127s 4K HDR stream, where a single sample of state 0x4
++	 * (HEVC_NAL_UNIT_CODED_SLICE_SEGMENT) triggered recovery and 32
++	 * reference misses immediately after.
++	 */
++	lcu = amvdec_read_dos(core, HEVC_PARSER_LCU_START) & 0xffffff;
++	if (lcu != hevc->stall_lcu || status != hevc->stall_status) {
++		hevc->stall_lcu = lcu;
++		hevc->stall_status = status;
++		hevc->stall_ticks = 0;
++		mod_delayed_work(system_wq, &hevc->stall_work,
++				 msecs_to_jiffies(STALL_TIMEOUT_MS));
++		return;
++	}
++
++	if (++hevc->stall_ticks < 3) {
++		mod_delayed_work(system_wq, &hevc->stall_work,
++				 msecs_to_jiffies(STALL_GRACE_MS));
++		return;
+ 	}
+ 
+ 	/* Claim the stall - a late IRQ from here on is discarded */
+-- 
+2.43.0
+

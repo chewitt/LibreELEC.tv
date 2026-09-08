@@ -1,0 +1,82 @@
+From 34b9a63d5c0a9ecbfdcd3517f2962d63efb819e1 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sat, 5 Sep 2026 21:40:00 -0700
+Subject: [PATCH 094/145] media: meson: vdec: vp9: do not take vp9->lock
+ recursively on a source change
+
+codec_vp9_threaded_isr() holds vp9->lock across its whole body, and calls
+amvdec_src_change() from inside it.  When the capture queue already suits
+the new format - same width, same height, enough buffers, still streaming -
+amvdec_src_change() does not queue an event and wait for userspace; it
+calls sess->fmt_out->codec_ops->resume(sess) directly.  For VP9 that is
+codec_vp9_resume(), whose first act is mutex_lock(&vp9->lock).
+
+The IRQ thread therefore blocks on a mutex it already owns and never
+returns.  Every further decode stalls behind it:
+
+  INFO: task irq/33-vdec:514 blocked for more than 30 seconds.
+    __mutex_lock_slowpath
+    codec_vp9_resume+0x1c/0x88 [meson_vdec]
+    amvdec_src_change+0x110/0x120 [meson_vdec]
+    codec_vp9_threaded_isr+0x1c8/0xddc [meson_vdec]
+    vdec_threaded_isr+0x1c/0x24 [meson_vdec]
+  INFO: task irq/33-vdec:514 is blocked on a mutex likely owned by
+        task irq/33-vdec:514.
+
+It is easy to hit in practice: seeking within a VP9 stream makes the
+parser re-announce the frame geometry, and on a player that has already
+negotiated that same geometry every condition of the fast path is met.
+Observed on a Khadas VIM3 (G12B) seeking a 4K VP9 profile-2 clip; the
+decoder never recovers and the board needs a reboot.
+
+Drop the lock before calling amvdec_src_change().  The pending frame is
+shown and the references saved first, so nothing the lock protects is
+still live at that point, and the handler returns immediately afterwards
+instead of falling through to the shared unlock.
+
+codec_hevc_resume() and codec_h264_resume() do not take a codec lock, so
+VP9 is the only affected decoder.
+
+Fixes: 00c43088aa68 ("media: meson: vdec: add VP9 decoder support")
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_vp9.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_vp9.c b/drivers/staging/media/meson/vdec/codec_vp9.c
+index f63bbdcb5814..d69e338e3a2b 100644
+--- a/drivers/staging/media/meson/vdec/codec_vp9.c
++++ b/drivers/staging/media/meson/vdec/codec_vp9.c
+@@ -2140,9 +2140,6 @@ static irqreturn_t codec_vp9_threaded_isr(struct amvdec_session *sess)
+ 
+ 	codec_vp9_fetch_rpm(sess);
+ 	if (codec_vp9_process_rpm(vp9)) {
+-		amvdec_src_change(sess, vp9->width, vp9->height, 16,
+-				  vp9->is_10bit ? 10 : 8);
+-
+ 		/* No frame is actually processed */
+ 		vp9->cur_frame = NULL;
+ 
+@@ -2153,7 +2150,18 @@ static irqreturn_t codec_vp9_threaded_isr(struct amvdec_session *sess)
+ 		if (vp9->frames_num)
+ 			codec_vp9_save_refs(vp9);
+ 
+-		goto unlock;
++		/*
++		 * amvdec_src_change() calls ->resume() directly when the
++		 * capture queue already suits the new format, and
++		 * codec_vp9_resume() takes vp9->lock - which this thread is
++		 * holding.  Drop it first: the pending frame has been shown
++		 * and the refs saved, so there is nothing left here that the
++		 * lock protects.
++		 */
++		mutex_unlock(&vp9->lock);
++		amvdec_src_change(sess, vp9->width, vp9->height, 16,
++				  vp9->is_10bit ? 10 : 8);
++		return IRQ_HANDLED;
+ 	}
+ 
+ 	codec_vp9_process_lf(vp9);
+-- 
+2.43.0
+

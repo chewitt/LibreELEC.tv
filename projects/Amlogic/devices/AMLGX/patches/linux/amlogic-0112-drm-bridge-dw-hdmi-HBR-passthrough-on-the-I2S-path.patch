@@ -1,0 +1,143 @@
+From 51d552a889e7b1884b97bb20b053fbd35def80a1 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 112/145] drm/bridge: dw-hdmi: HBR passthrough on the I2S path
+
+TrueHD and DTS-HD MA are carried as IEC61937 at four times the nominal
+rate, spread across all four I2S lanes.  The controller packetises that
+differently from ordinary non-PCM: AUD_CONF2[0] selects an HBR packet
+where AUD_CONF2[1] selects NLPCM.  The two are alternatives, not flags
+to combine, so pick between them on the channel count - eight non-PCM
+channels is HBR.  dw-hdmi-qp.c makes the same 8-channel decision.
+
+An HBR stream also has to declare 768 kHz in its channel status, and
+stop claiming an original sample rate, or the sink sizes its buffers
+for whatever rate userspace happened to open the PCM at.  Apply that
+fixup inside dw_hdmi_set_channel_status() rather than at the call site,
+so any interface feeding this function inherits it; the function has a
+single caller today, so widening the signature costs nothing.  This is
+the same fixup dw-hdmi-qp.c performs.
+
+Register-verified on G12B (A311D) against a sink advertising 8-channel
+LPCM to 192 kHz plus AC3/DTS/E-AC3/DTS-HD/TrueHD, reading the directly
+addressable DWC block:
+
+  case                  AUD_CONF0  AUD_CONF2  FC_AUDSCHNLS7
+  LPCM 2ch              0x21       0x00       0x02  (48 kHz)
+  non-PCM 2ch           0x21       0x02       0x02
+  LPCM 8ch              0x2f       0x00       0x02
+  non-PCM 8ch (HBR)     0x2f       0x01       0x09  (768 kHz)
+  back to non-PCM 2ch   0x21       0x02       0x02
+  back to LPCM 2ch      0x21       0x00       0x02
+
+so the two modes are mutually exclusive and the channel-status fixup
+both applies and reverts.  The AES4 original-sample-rate half of the
+fixup is correct by construction but was a no-op in this measurement:
+hdmi-codec already left those bits at zero.
+
+Depends on the AUD_CONF2 field values added by the non-PCM patch.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ .../drm/bridge/synopsys/dw-hdmi-i2s-audio.c   | 19 +++++++++++---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.c     | 25 ++++++++++++++++---
+ include/drm/bridge/dw_hdmi.h                  |  3 ++-
+ 3 files changed, 40 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
+index 0061203f5dfa..166cdc19eea3 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
+@@ -110,11 +110,24 @@ static int dw_hdmi_i2s_hw_params(struct device *dev, void *data,
+ 	 * AUD_CONF2 rather than from the stream.  dw-hdmi-gp-audio.c already
+ 	 * derives it the same way for the GP path.
+ 	 */
+-	if (hparms->iec.status[0] & IEC958_AES0_NONAUDIO)
+-		conf2 |= HDMI_AUD_CONF2_NLPCM;
++	if (hparms->iec.status[0] & IEC958_AES0_NONAUDIO) {
++		/*
++		 * HBR (TrueHD, DTS-HD MA) is the same IEC61937 payload spread
++		 * over all four I2S lanes at four times the rate, and the
++		 * controller packetises it differently -- HBR and NLPCM select
++		 * the packet type, so they are alternatives, not flags to
++		 * combine.  Eight non-PCM channels is what distinguishes them;
++		 * dw-hdmi-qp makes the same 8-channel decision.
++		 */
++		if (hparms->channels == 8)
++			conf2 |= HDMI_AUD_CONF2_HBR;
++		else
++			conf2 |= HDMI_AUD_CONF2_NLPCM;
++	}
+ 
+ 	dw_hdmi_set_sample_rate(hdmi, hparms->sample_rate);
+-	dw_hdmi_set_channel_status(hdmi, hparms->iec.status);
++	dw_hdmi_set_channel_status(hdmi, hparms->iec.status,
++				   conf2 & HDMI_AUD_CONF2_HBR);
+ 	dw_hdmi_set_channel_count(hdmi, hparms->channels);
+ 	dw_hdmi_set_channel_allocation(hdmi, hparms->cea.channel_allocation);
+ 
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+index 3fb830899cf0..6d8b2a90a9f0 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+@@ -23,6 +23,9 @@
+ #include <linux/dma-mapping.h>
+ #include <linux/spinlock.h>
+ 
++#include <media/cec-notifier.h>
++#include <sound/asoundef.h>
++
+ #include <linux/media-bus-format.h>
+ #include <linux/videodev2.h>
+ 
+@@ -614,14 +617,30 @@ static unsigned int hdmi_compute_n(unsigned int freq, unsigned long pixel_clk)
+  * (for S/PDIF interface this information comes from the stream).
+  */
+ void dw_hdmi_set_channel_status(struct dw_hdmi *hdmi,
+-				u8 *channel_status)
++				u8 *channel_status, bool hbr)
+ {
++	u8 cs3 = channel_status[3];
++	u8 cs4 = channel_status[4];
++
++	/*
++	 * An HBR stream is carried at four times the nominal sample rate, so
++	 * the channel status must declare 768 kHz and stop claiming a known
++	 * original sample rate -- otherwise the sink sizes its buffers for
++	 * whatever userspace opened the PCM at.  dw-hdmi-qp applies the same
++	 * fixup; do it here rather than in the caller so every interface that
++	 * feeds this function gets it.
++	 */
++	if (hbr) {
++		cs3 = (cs3 & 0xf0) | IEC958_AES3_CON_FS_768000;
++		cs4 = (cs4 & 0x0f) | IEC958_AES4_CON_ORIGFS_NOTID;
++	}
++
+ 	/*
+ 	 * Set channel status register for frequency and word length.
+ 	 * Use default values for other registers.
+ 	 */
+-	hdmi_writeb(hdmi, channel_status[3], HDMI_FC_AUDSCHNLS7);
+-	hdmi_writeb(hdmi, channel_status[4], HDMI_FC_AUDSCHNLS8);
++	hdmi_writeb(hdmi, cs3, HDMI_FC_AUDSCHNLS7);
++	hdmi_writeb(hdmi, cs4, HDMI_FC_AUDSCHNLS8);
+ }
+ EXPORT_SYMBOL_GPL(dw_hdmi_set_channel_status);
+ 
+diff --git a/include/drm/bridge/dw_hdmi.h b/include/drm/bridge/dw_hdmi.h
+index 046968cf348a..366dd9229619 100644
+--- a/include/drm/bridge/dw_hdmi.h
++++ b/include/drm/bridge/dw_hdmi.h
+@@ -193,7 +193,8 @@ void dw_hdmi_set_sample_iec958(struct dw_hdmi *hdmi, unsigned int iec958);
+ void dw_hdmi_set_sample_width(struct dw_hdmi *hdmi, unsigned int width);
+ void dw_hdmi_set_sample_rate(struct dw_hdmi *hdmi, unsigned int rate);
+ void dw_hdmi_set_channel_count(struct dw_hdmi *hdmi, unsigned int cnt);
+-void dw_hdmi_set_channel_status(struct dw_hdmi *hdmi, u8 *channel_status);
++void dw_hdmi_set_channel_status(struct dw_hdmi *hdmi, u8 *channel_status,
++				bool hbr);
+ void dw_hdmi_set_channel_allocation(struct dw_hdmi *hdmi, unsigned int ca);
+ void dw_hdmi_audio_enable(struct dw_hdmi *hdmi);
+ void dw_hdmi_audio_disable(struct dw_hdmi *hdmi);
+-- 
+2.43.0
+

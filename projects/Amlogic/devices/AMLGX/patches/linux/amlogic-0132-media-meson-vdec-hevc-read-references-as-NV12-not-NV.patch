@@ -1,0 +1,55 @@
+From d89e4ea4543854c0138bbb76ac85dad562ebdcc1 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 07:30:56 +0000
+Subject: [PATCH 132/145] media: meson: vdec: hevc: read references as NV12,
+ not NV21
+
+The VP9 codec clears HEVCD_IPP_AXIIF_CONFIG bit 12 when it programs the
+IPP AXI interface, and has since VP9 support was added: the hardware's
+native chroma order for that read path is NV21, and this driver hands
+the engine NV12 planes.  codec_hevc_set_sao() programs the same register
+from the same values but never clears the bit, so the motion compensator
+reads every reference frame's chroma with Cb and Cr the wrong way round.
+
+Only 8-bit NV12M output is affected.  It is the only mode where the
+references the MC reads are the NV12 planes themselves; 10-bit predicts
+from the compressed body and comes out with correct colour, which is
+what the two cases look like on a gxbb board: 8-bit decodes to blocks of
+green and magenta that get worse the further the stream runs from the
+last intra frame, 10-bit does not.
+
+Fixes: a2494e69efa4 ("media: meson: vdec: HEVC decode on G12A/G12B (8-bit and 10-bit)")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index c3b4fb0ba020..c0a189cfaeb6 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -589,8 +589,10 @@ static void codec_hevc_show_frames(struct amvdec_session *sess)
+ 		    (hevc->frames_num <= tmp->num_reorder_pic))
+ 			break;
+ 
+-		dev_dbg(sess->core->dev, "DONE frame poc %u; vbuf %u\n",
+-			tmp->poc, tmp->vbuf->vb2_buf.index);
++		dev_dbg(sess->core->dev,
++			"DONE frame poc %u; vbuf %u; reorder %u; held %u\n",
++			tmp->poc, tmp->vbuf->vb2_buf.index,
++			tmp->num_reorder_pic, hevc->frames_num);
+ 		amvdec_dst_buf_done_offset(sess, tmp->vbuf, tmp->offset,
+ 					   V4L2_FIELD_NONE, 0, false);
+ 
+@@ -1258,6 +1260,7 @@ codec_hevc_set_sao(struct amvdec_session *sess, struct hevc_frame *frame)
+ 
+ 	val = amvdec_read_dos(core, HEVCD_IPP_AXIIF_CONFIG) & ~0x30;
+ 	val |= 0xf;
++	val &= ~BIT(12); /* NV12 */
+ 	amvdec_write_dos(core, HEVCD_IPP_AXIIF_CONFIG, val);
+ 
+ 	val = 0;
+-- 
+2.43.0
+

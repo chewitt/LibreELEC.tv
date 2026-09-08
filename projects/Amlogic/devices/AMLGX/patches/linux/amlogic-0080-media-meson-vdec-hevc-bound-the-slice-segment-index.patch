@@ -1,0 +1,105 @@
+From a83a354ca7799bc933612ab1bb16c8f93db3b72a Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:14:49 -0700
+Subject: [PATCH 080/145] media: meson: vdec: hevc: bound the slice segment
+ index
+
+hevc_frame::cur_slice_idx indexes ref_poc_list[2][MAX_SLICE_NUM][16] in
+eight places, and codec_hevc_process_segment() increments it once per
+continuation slice with nothing bounding it. The bitstream decides how
+many slice segments arrive before one restarts at segment address 0, so a
+corrupt, truncated or hostile stream drives it without end.
+
+The overrun is quiet at first and then destructive. ref_poc_list[0] is
+followed in memory by ref_poc_list[1], so indices 800..1599 merely alias
+the second list and corrupt reference POCs. Past 1599 the writes leave the
+~100KB hevc_frame allocation entirely, and codec_hevc_update_frame_refs()
+zeroes 16 words per slice into whatever shares the slab.
+
+Seen on a 4K HEVC Main10 stream after a long run of
+
+  meson-vdec: Couldn't find ref. frame 63
+
+which is the same stream damage that stops the segments restarting:
+
+  Unable to handle kernel read from unreadable memory at virtual address 0000000000000030
+  pc : codec_hevc_process_segment+0x1fc/0x1008 [meson_vdec]
+  Call trace:
+   codec_hevc_process_segment+0x1fc/0x1008 [meson_vdec]
+   codec_hevc_threaded_isr+0x1d0/0x230 [meson_vdec]
+   vdec_threaded_isr+0x1c/0x24 [meson_vdec]
+
+0x30 is hevc_frame::cur_slice_type and the faulting instruction is the
+first dereference in codec_hevc_set_mc(), reached with hevc->cur_frame
+NULL - reloaded from memory immediately after codec_hevc_fill_mmu_map(),
+one line before it is used. No writer of cur_frame can run at that point:
+the threaded ISR holds hevc->lock and every assignment of the field takes
+it. The field was corrupted, not assigned.
+
+Bound the counter and drop the frame when it is reached; decoding resumes
+at the next frame start, which is what the stall recovery already does for
+frames it abandons. Also refuse to dereference a NULL cur_frame in the
+segment tail, so a corrupted field is a warning and a failed segment
+rather than an oops.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 35 +++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index 28f8b0268080..b157c52e654a 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -1629,6 +1629,28 @@ static int codec_hevc_process_segment(struct amvdec_session *sess)
+ 		 */
+ 		if (!hevc->cur_frame)
+ 			return codec_hevc_skip_slice(sess);
++
++		/*
++		 * ref_poc_list[] holds MAX_SLICE_NUM slice segments and
++		 * nothing in the bitstream bounds this counter.  A stream
++		 * whose segments never restart at address 0 - corrupt,
++		 * truncated, or hostile - increments it without end, and
++		 * every ref_poc_list[0][cur_slice_idx][] write then walks
++		 * off that list: first aliasing ref_poc_list[1], then
++		 * spraying zeroes past the end of the 100KB hevc_frame
++		 * allocation and into whatever shares the slab.
++		 *
++		 * Drop the frame instead.  Playback resumes at the next
++		 * frame start, which is what the stall recovery would have
++		 * done anyway.
++		 */
++		if (hevc->cur_frame->cur_slice_idx + 1 >= MAX_SLICE_NUM) {
++			dev_warn_ratelimited(core->dev,
++					     "%u slice segments without a frame start; dropping frame\n",
++					     MAX_SLICE_NUM);
++			return codec_hevc_skip_slice(sess);
++		}
++
+ 		hevc->cur_frame->cur_slice_idx++;
+ 	}
+ 
+@@ -1640,6 +1662,19 @@ static int codec_hevc_process_segment(struct amvdec_session *sess)
+ 		codec_hevc_fill_mmu_map(sess, &hevc->common,
+ 					&hevc->cur_frame->vbuf->vb2_buf,
+ 					hevc->is_10bit);
++	/*
++	 * Everything above reads hevc->cur_frame through hevc, so the
++	 * compiler must reload it after each call - and an oops has been
++	 * seen where the reload following codec_hevc_fill_mmu_map()
++	 * returned NULL, dereferenced one line later in
++	 * codec_hevc_set_mc().  No writer of cur_frame can run here (the
++	 * threaded ISR holds hevc->lock and every writer takes it), so a
++	 * NULL at this point means the field was corrupted rather than
++	 * assigned.  Fail the segment loudly instead of oopsing.
++	 */
++	if (WARN_ON_ONCE(!hevc->cur_frame))
++		return -1;
++
+ 	codec_hevc_set_mc(sess, hevc->cur_frame);
+ 	codec_hevc_set_mcrcc(sess);
+ 	codec_hevc_set_mpred(sess, hevc->cur_frame, hevc->col_frame);
+-- 
+2.43.0
+

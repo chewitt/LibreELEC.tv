@@ -1,0 +1,65 @@
+From 612e36cc07062b79f20e0c1d0729dedc824f7f52 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 058/145] media: meson: vdec: re-pulse decode pipeline resets
+ after power-up for h264
+
+The only reset the session power-on path issues (DOS_SW_RESET0 =
+0xfffffffc in vdec_1_start) runs while DOS_MEM_PD_VDEC is still
+all-ones and the power island is still isolated, so the write-back /
+deblock pipeline state around the just-power-cycled SRAMs never sees
+an effective reset.  The result: the first GOP of every session
+decodes with non-deterministically corrupt luma (chroma untouched,
+~28dB PSNR-y, different output on every run) until the next IDR
+resets the prediction chain.
+
+Mirror the vendor vh264_prot_init() sequence: after firmware load,
+with clocks running and memories un-gated, pulse VLD_PART/IQIDCT/MC
+twice and then DBLK/PIC_DC (DOS_SW_RESET0 bits 4,6,7 then 8,9 - the
+AMRISC cpus, bits 11/12, are untouched so the loaded IMEM survives).
+
+With this, H.264 hardware decode is bit-exact against software for
+every frame of every session including the first GOP, and the output
+is deterministic across sessions (identical md5 sets, 1080p and 4K).
+---
+ drivers/staging/media/meson/vdec/codec_h264.c | 24 +++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_h264.c b/drivers/staging/media/meson/vdec/codec_h264.c
+index a6074de15118..e6c48e61d33a 100644
+--- a/drivers/staging/media/meson/vdec/codec_h264.c
++++ b/drivers/staging/media/meson/vdec/codec_h264.c
+@@ -182,6 +182,30 @@ static int codec_h264_start(struct amvdec_session *sess)
+ 	if (!h264->sei_vaddr)
+ 		return -ENOMEM;
+ 
++	/*
++	 * Re-pulse the decode-pipeline resets (VLD_PART, IQIDCT, MC, then
++	 * DBLK, PIC_DC) now that the clocks are running and the DOS
++	 * memories are un-gated.  The reset issued during power-on ran
++	 * while DOS_MEM_PD_VDEC was still all-ones and the power island
++	 * isolated, so the write-back/deblock state around the
++	 * just-power-cycled SRAMs never saw an effective reset - the
++	 * first GOP of every session decodes with non-deterministically
++	 * corrupt luma until the next IDR.  Mirrors the vendor
++	 * vh264_prot_init() sequence.
++	 */
++	amvdec_write_dos(core, DOS_SW_RESET0, BIT(7) | BIT(6) | BIT(4));
++	amvdec_write_dos(core, DOS_SW_RESET0, 0);
++	amvdec_read_dos(core, DOS_SW_RESET0);
++	amvdec_read_dos(core, DOS_SW_RESET0);
++	amvdec_read_dos(core, DOS_SW_RESET0);
++	amvdec_write_dos(core, DOS_SW_RESET0, BIT(7) | BIT(6) | BIT(4));
++	amvdec_write_dos(core, DOS_SW_RESET0, 0);
++	amvdec_write_dos(core, DOS_SW_RESET0, BIT(9) | BIT(8));
++	amvdec_write_dos(core, DOS_SW_RESET0, 0);
++	amvdec_read_dos(core, DOS_SW_RESET0);
++	amvdec_read_dos(core, DOS_SW_RESET0);
++	amvdec_read_dos(core, DOS_SW_RESET0);
++
+ 	amvdec_write_dos_bits(core, POWER_CTL_VLD, BIT(9) | BIT(6));
+ 
+ 	workspace_offset = h264->workspace_paddr - WORKSPACE_BUF_OFFSET;
+-- 
+2.43.0
+

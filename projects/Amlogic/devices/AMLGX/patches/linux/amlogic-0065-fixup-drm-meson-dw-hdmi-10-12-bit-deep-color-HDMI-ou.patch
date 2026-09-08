@@ -1,0 +1,44 @@
+From 6e69662127ffb2d45a319f97d40372df213b2700 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 7 Sep 2026 13:36:06 +0000
+Subject: [PATCH 065/145] fixup! drm/meson + dw-hdmi: 10/12-bit deep color HDMI
+ output for G12A
+
+Drop the stale meson_encoder_hdmi_detach().
+
+The function was written against a base that predates the meson switch
+to the bridge-connector CEC notifier: it dereferences a cec_notifier
+member that struct meson_encoder_hdmi no longer has, calls
+cec_notifier_conn_unregister() without <media/cec-notifier.h>, and is
+never referenced because meson_encoder_hdmi_bridge_funcs has no .detach
+entry.  CEC is wired up through bridge.hdmi_cec_dev instead, so there is
+nothing for a detach hook to undo.
+
+Fixes three -Wimplicit-function-declaration / no-such-member errors and
+a -Wunused-function warning.
+---
+ drivers/gpu/drm/meson/meson_encoder_hdmi.c | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/drivers/gpu/drm/meson/meson_encoder_hdmi.c b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+index 693d12cc5bd6..d83b0df95dba 100644
+--- a/drivers/gpu/drm/meson/meson_encoder_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+@@ -54,14 +54,6 @@ static int meson_encoder_hdmi_attach(struct drm_bridge *bridge,
+ 				 &encoder_hdmi->bridge, flags);
+ }
+ 
+-static void meson_encoder_hdmi_detach(struct drm_bridge *bridge)
+-{
+-	struct meson_encoder_hdmi *encoder_hdmi = bridge_to_meson_encoder_hdmi(bridge);
+-
+-	cec_notifier_conn_unregister(encoder_hdmi->cec_notifier);
+-	encoder_hdmi->cec_notifier = NULL;
+-}
+-
+ /*
+  * Bus-format classification.  The VENC->HDMI-TX bus is 3x10-bit
+  * natively; what varies per format is the chroma layout and the wire
+-- 
+2.43.0
+

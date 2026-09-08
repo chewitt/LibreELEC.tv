@@ -1,0 +1,108 @@
+From 221386a2b0eb44d596bee5da8cb248027e83c950 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sat, 5 Sep 2026 22:10:00 -0700
+Subject: [PATCH 095/145] media: meson: vdec: do not announce a source change
+ that did not happen
+
+amvdec_src_change() queues a V4L2_EVENT_SOURCE_CHANGE unconditionally,
+even down the path that has just decided the capture queue is already
+configured for this stream and called codec_ops->resume() to keep
+decoding with the buffers it has.
+
+That path exists precisely because nothing userspace-visible changed, so
+the event is a lie, and it is an expensive one.  Every client that
+honours SOURCE_CHANGE stops its CAPTURE queue in response.  ffmpeg's
+v4l2m2m decoder goes further for this driver specifically:
+
+  // Meson (amlogic) always gives a resolution changed event after output
+  // streamon and userspace must (re)allocate capture buffers and streamon
+  // capture to clear the event even if the capture buffers were the right
+  // size in the first place.
+  if (strcmp(cap.driver, "meson-vdec") == 0)
+          s->quirks |= FF_V4L2_QUIRK_REINIT_ALWAYS | ...
+
+FF_V4L2_QUIRK_REINIT_ALWAYS forces do_source_change() to take the full
+reinit branch: release every capture buffer and allocate the set again.
+
+VP9 re-announces its frame geometry on every seek, so on a 4K profile-2
+stream this fires a complete teardown and reallocation of a ~378 MB
+buffer set per seek, on top of the set still in use.  Measured on a
+Khadas VIM3 (896 MB CMA): playback settles at 3 MB CmaFree, the seek
+releases back to 356 MB, and the reallocation then fails -
+
+  cma: __cma_alloc_frozen: reserved: alloc failed, req-size: 2032 pages, ret: -16
+  => 1100 free of 229376 total pages
+  meson-vdec PRP0001:26: dma alloc of size 8323072 failed
+    vb2_dc_alloc <- __vb2_queue_alloc <- vb2_core_reqbufs (VideoPlayer)
+
+- and the session is dead: position frozen, zero decoder interrupts for
+every subsequent seek.  The buffers are not leaked; CMA returns in full
+on stop.  A single 4K VP9 session simply is the whole CMA budget, so
+asking for a second copy of it can never succeed.
+
+Return early once resume() has been called, as the code did before the
+G12A HEVC work removed it, so a client is only told about changes that
+are real.  The comment that went with it ("and do not send the event")
+described the intended behaviour and is restored here.
+
+Compare bitdepth alongside geometry and DPB size rather than assigning
+it up front: bitdepth became part of this function's contract when the
+10-bit support landed, and an 8->10 bit transition at constant
+resolution is a genuine format change that userspace must still hear
+about.
+
+Initial negotiation is unaffected: streamon_cap is 0 until the client
+has started its CAPTURE queue, so the first source change always takes
+the event path.  Seeks reach here with CAPTURE still streaming because
+ffmpeg's flush only stops the OUTPUT queue.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ .../staging/media/meson/vdec/vdec_helpers.c   | 20 ++++++++++++-------
+ 1 file changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec_helpers.c b/drivers/staging/media/meson/vdec/vdec_helpers.c
+index cc66cb111c38..af48066cd21e 100644
+--- a/drivers/staging/media/meson/vdec/vdec_helpers.c
++++ b/drivers/staging/media/meson/vdec/vdec_helpers.c
+@@ -551,24 +551,30 @@ void amvdec_src_change(struct amvdec_session *sess, u32 width,
+ 
+ 	v4l2_ctrl_s_ctrl(sess->ctrl_min_buf_capture, dpb_size);
+ 
+-	sess->bitdepth = bitdepth;
+-
+ 	/*
+-	 * Check if the capture queue is already configured well for our
+-	 * usecase. If so, keep decoding with it.
++	 * If the capture queue is already configured for exactly this
++	 * stream - same geometry, same bit depth, enough buffers, still
++	 * streaming - keep decoding with it and tell userspace nothing.
++	 * Every client that honours SOURCE_CHANGE stops the CAPTURE queue
++	 * in response, and ffmpeg's v4l2m2m additionally reallocates every
++	 * capture buffer for this driver (FF_V4L2_QUIRK_REINIT_ALWAYS), so
++	 * an event for a change that did not happen costs a full 4K buffer
++	 * set each time.  VP9 re-announces its geometry on every seek.
+ 	 */
+ 	if (sess->streamon_cap &&
+ 	    sess->width == width &&
+ 	    sess->height == height &&
++	    sess->bitdepth == bitdepth &&
+ 	    dpb_size <= sess->num_dst_bufs) {
+ 		sess->fmt_out->codec_ops->resume(sess);
+-	} else {
+-		sess->status = STATUS_NEEDS_RESUME;
+-		sess->changed_format = 0;
++		return;
+ 	}
+ 
++	sess->bitdepth = bitdepth;
+ 	sess->width = width;
+ 	sess->height = height;
++	sess->status = STATUS_NEEDS_RESUME;
++	sess->changed_format = 0;
+ 
+ 	dev_dbg(sess->core->dev, "Res. changed (%ux%u), DPB %u, bitdepth %u\n",
+ 		width, height, dpb_size, bitdepth);
+-- 
+2.43.0
+

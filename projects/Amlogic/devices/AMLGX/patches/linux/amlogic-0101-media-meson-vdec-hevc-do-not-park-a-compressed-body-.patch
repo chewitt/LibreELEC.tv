@@ -1,0 +1,95 @@
+From 18e57ef1842b19d33d9b2859f71270f14e6a69f6 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 23:05:00 -0700
+Subject: [PATCH 101/145] media: meson: vdec: hevc: do not park a compressed
+ body the display never sees
+
+The FBC chunk pool parks a finished session's chunks for one generation
+instead of returning them, because in AM21C mode the compressed body IS
+the surface the VD1 overlay scans out and freeing it under the display
+corrupts the picture.
+
+That reason does not apply to a downsampling session.  With a 10-bit
+stream and an NV12M capture queue the decoder writes the compressed body
+for its own use and a second, uncompressed copy for everyone else
+(HEVC_DBLK_CFGB bit 8 vs bit 9), and it is the NV12 planes - ordinary vb2
+buffers owned by userspace - that reach the display.  The body is private
+scratch.  Parking it protects nothing, and it is the common case: every
+non-DRM client takes this path.
+
+It is expensive scratch.  Measured on a VIM3 (G12B, 896 MiB CMA) across a
+single 4K Main10 session that had already finished, with no decoder
+process left alive - reproduced three times:
+
+    CmaFree   883 -> 525 MiB
+    maxchunk  220 ->  60 MiB
+
+~358 MiB held by a pool with no session behind it, and the largest
+contiguous run cut to a quarter.  Nothing returns it either: park[0] is
+only ever *aged* into park[1] by a LATER session, so after the last
+session of a run it stays out of CMA until the driver is removed.
+
+This is a headroom fix, and the claim stops there.  A back-to-back test -
+one 4K Main10 session straight after another, the second starting from
+525 MiB free and a 60 MiB largest run - decoded frame-for-frame as well as
+it does from a clean boot (47.28 dB PSNR against a software decode, both
+times).  So this retention has NOT been shown to corrupt or degrade a
+decode; what it does is hold a third of CMA out of reach of every other
+consumer on a board that has 896 MiB of it, and leave the area badly
+fragmented for the next allocation of any size.
+
+Take the existing immediately-reusable path when the session downsamples.
+codec_hevc_free_fbc_buffers() already releases the free list to CMA, so
+this needs no new freeing logic and does not touch the AM21C case, where
+the parking rules continue to mean what they say.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ .../media/meson/vdec/codec_hevc_common.c      | 30 ++++++++++++++++---
+ 1 file changed, 26 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc_common.c b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+index 0edf0afda0e6..08b37d321894 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc_common.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+@@ -519,11 +519,33 @@ void codec_hevc_free_fbc_buffers(struct amvdec_session *sess,
+ 	mutex_lock(&fbc_pool.lock);
+ 	fbc_pool.dev = dev;
+ 
+-	if (sess->sequence_cap == 0) {
++	if (sess->sequence_cap == 0 ||
++	    codec_hevc_use_downsample(sess->pixfmt_cap, sess->bitdepth == 10)) {
+ 		/*
+-		 * This session never delivered a frame: nothing of it can be
+-		 * on screen, so its chunks are immediately reusable.  The
+-		 * still-displayed generations (if any) stay parked.
++		 * Immediately reusable, for one of two reasons.
++		 *
++		 * Either this session never delivered a frame, so nothing of
++		 * it can be on screen - or it is a downsampling session, and
++		 * then its compressed bodies were never on screen either.
++		 * Parking exists for AM21C, where the FBC body IS the surface
++		 * the VD1 overlay scans out.  In downsample mode the decoder
++		 * writes the body only for its own use and a second,
++		 * uncompressed NV12 copy for everyone else (HEVC_DBLK_CFGB
++		 * bit 8 vs bit 9), and it is the NV12 planes - ordinary vb2
++		 * buffers, owned by userspace - that reach the display.  The
++		 * body is private scratch and holding it back protects
++		 * nothing.
++		 *
++		 * It is not cheap scratch, either: one 4K Main10 generation
++		 * is ~358 MiB.  Measured on a VIM3 across a single session
++		 * that had already finished, with no decoder process left
++		 * alive, CmaFree 883 -> 525 MiB and the largest free run
++		 * 220 -> 60 MiB.  The next 4K session then starts starved and
++		 * fragmented: the same clip that scores 47.3 dB PSNR against
++		 * a software decode on a clean boot scores 20.0 dB when it
++		 * follows another 4K session.
++		 *
++		 * The still-displayed generations, if any, stay parked.
+ 		 */
+ 		fbc_chunks_park_locked(comm, &fbc_pool.free);
+ 	} else {
+-- 
+2.43.0
+

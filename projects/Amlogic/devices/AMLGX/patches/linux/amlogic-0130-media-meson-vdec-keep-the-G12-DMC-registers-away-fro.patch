@@ -1,0 +1,107 @@
+From 6c6b51111636e11ca9132ee2bb925b21c176a0d8 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 06:35:50 +0000
+Subject: [PATCH 130/145] media: meson: vdec: keep the G12 DMC registers away
+ from GX
+
+The DMC park/unpark helpers and the DMC decode-pipeline pulse reach
+their registers by hardcoded physical address - 0xff638000 for the DMC
+and 0xffd01020 for the RESET7 pulse register - both taken from the G12
+family register map.  GX parts decode nothing in that range at all;
+their DMC is at 0xc8838000 and their reset controller at 0xc1104404.
+
+VDEC_HEVC gates its whole scrub on G12A+, but VDEC_1 does not:
+vdec_1_core_scrub() ends with an unconditional pipeline pulse, and it
+runs on every VDEC_1 power transition.  So on gxbb/gxl/gxlx/gxm, the
+first H.264 or MPEG1/2 playback writes to an address the SoC does not
+claim, moments after the power domain comes up and just before the
+firmware is loaded - the point at which the board wedges with nothing
+on the console and comes back via the watchdog.
+
+Guard the three helpers on the revision they were written for, so no
+caller can put a G12 address on a GX bus, and gate the VDEC_1 pulse at
+its call site to match the HEVC bracket.  Pre-G12A parts use a
+different DMC request port (bit 13 for VDEC_1, bit 4 for VDEC_HEVC,
+per the vendor 3.14 vdec_poweron()); wiring that up is a separate
+change and needs validation on GX silicon, so GX keeps the behaviour it
+had before the reset discipline landed.
+
+Fixes: e76306b9ad8b ("media: meson: vdec: extend the reset discipline to VDEC_1")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/staging/media/meson/vdec/vdec_1.c     |  3 ++-
+ .../staging/media/meson/vdec/vdec_helpers.c   | 23 +++++++++++++++++++
+ 2 files changed, 25 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec_1.c b/drivers/staging/media/meson/vdec/vdec_1.c
+index 06c47b6b9c5d..c176d6ce7907 100644
+--- a/drivers/staging/media/meson/vdec/vdec_1.c
++++ b/drivers/staging/media/meson/vdec/vdec_1.c
+@@ -90,7 +90,8 @@ static void vdec_1_core_scrub(struct amvdec_core *core)
+ 	udelay(10);
+ 	amvdec_write_dos(core, DOS_SW_RESET0, 0);
+ 
+-	amvdec_dmc_pipeline_reset(core);
++	if (vdec_1_is_g12(core))
++		amvdec_dmc_pipeline_reset(core);
+ }
+ 
+ /*
+diff --git a/drivers/staging/media/meson/vdec/vdec_helpers.c b/drivers/staging/media/meson/vdec/vdec_helpers.c
+index 5d653f27471a..98e31253fc30 100644
+--- a/drivers/staging/media/meson/vdec/vdec_helpers.c
++++ b/drivers/staging/media/meson/vdec/vdec_helpers.c
+@@ -43,12 +43,29 @@ static void __iomem *amvdec_map(u64 addr, u32 size, void __iomem **cache)
+ 	return *cache;
+ }
+ 
++/*
++ * Both addresses above belong to the G12 family register map.  GX parts
++ * put the DMC at 0xc8838000 and the reset controller at 0xc1104404, and
++ * decode nothing at all in the 0xff000000 range: an access there is an
++ * unclaimed bus transaction that takes the SoC down without so much as
++ * an oops.  The pre-G12A DMC request port (bit 13 for VDEC_1, bit 4 for
++ * VDEC_HEVC) is unvalidated here, so GX simply keeps its old behaviour.
++ */
++static bool amvdec_has_g12_dmc(struct amvdec_core *core)
++{
++	return core->platform->revision == VDEC_REVISION_G12A ||
++	       core->platform->revision == VDEC_REVISION_SM1;
++}
++
+ void amvdec_dmc_park(struct amvdec_core *core, u32 mask)
+ {
+ 	static void __iomem *dmc_base;
+ 	u32 val;
+ 	int i;
+ 
++	if (!amvdec_has_g12_dmc(core))
++		return;
++
+ 	if (!amvdec_map(G12A_DMC_BASE, G12A_DMC_SIZE, &dmc_base))
+ 		return;
+ 
+@@ -71,6 +88,9 @@ void amvdec_dmc_unpark(struct amvdec_core *core, u32 mask)
+ 	static void __iomem *dmc_base;
+ 	u32 val;
+ 
++	if (!amvdec_has_g12_dmc(core))
++		return;
++
+ 	if (!amvdec_map(G12A_DMC_BASE, G12A_DMC_SIZE, &dmc_base))
+ 		return;
+ 
+@@ -83,6 +103,9 @@ void amvdec_dmc_pipeline_reset(struct amvdec_core *core)
+ {
+ 	static void __iomem *reset7;
+ 
++	if (!amvdec_has_g12_dmc(core))
++		return;
++
+ 	if (!amvdec_map(G12A_RESET7_ADDR, 4, &reset7))
+ 		return;
+ 
+-- 
+2.43.0
+

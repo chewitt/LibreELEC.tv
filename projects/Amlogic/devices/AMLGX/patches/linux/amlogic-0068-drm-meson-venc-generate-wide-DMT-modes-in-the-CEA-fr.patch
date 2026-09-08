@@ -1,0 +1,93 @@
+From 83ae3c0c43bbb67e777b8daa4ec661a2d91ae24b Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 068/145] drm/meson: venc: generate wide DMT modes in the CEA
+ frame phase
+
+Wide (>1920px) non-CEA modes scan out horizontally wrapped/rolled on
+G12B (every ultrawide monitor's native mode).  Long investigation
+showed every timing register correct in the classic DMT convention -
+sync at counter origin, active video after the back porch - and the
+same registers fine for narrow DMT and for wide CEA (4K) modes.
+
+The difference is the frame phase: the CEA tables pin active video at
+a fixed counter position (havon 148..) and place the sync pulse
+relative to it, and the in-tree 2160p tables are literally the
+1080p60 values offset by the hdisplay delta.  Some stage of the wide
+datapath evidently latches based on that phase.  Generate the same
+transform for arbitrary wide modes: 1080p60 anchors + (hdisplay -
+1920), positions taken mod htotal (the counters wrap; the stock
+1080p60 registers already program a wrapped sync pulse).
+
+Validated on a VIM3 (G12B): 3440x1440@50 CVT-RB (3600x1474, tight
+160px blanking - the wrap-heavy case) renders straight and
+left-aligned on the first try; narrow DMT (1024x768) and CEA
+(1080p60, 2160p) unchanged.  The live sync pulse lands at the
+mode-correct position (mode_set's existing hso fixups apply
+uniformly).
+---
+ drivers/gpu/drm/meson/meson_venc.c | 48 ++++++++++++++++++++++++++++++
+ 1 file changed, 48 insertions(+)
+
+diff --git a/drivers/gpu/drm/meson/meson_venc.c b/drivers/gpu/drm/meson/meson_venc.c
+index 4abd0c09b442..4a23b87d5cdc 100644
+--- a/drivers/gpu/drm/meson/meson_venc.c
++++ b/drivers/gpu/drm/meson/meson_venc.c
+@@ -897,6 +897,54 @@ static void meson_venc_hdmi_get_dmt_vmode(const struct drm_display_mode *mode,
+ {
+ 	memset(dmt_mode, 0, sizeof(*dmt_mode));
+ 
++	if (mode->hdisplay > 1920) {
++		/*
++		 * Wide (>1920px) modes scan out wrapped in the classic DMT
++		 * frame phase (sync at counter origin, active after the
++		 * back porch).  The CEA tables use the opposite phase -
++		 * active video pinned at pixel 148 and the sync position
++		 * derived from it - and wide CEA modes (4K) work; the
++		 * in-tree 2160p tables are literally the 1080p60 values
++		 * offset by the hdisplay delta.  Generate that same
++		 * transform for arbitrary wide modes.  Positions past
++		 * htotal wrap (the hardware counters wrap; the stock
++		 * 1080p60 registers already program a wrapped sync).
++		 */
++		unsigned int dh = mode->hdisplay - 1920;
++		unsigned int h = mode->htotal;
++
++		dmt_mode->encp.dvi_settings = 0x1;
++		dmt_mode->encp.video_mode = 0x4040;
++		dmt_mode->encp.video_mode_adv = 0x18;
++		dmt_mode->encp.video_prog_mode = 0x100;
++		dmt_mode->encp.video_prog_mode_present = true;
++		dmt_mode->encp.yfp1_htime = 140;
++		dmt_mode->encp.yfp2_htime = 140 + mode->hdisplay;
++		dmt_mode->encp.max_pxcnt = mode->htotal - 1;
++		dmt_mode->encp.hspuls_begin = (2156 + dh) % h;
++		dmt_mode->encp.hspuls_end = 44;
++		dmt_mode->encp.hspuls_switch = 44;
++		dmt_mode->encp.vspuls_begin = 140;
++		dmt_mode->encp.vspuls_end = (2059 + dh) % h;
++		dmt_mode->encp.vspuls_bline = 0;
++		dmt_mode->encp.vspuls_eline = 4;
++		dmt_mode->encp.havon_begin = 148;
++		dmt_mode->encp.havon_end = 147 + mode->hdisplay;
++		dmt_mode->encp.vavon_bline = mode->vtotal - mode->vsync_start;
++		dmt_mode->encp.vavon_eline = dmt_mode->encp.vavon_bline +
++					     mode->vdisplay - 1;
++		dmt_mode->encp.hso_begin = 44;
++		dmt_mode->encp.hso_end = (2156 + dh) % h;
++		dmt_mode->encp.vso_begin = (2100 + dh) % h;
++		dmt_mode->encp.vso_end = (2164 + dh) % h;
++		dmt_mode->encp.vso_bline = 0;
++		dmt_mode->encp.vso_eline = mode->vsync_end - mode->vsync_start;
++		dmt_mode->encp.vso_eline_present = true;
++		dmt_mode->encp.max_lncnt = mode->vtotal - 1;
++
++		return;
++	}
++
+ 	dmt_mode->encp.dvi_settings = 0x21;
+ 	dmt_mode->encp.video_mode = 0x4040;
+ 	dmt_mode->encp.video_mode_adv = 0x18;
+-- 
+2.43.0
+

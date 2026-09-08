@@ -1,0 +1,140 @@
+From 5644d35d9c4bdb8035829fa4ca6fe3266fe3a413 Mon Sep 17 00:00:00 2001
+From: gus bourg <gus@bourg.net>
+Date: Thu, 10 Sep 2026 06:43:16 -0700
+Subject: [PATCH 108/145] media: meson: vdec: advertise only mapped H.264
+ capture buffers
+
+After an interlaced H.264 seek, Kodi can retain two of twenty allocated
+CAPTURE buffers for display. amvdec_set_canvases() maps only the eighteen
+queued buffers, but codec_h264_resume() advertises all twenty to firmware.
+Firmware can then write into stale canvas slots belonging to buffers that
+userspace still holds, producing mixed-picture rectangles and completion
+errors.
+
+A diagnostic run mapped firmware slots 0 through 17, then reported slot 19
+mapping to vb2 index 19, absent from the destination queue. The forward map
+retained entries from before the seek, disguising an unconfigured current
+slot as a valid mapping. The initial diagnostic reproduced five errors in
+sixteen seeks; logging each mapping reproduced eight in a second run.
+
+Track the number of successfully mapped canvases independently of the
+allocated CAPTURE count and advertise that number to H.264 firmware. Abort
+resume if canvas setup fails or provides no buffers. Clear the forward map
+alongside the reverse map so unused slots cannot retain previous mappings.
+Keep the allocation count for queue setup and source-change accounting.
+
+This complements the firmware-index recycling fix; it does not replace it.
+
+Validated on VIM3 with g12b-hdtv.ts: three fresh-Kodi 16-seek runs and a
+30-seek storm produced no completion errors, with decoder IRQ activity in
+every run. Six KVM captures during the storm showed no mixed-picture
+rectangles. H.264, HEVC and VP9 remained bit-exact at 24 frames, and VC-1
+at 60 frames. MPEG-1/2/4 hardware hashes matched the unchanged baseline at
+24 frames each; those clips already differ from software on the baseline.
+
+Signed-off-by: gus bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_h264.c   | 14 +++++++++-----
+ drivers/staging/media/meson/vdec/vdec.c         |  6 +++---
+ drivers/staging/media/meson/vdec/vdec.h         |  4 +++-
+ drivers/staging/media/meson/vdec/vdec_helpers.c |  4 ++++
+ 4 files changed, 19 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_h264.c b/drivers/staging/media/meson/vdec/codec_h264.c
+index 8c9d8f08bb69..5882e5f3ba58 100644
+--- a/drivers/staging/media/meson/vdec/codec_h264.c
++++ b/drivers/staging/media/meson/vdec/codec_h264.c
+@@ -312,12 +312,16 @@ static void codec_h264_resume(struct amvdec_session *sess)
+ 	struct codec_h264 *h264 = sess->priv;
+ 	u32 mb_width, mb_height, mb_total;
+ 
+-	amvdec_set_canvases(sess,
+-			    (u32[]){ ANC0_CANVAS_ADDR, 0 },
+-			    (u32[]){ 24, 0 });
++	/* Userspace may still hold some allocated buffers after a seek. */
++	if (amvdec_set_canvases(sess,
++				(u32[]){ ANC0_CANVAS_ADDR, 0 },
++				(u32[]){ 24, 0 }) || !sess->num_fw_bufs) {
++		amvdec_abort(sess);
++		return;
++	}
+ 
+ 	dev_dbg(core->dev, "max_refs = %u; actual_dpb_size = %u\n",
+-		h264->max_refs, sess->num_dst_bufs);
++		h264->max_refs, sess->num_fw_bufs);
+ 
+ 	/* Align to a multiple of 4 macroblocks */
+ 	mb_width = ALIGN(h264->mb_width, 4);
+@@ -338,7 +342,7 @@ static void codec_h264_resume(struct amvdec_session *sess)
+ 	amvdec_write_dos(core, AV_SCRATCH_4, h264->ref_paddr + h264->ref_size);
+ 
+ 	amvdec_write_dos(core, AV_SCRATCH_0, (h264->max_refs << 24) |
+-					     (sess->num_dst_bufs << 16) |
++					     (sess->num_fw_bufs << 16) |
+ 					     ((h264->max_refs - 1) << 8));
+ }
+ 
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index 3e0b954c96e2..1b0e4c70f69c 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -246,9 +246,9 @@ static void process_num_buffers(struct vb2_queue *q,
+ 	 * may write a frame into any of them - so every buffer must be
+ 	 * queued before the stream can start.
+ 	 *
+-	 * Codecs with a resume op program buffers per frame and set their
+-	 * tables up from every ALLOCATED buffer (codec_hevc_setup_buffers),
+-	 * so they can start with the interface minimum.  Demanding every
++	 * Codecs with a resume op configure buffers later: H.264 advertises
++	 * queued canvases, while HEVC and VP9 assign buffers per frame.
++	 * They can start with the interface minimum.  Demanding every
+ 	 * buffer here deadlocked seeks with a zero-copy client: Kodi keeps
+ 	 * two CAPTURE buffers on the display across a seek and re-queues
+ 	 * the other eighteen, so vb2 accepted STREAMON but never called
+diff --git a/drivers/staging/media/meson/vdec/vdec.h b/drivers/staging/media/meson/vdec/vdec.h
+index bf6800914a64..f686b1cba5d3 100644
+--- a/drivers/staging/media/meson/vdec/vdec.h
++++ b/drivers/staging/media/meson/vdec/vdec.h
+@@ -229,7 +229,8 @@ enum amvdec_status {
+  * @should_stop: flag set if userspace signaled EOS via command
+  *		 or empty buffer
+  * @keyframe_found: flag set once a keyframe has been parsed
+- * @num_dst_bufs: number of destination buffers
++ * @num_dst_bufs: number of allocated destination buffers
++ * @num_fw_bufs: number of destination buffers mapped to firmware canvases
+  * @changed_format: the format changed
+  * @canvas_alloc: array of all the canvas IDs allocated
+  * @canvas_num: number of canvas IDs allocated
+@@ -286,6 +287,7 @@ struct amvdec_session {
+ 	bool eos_pending;
+ 	unsigned int keyframe_found;
+ 	unsigned int num_dst_bufs;
++	unsigned int num_fw_bufs;
+ 	unsigned int changed_format;
+ 	unsigned int init_src_change_done;
+ 
+diff --git a/drivers/staging/media/meson/vdec/vdec_helpers.c b/drivers/staging/media/meson/vdec/vdec_helpers.c
+index da350f94b9d4..b390e464f8ed 100644
+--- a/drivers/staging/media/meson/vdec/vdec_helpers.c
++++ b/drivers/staging/media/meson/vdec/vdec_helpers.c
+@@ -273,6 +273,9 @@ int amvdec_set_canvases(struct amvdec_session *sess,
+ 	int i = 0;
+ 	int ret;
+ 
++	sess->num_fw_bufs = 0;
++	for (i = 0; i < ARRAY_SIZE(sess->fw_idx_to_vb2_idx); ++i)
++		sess->fw_idx_to_vb2_idx[i] = VB2_IDX_UNMAPPED;
+ 	for (i = 0; i < ARRAY_SIZE(sess->vb2_idx_to_fw_idx); ++i)
+ 		sess->vb2_idx_to_fw_idx[i] = VB2_IDX_UNMAPPED;
+ 	i = 0;
+@@ -323,6 +326,7 @@ int amvdec_set_canvases(struct amvdec_session *sess,
+ 		i++;
+ 	}
+ 
++	sess->num_fw_bufs = i;
+ 	return 0;
+ }
+ EXPORT_SYMBOL_GPL(amvdec_set_canvases);
+-- 
+2.43.0
+

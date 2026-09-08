@@ -1,0 +1,67 @@
+From b8f5909a6828464880423af7aa7fcd1a37a16b7f Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 14:06:56 +0000
+Subject: [PATCH 145/145] drm/meson: do not offer YUV422 wire formats by
+ default
+
+A mode with no 444 deep-color clock entry does not fall back to 8 bits.
+It falls into YUV422, because 422 carries deep color at the 8-bit TMDS
+rate and is therefore exempt from the clock gate that rejects every
+other deep-color format the clock tree cannot deliver.  Nothing logs
+it: the gate refuses 444 during format negotiation, so the "invalid
+HDMI vclk freq" error that would name the missing entry is never
+reached, and the sink is simply handed a format it may not lock.
+
+That is how a G12B board lost HDMI sync on every switch to 1080p23.98
+until the 74.25 MHz entries were added: 444 at 12 and then at 10 bits
+were both gated out, 422 at 10 bits was not, and the display went dark
+with a clean log.  Every rate without 444 deep-color entries is the
+same trap - 27 MHz and 54 MHz have none.
+
+422 has never been validated on this hardware; what it is here is the
+hole in an otherwise total gate.  Stop offering it, so a missing entry
+degrades to 8-bit 444 as intended, and put it behind a module parameter
+for anyone who wants to test it.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/gpu/drm/meson/meson_encoder_hdmi.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/gpu/drm/meson/meson_encoder_hdmi.c b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+index e64b3cc6454d..3a85576fb85a 100644
+--- a/drivers/gpu/drm/meson/meson_encoder_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+@@ -44,6 +44,18 @@ module_param(scrambled_deep, bool, 0644);
+ MODULE_PARM_DESC(scrambled_deep,
+ 		 "Offer deep color above 340 MHz TMDS (default Y; N restricts to the unscrambled domain)");
+ 
++/*
++ * YUV422 carries deep color at the 8-bit TMDS rate, so it is the one
++ * wire format the clock gate below cannot refuse - which makes it the
++ * format negotiation falls into whenever a mode has no 444 entry at
++ * any depth, with nothing in any log to say so.  It has never been
++ * validated on this hardware; offering it is opt-in.
++ */
++static bool allow_422;
++module_param(allow_422, bool, 0644);
++MODULE_PARM_DESC(allow_422,
++		 "Offer YUV422 wire formats (default N; they bypass the deep-color clock gate)");
++
+ struct meson_encoder_hdmi {
+ 	struct drm_encoder encoder;
+ 	struct drm_bridge bridge;
+@@ -376,6 +388,9 @@ meson_encoder_hdmi_get_inp_bus_fmts(struct drm_bridge *bridge,
+ 
+ 	*num_input_fmts = 0;
+ 
++	if (meson_encoder_hdmi_fmt_is_422(output_fmt) && !allow_422)
++		return NULL;
++
+ 	/*
+ 	 * Deep color is implemented (PLL m/frac cases, analog band
+ 	 * parameters, VPU dither block) for G12A-family only; on older
+-- 
+2.43.0
+

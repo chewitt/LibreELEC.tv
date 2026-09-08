@@ -1,0 +1,97 @@
+From f5995cd1b3c2c9200148eb053b4856794cf2562c Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 062/145] media: meson: vdec: use 64-byte aligned canvas
+ strides
+
+The VDEC writes decoded frames through canvases configured with
+MESON_CANVAS_ENDIAN_SWAP64, and the VPU's VD1 scanout path reads them
+back the same way - both sides move data in 64-byte units, so the line
+stride must be a multiple of 64 bytes.  The driver aligned bytesperline
+and the canvas width to 32 bytes only.
+
+For widths that are multiples of 64 (1920, 3840...) the two alignments
+coincide and everything works, which is why HD/UHD content never showed
+the problem.  For SD widths (720 DVD, 352 VCD) the stride lands on an
+odd 32-byte boundary: CPU consumers reading the linear memory still see
+correct frames (GStreamer md5 harnesses pass), but direct scanout of
+the dmabuf on the video overlay plane (Kodi DRMPRIME zero-copy) shears
+the image into interleaved columns with uninitialized-chroma stripes.
+
+Align bytesperline, the canvas stride, and the derived plane sizes to
+64 bytes.  Buffer sizes are unchanged in practice (the 64 KiB
+sizeimage rounding already covered the difference), and 64-multiple
+widths produce byte-identical configurations, so validated HD/UHD
+behavior is untouched - re-verified bit-exact H.264 goldens and MPEG
+PSNR after the change.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/vdec.c       | 19 +++++++++++++------
+ .../staging/media/meson/vdec/vdec_helpers.c   |  2 +-
+ 2 files changed, 14 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index 9018d3c26ca8..8459aa2399eb 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -32,9 +32,16 @@ struct dummy_buf {
+ /* 16 MiB for parsed bitstream swap exchange */
+ #define SIZE_VIFIFO SZ_16M
+ 
++/*
++ * The VDEC writes and the VPU (VD1 scanout) reads through canvases in
++ * 64-byte swap mode - line strides must be 64-byte aligned.  A 32-byte
++ * stride happens to work for CPU consumers reading the linear memory,
++ * but direct scanout of such buffers (DRMPRIME) shears into columns for
++ * any width that is not a multiple of 64 (e.g. DVD 720, VCD 352).
++ */
+ static u32 get_output_size(u32 width, u32 height)
+ {
+-	return ALIGN(width * height, SZ_64K);
++	return ALIGN(ALIGN(width, 64) * height, SZ_64K);
+ }
+ 
+ u32 amvdec_get_output_size(struct amvdec_session *sess)
+@@ -609,20 +616,20 @@ vdec_try_fmt_common(struct amvdec_session *sess, u32 size,
+ 		memset(pfmt[1].reserved, 0, sizeof(pfmt[1].reserved));
+ 		if (pixmp->pixelformat == V4L2_PIX_FMT_NV12M) {
+ 			pfmt[0].sizeimage = output_size;
+-			pfmt[0].bytesperline = ALIGN(pixmp->width, 32);
++			pfmt[0].bytesperline = ALIGN(pixmp->width, 64);
+ 
+ 			pfmt[1].sizeimage = output_size / 2;
+-			pfmt[1].bytesperline = ALIGN(pixmp->width, 32);
++			pfmt[1].bytesperline = ALIGN(pixmp->width, 64);
+ 			pixmp->num_planes = 2;
+ 		} else if (pixmp->pixelformat == V4L2_PIX_FMT_YUV420M) {
+ 			pfmt[0].sizeimage = output_size;
+-			pfmt[0].bytesperline = ALIGN(pixmp->width, 32);
++			pfmt[0].bytesperline = ALIGN(pixmp->width, 64);
+ 
+ 			pfmt[1].sizeimage = output_size / 4;
+-			pfmt[1].bytesperline = ALIGN(pixmp->width, 32) / 2;
++			pfmt[1].bytesperline = ALIGN(pixmp->width, 64) / 2;
+ 
+ 			pfmt[2].sizeimage = output_size / 2;
+-			pfmt[2].bytesperline = ALIGN(pixmp->width, 32) / 2;
++			pfmt[2].bytesperline = ALIGN(pixmp->width, 64) / 2;
+ 			pixmp->num_planes = 3;
+ 		}
+ 	}
+diff --git a/drivers/staging/media/meson/vdec/vdec_helpers.c b/drivers/staging/media/meson/vdec/vdec_helpers.c
+index e504e5aead9a..d984ab11a4ad 100644
+--- a/drivers/staging/media/meson/vdec/vdec_helpers.c
++++ b/drivers/staging/media/meson/vdec/vdec_helpers.c
+@@ -189,7 +189,7 @@ int amvdec_set_canvases(struct amvdec_session *sess,
+ {
+ 	struct v4l2_m2m_buffer *buf;
+ 	u32 pixfmt = sess->pixfmt_cap;
+-	u32 width = ALIGN(sess->width, 32);
++	u32 width = ALIGN(sess->width, 64);
+ 	u32 height = ALIGN(sess->height, 32);
+ 	u32 reg_cur;
+ 	u32 reg_num_cur = 0;
+-- 
+2.43.0
+

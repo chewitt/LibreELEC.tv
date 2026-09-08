@@ -1,0 +1,65 @@
+From 339fac0985aba8a6c6538f25d2bd45b0528f1755 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 11:30:11 +0000
+Subject: [PATCH 137/145] media: meson: vdec: hevc: tell the esparser a new
+ session is resyncing
+
+A stream joined mid-GOP decodes nothing and then stops dead.  Traced on
+a 3840x2160 transport stream: seventeen slices are discarded as
+pre-IRAP, and from there the firmware sits at HEVC_ACTION_DONE - the
+skip command the driver wrote - with the LCU counter at 0, the shifter
+byte count frozen, 263 bytes left in the stream FIFO and
+esparser_queued_bufs pinned at 17 for as long as the player keeps
+trying.  Nothing recovers it, because nothing is broken: the decoder is
+waiting for bitstream that will never be written.
+
+Seventeen is twenty CAPTURE buffers minus the three the VP9/HEVC
+backpressure gate holds back.  That gate exists so a codec cannot
+outrun the CAPTURE queue, and the credit it spends is only repaid by
+amvdec_dst_buf_done() - by a decoded frame.  A codec that is discarding
+slices produces no frame, so it spends its last credit and stops being
+fed, which is precisely why the gate exempts a session that is
+resynchronising.
+
+codec_hevc_start() never set that state.  seen_irap is clear from the
+kzalloc, so the codec discards slices from the first one, but
+sess->resyncing stays 0 and the exemption never applies.  The paths
+that resync mid-session - the drain, and stall recovery - both set it
+properly; only a session that starts mid-GOP is caught, and it is
+caught every time.
+
+Containers that start on a keyframe never reach it: the first slice is
+an IRAP, the state clears on that slice, and a credit is repaid by the
+frame it produces.  That is why this looked like a 4K problem - the
+files that failed were transport streams and the ones that worked were
+not.
+
+Fixes: c493d1097b16 ("media: meson: vdec: hevc: keep a resynchronising decoder alive")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index ed62ad8e3a0c..85ca428bbd2d 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -977,6 +977,14 @@ static int codec_hevc_start(struct amvdec_session *sess)
+ 	mutex_init(&hevc->lock);
+ 	sess->priv = hevc;
+ 
++	/*
++	 * A session starts knowing nothing, so it discards slices until the
++	 * first IRAP - which is what seen_irap being clear means here.  Say
++	 * so, or the ESPARSER holds this session to the CAPTURE credit it
++	 * has no way of repaying while it is discarding.
++	 */
++	codec_hevc_set_resync(sess, true);
++
+ 	codec_hevc_hw_init(sess);
+ 
+ 	return 0;
+-- 
+2.43.0
+

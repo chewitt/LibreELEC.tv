@@ -1,0 +1,63 @@
+From c85a484863cae1e0d80ee5347ffb74f6cb2f8c30 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:14:55 -0700
+Subject: [PATCH 086/145] media: meson: vdec: hevc: resync at an IRAP after a
+ flush too
+
+codec_hevc_flush_output() frees every frame on the reference list, but
+leaves hevc->seen_irap set. seen_irap is assigned in exactly one place -
+set to 1 on the first IRAP of a session - and nothing ever clears it, so
+after a flush the decoder believes it still has a valid reference chain
+when in fact it has none.
+
+This is the drain op, which the core calls on CAPTURE STREAMOFF, and a
+seek is precisely that: userspace stops both queues, restarts them, and
+resumes feeding from a new position mid-GOP. The first frames after the
+seek reference pictures that were freed a moment ago, so every lookup
+fails and the substitution path rebuilds them from whatever frame is
+nearest.
+
+The user-visible effect is that seeking around a stream corrupts it even
+when nothing in the stream is damaged - which is how this was found:
+skipping through a 4K HDR clip destabilised the board well before reaching
+the one genuinely malformed frame it contains.
+
+Clear seen_irap and curr_poc alongside the frames they describe. The
+decoder then skips slices until the next IRAP, exactly as it already does
+for a session that starts mid-GOP, and resumes cleanly with a real
+reference chain.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index bea2cd1b42e0..1d93e451cce0 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -778,6 +778,21 @@ static void codec_hevc_flush_output(struct amvdec_session *sess)
+ 		list_del(&tmp->list);
+ 		kfree(tmp);
+ 	}
++
++	/*
++	 * Every reference this session held has just been freed, so nothing
++	 * arriving next can be decoded until the stream restarts at an IRAP.
++	 *
++	 * This runs as the drain op, which the core calls on CAPTURE
++	 * STREAMOFF - and a seek is exactly that: userspace stops both
++	 * queues, restarts them, and resumes feeding from a new position
++	 * mid-GOP.  Without clearing seen_irap the decoder carried straight
++	 * on, every frame failed its reference lookup, and the substitution
++	 * path reconstructed pictures from whatever was nearest - so seeking
++	 * around a stream corrupted it even when no frame in it was damaged.
++	 */
++	hevc->seen_irap = 0;
++	hevc->curr_poc = INVALID_POC;
+ }
+ 
+ static int codec_hevc_stop(struct amvdec_session *sess)
+-- 
+2.43.0
+

@@ -1,0 +1,106 @@
+From d2a2a6846a15cf68f7d479f7dd483fb5e45ce034 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 111/145] drm/bridge: dw-hdmi: honour non-PCM (IEC61937) on the
+ I2S path
+
+An IEC61937 stream reaches the controller over the I2S lanes as
+ordinary linear samples.  What tells the sink to treat them as a
+compressed bitstream rather than audio is the non-PCM bit of the
+channel status, and on this controller that bit is driven from
+AUD_CONF2[1] - the I2S sampler builds the IEC60958 subframe itself
+rather than taking C/U/V from the stream.
+
+dw-hdmi-i2s-audio.c never writes AUD_CONF2.  The register is defined in
+dw-hdmi.h and has no writes anywhere in the tree, so every passthrough
+stream is transmitted with the linear-PCM bit clear and a receiver
+decodes it as noise.
+
+hdmi-codec already carries the information: it exposes the IEC958
+Playback Default control, stores what userspace writes, and hands it to
+the platform in hparms->iec.status[].  dw-hdmi-gp-audio.c derives
+non-PCM from exactly that for the GP path; do the same for I2S.
+
+AUD_CONF2 is written unconditionally so that a passthrough-to-PCM
+transition clears the bit again - the register survives untouched today
+only because power-on reset leaves it zero.
+
+Verified on a Khadas VIM3 (G12B) by reading the controller back over
+its APB window: with the non-audio bit set and an AC3 IEC61937 stream
+playing, AUD_CONF2 reads 0x02; with the bit cleared and LPCM playing it
+reads 0x00.  Both directions, so the path is data-driven rather than
+stuck.
+
+Note for anyone reproducing this: amixer cannot set an IEC958-type
+control - "amixer cset" silently no-ops on it and prints the unchanged
+value.  Use the iec958: alsa-lib plugin, or write the element directly
+via SNDRV_CTL_IOCTL_ELEM_WRITE.
+---
+ .../gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c    | 14 ++++++++++++++
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.h          |  4 ++++
+ 2 files changed, 18 insertions(+)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
+index 2c903c9fe805..0061203f5dfa 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi-i2s-audio.c
+@@ -12,6 +12,7 @@
+ #include <drm/bridge/dw_hdmi.h>
+ #include <drm/drm_crtc.h>
+ 
++#include <sound/asoundef.h>
+ #include <sound/hdmi-codec.h>
+ 
+ #include "dw-hdmi.h"
+@@ -42,6 +43,7 @@ static int dw_hdmi_i2s_hw_params(struct device *dev, void *data,
+ 	struct dw_hdmi *hdmi = audio->hdmi;
+ 	u8 conf0 = 0;
+ 	u8 conf1 = 0;
++	u8 conf2 = 0;
+ 	u8 inputclkfs = 0;
+ 
+ 	/* it cares I2S only */
+@@ -101,6 +103,16 @@ static int dw_hdmi_i2s_hw_params(struct device *dev, void *data,
+ 		return -EINVAL;
+ 	}
+ 
++	/*
++	 * An IEC61937 (compressed) stream is carried over the I2S lanes as
++	 * ordinary linear samples; what tells the sink not to treat them as
++	 * audio is the non-PCM bit, which this controller drives from
++	 * AUD_CONF2 rather than from the stream.  dw-hdmi-gp-audio.c already
++	 * derives it the same way for the GP path.
++	 */
++	if (hparms->iec.status[0] & IEC958_AES0_NONAUDIO)
++		conf2 |= HDMI_AUD_CONF2_NLPCM;
++
+ 	dw_hdmi_set_sample_rate(hdmi, hparms->sample_rate);
+ 	dw_hdmi_set_channel_status(hdmi, hparms->iec.status);
+ 	dw_hdmi_set_channel_count(hdmi, hparms->channels);
+@@ -109,6 +121,8 @@ static int dw_hdmi_i2s_hw_params(struct device *dev, void *data,
+ 	hdmi_write(audio, inputclkfs, HDMI_AUD_INPUTCLKFS);
+ 	hdmi_write(audio, conf0, HDMI_AUD_CONF0);
+ 	hdmi_write(audio, conf1, HDMI_AUD_CONF1);
++	/* written unconditionally so a passthrough->PCM switch clears NLPCM */
++	hdmi_write(audio, conf2, HDMI_AUD_CONF2);
+ 
+ 	return 0;
+ }
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.h b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.h
+index af43a0414b78..b95f67daef98 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.h
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.h
+@@ -931,6 +931,10 @@ enum {
+ 	HDMI_AUD_CONF1_WIDTH_16 = 0x10,
+ 	HDMI_AUD_CONF1_WIDTH_24 = 0x18,
+ 
++/* AUD_CONF2 field values */
++	HDMI_AUD_CONF2_NLPCM = 0x02,
++	HDMI_AUD_CONF2_HBR = 0x01,
++
+ /* AUD_CTS3 field values */
+ 	HDMI_AUD_CTS3_N_SHIFT_OFFSET = 5,
+ 	HDMI_AUD_CTS3_N_SHIFT_MASK = 0xe0,
+-- 
+2.43.0
+

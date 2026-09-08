@@ -1,0 +1,88 @@
+From 3b25cadde9500fdef8af2787e02e03435af2d0f1 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 21:30:00 -0700
+Subject: [PATCH 097/145] media: meson: vdec: vp9: reclaim the FBC chunk pool
+ around a session
+
+codec_hevc_start() reclaims the shared FBC chunk pool before it asks CMA
+for its workspace, and codec_hevc_stop() reclaims it again on the way out.
+VP9 uses that same pool through codec_hevc_common.c and does neither.
+
+This is not a leak - codec_hevc_free_fbc_buffers() already hands the free
+list back to CMA on its way past.  What it leaves behind is two parked
+generations: it ages park[0] into park[1] and parks the finishing session's
+chunks in park[0], and only codec_hevc_fbc_pool_reclaim() frees park[1].
+A VP9-only workload therefore keeps both where the same workload in HEVC
+keeps one.  On a VIM3 (G12B, 896 MiB CMA) one 4K Profile-2 generation is
+~327 MiB, and it was still held with no decoder process alive at all:
+CmaFree 525 MiB against 852 MiB idle.
+
+The start side matters for the reason codec_hevc_start() already documents.
+A session begins by asking CMA for a single contiguous SIZE_WORKSPACE run,
+and 1 MiB chunks left over from the session before it are exactly what
+leaves no run that long.  The failure shape is cma_alloc returning -EBUSY:
+an isolation failure, not a shortage.
+
+Reclaim on both edges, matching HEVC.
+
+This deliberately uses codec_hevc_fbc_pool_reclaim() and not
+codec_hevc_fbc_pool_drain() on the start path.  reclaim() frees the free
+list and park[1], both of which are provably off-screen; drain() also frees
+park[0], the generation that may still be scanned out.  HEVC uses drain()
+as a last resort before failing a session outright, but that trade is not
+worth making here for a problem reclaim() already solves - adding a second
+site that can free memory out from under the display is exactly what the
+parking rules exist to prevent.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_vp9.c | 26 ++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_vp9.c b/drivers/staging/media/meson/vdec/codec_vp9.c
+index d69e338e3a2b..b0c3fea107d3 100644
+--- a/drivers/staging/media/meson/vdec/codec_vp9.c
++++ b/drivers/staging/media/meson/vdec/codec_vp9.c
+@@ -760,6 +760,16 @@ static int codec_vp9_start(struct amvdec_session *sess)
+ 	if (!vp9)
+ 		return -ENOMEM;
+ 
++	/*
++	 * The workspace is a single contiguous SIZE_WORKSPACE allocation and
++	 * it is the first thing a session asks CMA for.  A previous session's
++	 * FBC chunk pool can still be holding CMA in 1 MiB chunks here -
++	 * always, on a seek, which stops one session and starts the next back
++	 * to back - leaving no run long enough.  Hand that memory back first,
++	 * exactly as codec_hevc_start() does.
++	 */
++	codec_hevc_fbc_pool_reclaim();
++
+ 	ret = codec_vp9_alloc_workspace(core, vp9);
+ 	if (ret)
+ 		goto free_vp9;
+@@ -845,6 +855,22 @@ static int codec_vp9_stop(struct amvdec_session *sess)
+ 	codec_hevc_free_fbc_buffers(sess, &vp9->common);
+ 	mutex_unlock(&vp9->lock);
+ 
++	/*
++	 * codec_hevc_free_fbc_buffers() only returns this session's chunks to
++	 * the shared pool's free list - it does not give the pages back to
++	 * CMA.  Without this the pool keeps every chunk a VP9 session ever
++	 * used until an HEVC session happens to run or the driver is removed:
++	 * measured on a VIM3, one 4K Main-profile-2 session left 327 MiB of
++	 * CMA held with no decoder open at all, and the next session - any
++	 * codec - started that much short.  codec_hevc_stop() already does
++	 * this; VP9 was simply missed.
++	 *
++	 * reclaim() frees the free list and park[1] only.  park[0] is the
++	 * generation that may still be on screen and is deliberately left
++	 * alone (see the pooled-FBC parking rules).
++	 */
++	codec_hevc_fbc_pool_reclaim();
++
+ 	return 0;
+ }
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,63 @@
+From c4ad5379223fa1355a913926a147769dc963d4ad Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 14:06:19 +0000
+Subject: [PATCH 144/145] drm/meson: deep color clock for 4K at 12-bit
+
+4K24/25/30 has a 10-bit clock entry but no 12-bit one, so a sink that
+declares DC_36 gets 10-bit there: the format negotiation gates 444 deep
+color on a clock-tree entry existing at the deeper TMDS rate, and
+without one it settles for the next format down.
+
+The PLL reaches it.  4455 MHz with no output dividers puts the PHY at
+4455 MHz, which is 297 x 15 - the 12-bit character rate - and the VCO
+is already wired up for G12A with its 1000/1001 alternate, the same one
+1080p @ 12-bit uses.  Per the relation above the table, PHY = VCO / od1
+/ od2 and vclk = PHY / od3 / vid_pll_div / vclk_div:
+
+  4455 /1 /1 /1 /7.5 /2 -> PHY 4455 MHz, vclk 297 MHz
+
+Untested: it changes what a DC_36 sink is offered at 4K24/25/30 from 10
+to 12 bits.  4K60 RGB/444 remains out of reach on this PLL - it would
+need a 7.425 GHz VCO against a 6 GHz maximum.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/gpu/drm/meson/meson_vclk.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/gpu/drm/meson/meson_vclk.c b/drivers/gpu/drm/meson/meson_vclk.c
+index efea4bdd4d17..7b9ccdf00baa 100644
+--- a/drivers/gpu/drm/meson/meson_vclk.c
++++ b/drivers/gpu/drm/meson/meson_vclk.c
+@@ -373,6 +373,8 @@ enum {
+ 	MESON_VCLK_HDMI_594000_YUV420_10B,
+ /* 4455 /2 /2 /1 /7.5 /2  => /1 /1      1080p24/25/30 @ 12-bit */
+ 	MESON_VCLK_HDMI_74250_12B,
++/* 4455 /1 /1 /1 /7.5 /2  => /1 /1      4K24/25/30 @ 12-bit */
++	MESON_VCLK_HDMI_297000_12B,
+ /* 4455 /2 /1 /1 /7.5 /2  => /1 /1      1080p @ 12-bit */
+ 	MESON_VCLK_HDMI_148500_12B,
+ /* 4455 /1 /1 /1 /7.5 /1  => /1 /2      4K60 YUV420 @ 12-bit */
+@@ -559,6 +561,18 @@ struct meson_vclk_params {
+ 		.vid_pll_div = VID_PLL_DIV_7p5,
+ 		.vclk_div = 2,
+ 	},
++	[MESON_VCLK_HDMI_297000_12B] = {
++		.pll_freq = 4455000000,
++		.phy_freq = 4455000000,
++		.venc_freq = 297000000,
++		.vclk_freq = 297000000,
++		.pixel_freq = 297000000,
++		.pll_od1 = 1,
++		.pll_od2 = 1,
++		.pll_od3 = 1,
++		.vid_pll_div = VID_PLL_DIV_7p5,
++		.vclk_div = 2,
++	},
+ 	[MESON_VCLK_HDMI_594000_YUV420_12B] = {
+ 		.pll_freq = 4455000000,
+ 		.phy_freq = 4455000000,
+-- 
+2.43.0
+

@@ -1,0 +1,62 @@
+From 3042481902a22dcf837f335ccd4934e68993429c Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 12:47:01 +0000
+Subject: [PATCH 142/145] media: meson: vdec: add HEVC to SM1
+
+SM1 was the one platform left without an HEVC entry, so the codec could
+not be exercised there at all.  Nothing stands in the way: SM1 is a G12
+part as far as this driver is concerned - codec_hevc_use_mmu() already
+treats VDEC_REVISION_SM1 as MMU-capable, codec_hevc.c and
+codec_hevc_common.c branch on >= G12A and on SM1 by revision where the
+two differ, and Amlogic ships an SM1 build of the firmware.
+
+Load sm1_hevc_mmu.bin, as the SM1 VP9 entry loads its own MMU build.
+codec_hevc_use_mmu() turns the frame-buffer MMU on for 10-bit only, so
+8-bit runs the non-MMU path against an MMU-named blob - the same
+arrangement G12A has been running.
+
+Advertise NV12M only, matching the SM1 VP9 entry; the zero-copy AM21C
+capture format that G12A offers is a separate thing to validate.
+
+Untested - SM1 hardware is what this entry is for.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/staging/media/meson/vdec/vdec_platform.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec_platform.c b/drivers/staging/media/meson/vdec/vdec_platform.c
+index e6c712b22010..a1016decd71e 100644
+--- a/drivers/staging/media/meson/vdec/vdec_platform.c
++++ b/drivers/staging/media/meson/vdec/vdec_platform.c
+@@ -507,6 +507,18 @@ static const struct amvdec_format vdec_formats_sm1[] = {
+ 		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
+ 		.flags = V4L2_FMT_FLAG_COMPRESSED |
+ 			 V4L2_FMT_FLAG_DYN_RESOLUTION,
++	}, {
++		.pixfmt = V4L2_PIX_FMT_HEVC,
++		.min_buffers = 4,
++		.max_buffers = 24,
++		.max_width = 3840,
++		.max_height = 2160,
++		.vdec_ops = &vdec_hevc_ops,
++		.codec_ops = &codec_hevc_ops,
++		.firmware_path = "meson/vdec/sm1_hevc_mmu.bin",
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
++		.flags = V4L2_FMT_FLAG_COMPRESSED |
++			 V4L2_FMT_FLAG_DYN_RESOLUTION,
+ 	}, {
+ 		.pixfmt = V4L2_PIX_FMT_MPEG1,
+ 		.min_buffers = 8,
+@@ -613,6 +625,7 @@ MODULE_FIRMWARE("meson/vdec/gxl_mpeg4_5.bin");
+ MODULE_FIRMWARE("meson/vdec/gxl_vc1.bin");
+ MODULE_FIRMWARE("meson/vdec/gxl_vp9.bin");
+ MODULE_FIRMWARE("meson/vdec/gxm_h264.bin");
++MODULE_FIRMWARE("meson/vdec/sm1_hevc_mmu.bin");
+ MODULE_FIRMWARE("meson/vdec/sm1_vp9_mmu.bin");
+ MODULE_FIRMWARE("meson/vdec/g12a_hevc_mmu.bin");
+ MODULE_FIRMWARE("meson/vdec/g12a_vc1.bin");
+-- 
+2.43.0
+

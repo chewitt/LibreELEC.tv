@@ -1,0 +1,83 @@
+From 13a06c84494180537ab98f3c60e48a35a03b1fc3 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:14:56 -0700
+Subject: [PATCH 090/145] media: meson: vdec: hevc: restart recovery the way a
+ cold start does
+
+Stall recovery left the decoder dead.  On the malformed-frame stream the
+first stall is real - status 0x4 (CODED_SLICE_SEGMENT), LCU advancing -
+and recovery runs; from then on the status register reads 0xff with the
+LCU at 0 and the vdec interrupt count never moves again, while the stall
+detector re-fires and re-recovers every ~460 ms for as long as the clip
+is left playing.  Measured on the hardware via irq33 in /proc/interrupts
+across a 90 s run.
+
+0xff is HEVC_ACTION_DONE, and it is there because recovery writes it.
+That is the whole defect: the value never changes because nothing ever
+reads it.
+
+ACTION_DONE is the host's reply to an interrupt the firmware has raised,
+and the firmware only collects the reply when the host also kicks
+HEVC_MCPU_INTR_REQ - codec_hevc_skip_slice() does both, which is what
+makes it work there.  Recovery had just quiesced and reset the core, so
+there was no raised interrupt to reply to and no kick; the firmware came
+up under MPSR=1, found a status byte that meant nothing in that context,
+and sat.
+
+A cold start does not do this.  vdec_hevc_start() calls the codec's
+start op - which ends in codec_hevc_hw_init(), leaving
+HEVC_DEC_STATUS_REG at 0 and HEVC_WAIT_FLAG at 1 - then pulses
+DOS_SW_RESET3 bits 12 and 11, then sets MPSR.  Recovery already calls
+codec_hevc_hw_init() and already does that same reset-then-MPSR pair, so
+it had reconstructed the cold-start state correctly and then overwrote
+one register of it immediately before starting.  Status 0 is what the
+firmware expects to come up to: nothing pending from the host, go and
+search for a picture.
+
+Drop the write and let hw_init's value stand, and add the same short
+settle the cold start has.  Recovery now hands the firmware the state it
+was built to start from.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 20 +++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index 559c1f014157..7027b7850cd0 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -1734,12 +1734,28 @@ static int codec_hevc_stall_recover(struct amvdec_session *sess)
+ 	codec_hevc_setup_workspace(sess, hevc);
+ 	codec_hevc_setup_decode_head(sess, hevc->is_10bit);
+ 
+-	/* Firmware IMEM survives the targeted reset: revector + run */
+-	amvdec_write_dos(core, HEVC_DEC_STATUS_REG, HEVC_ACTION_DONE);
++	/*
++	 * Firmware IMEM survives the targeted reset: revector + run,
++	 * in exactly the order and with exactly the register state a cold
++	 * start uses (vdec_hevc_start(): codec start, then this reset pair,
++	 * then MPSR).  codec_hevc_hw_init() above has already left
++	 * HEVC_DEC_STATUS_REG at 0 and HEVC_WAIT_FLAG at 1, which is the
++	 * state the firmware expects to come up in: nothing pending from
++	 * the host, go and search for a picture.
++	 *
++	 * Do not write ACTION_DONE here.  That value is a reply to an
++	 * interrupt the firmware has raised, and it is consumed only when
++	 * the host also kicks HEVC_MCPU_INTR_REQ - see
++	 * codec_hevc_skip_slice(), which does both.  After a reset there is
++	 * no raised interrupt to reply to, so the firmware started running
++	 * and never looked at the register again.
++	 */
+ 	amvdec_write_dos(core, DOS_SW_RESET3, BIT(12) | BIT(11));
+ 	amvdec_write_dos(core, DOS_SW_RESET3, 0);
+ 	amvdec_read_dos(core, DOS_SW_RESET3);
+ 	amvdec_write_dos(core, HEVC_MPSR, 1);
++	/* Let the firmware settle, as the cold start does */
++	usleep_range(10, 20);
+ 
+ 	/*
+ 	 * The firmware is back in NAL search at the same stream position,
+-- 
+2.43.0
+

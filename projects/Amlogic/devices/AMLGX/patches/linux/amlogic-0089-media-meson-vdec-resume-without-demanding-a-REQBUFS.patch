@@ -1,0 +1,76 @@
+From 04c93090b77b22d19970b7b69047367f9dda0a77 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:14:56 -0700
+Subject: [PATCH 089/145] media: meson: vdec: resume without demanding a
+ REQBUFS
+
+After a source change the driver would only resume decoding for a client
+that had gone all the way round REQBUFS again: the resume in
+vdec_vb2_start_streaming() also required sess->changed_format, which is
+set from queue_setup(), and amvdec_src_change() clears it on the way
+into STATUS_NEEDS_RESUME.
+
+The stateful decoder interface does not ask for that. After a source
+change a client may keep the buffers it already has if they still fit
+and simply STREAMON the CAPTURE queue. Kodi does exactly that on a seek.
+
+Observed on a Khadas VIM3 seeking within a 4K HDR10 HEVC stream: the new
+session starts, takes exactly one interrupt, reports the source change
+with streamon_cap = 0, and then sits in STATUS_NEEDS_RESUME for good -
+the firmware parked on the first slice segment of the new position with
+HEVC_SHIFT_BYTE_COUNT frozen at 0x638, while the player ran its clock on
+at 1x over a picture that had stopped. It reads as a hardware wedge and
+is a handshake the driver invented.
+
+codec_ops->resume() reprograms the buffer registers from whatever is on
+the CAPTURE queue at that moment, so it does not need the REQBUFS.
+
+NOT YET VERIFIED ON HARDWARE. This was first tried while a second,
+independent fault - CMA exhaustion failing the CAPTURE buffer allocation
+outright - was still masking it, so the client never reached STREAMON
+either way and the change appeared to do nothing. With that fault fixed
+and a fresh boot showing 906 MB of CMA free, the same seek still hangs in
+exactly the described state, which puts this back as the prime suspect.
+The board went down before the test could run.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/vdec.c | 21 +++++++++++++++++++--
+ 1 file changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index d93f088e3430..f83f1e7ce600 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -415,9 +415,26 @@ static int vdec_start_streaming(struct vb2_queue *q, unsigned int count)
+ 	if (!codec_ops->resume && !sess->streamon_cap)
+ 		return 0;
+ 
++	/*
++	 * Resume when the CAPTURE queue comes back up, whatever userspace
++	 * did with its buffers in between.
++	 *
++	 * This also required changed_format, which is set from queue_setup()
++	 * - so the decoder only ever resumed for a client that had gone all
++	 * the way round REQBUFS again.  The stateful decoder interface does
++	 * not ask for that: after a source change a client may keep the
++	 * buffers it has if they still fit, and simply STREAMON.  Kodi does
++	 * exactly that on a seek, so the decoder stayed in NEEDS_RESUME for
++	 * good - firmware parked on the first slice segment of the new
++	 * position, one interrupt taken and never another, while the player
++	 * ran its clock on at 1x over a picture that had stopped.  It reads
++	 * as a hardware wedge and is a handshake the driver invented.
++	 *
++	 * codec_ops->resume() reprograms the buffer registers from whatever
++	 * is on the CAPTURE queue now, so it does not need the REQBUFS.
++	 */
+ 	if (sess->status == STATUS_NEEDS_RESUME &&
+-	    q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+-	    sess->changed_format) {
++	    q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
+ 		codec_ops->resume(sess);
+ 		sess->status = STATUS_RUNNING;
+ 		return 0;
+-- 
+2.43.0
+

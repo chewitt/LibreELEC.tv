@@ -1,0 +1,192 @@
+From b4cd5e00247b11a29afe54652e4b640f2570a3a1 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 067/145] media: meson: vdec: zero-copy FBC capture format
+ (AM21C)
+
+Add a second HEVC capture format on G12A-family, 'AM21'
+(V4L2_PIX_FMT_MESON_AM21C): one plane carrying the decoder's AFBC
+"scatter"/MMU compression header (0x48000 bytes).  The G12 VD1 video
+overlay scans that plane out directly as DRM_FORMAT_YUV420_8BIT/10BIT
++ DRM_FORMAT_MOD_AMLOGIC_FBC(SCATTER), giving a true zero-copy
+10-bit decode-to-display path: no downsample-to-NV12 second write
+(HEVC_DBLK_CFGB bit 9 stays clear via the existing NV12M-only gate),
+no 8-bit truncation.
+
+The driver already contained the designed-for plumbing: the
+non-downsample MMU path in codec_hevc.c programs the vb2 plane as
+HEVC_CM_HEADER_START_ADDR and the GXL buffer setup feeds it into the
+ANC table.  The gap was that codec_hevc_use_fbc()/use_downsample()
+ignored their pixfmt argument, and no capture format exposed the
+mode.  Changes:
+
+- codec_hevc_common.h: use_fbc(pixfmt)/use_downsample(pixfmt) honor
+  V4L2_PIX_FMT_MESON_AM21C (FBC on for both 8 and 10-bit content -
+  8-bit uses the mem-saving block layout the setup code already
+  selects; downsample off).
+- vdec.c/vdec_helpers.c: 1-plane format plumbing (queue_setup,
+  try_fmt, dst_buf_done payload = header size).
+- vdec_platform.c: offer AM21C on the G12A MMU HEVC entry only;
+  NV12M stays first and remains the default for every existing
+  consumer (GStreamer etc. negotiate exactly as before).
+- videodev2.h + v4l2-ioctl.c: register the fourcc + description
+  (an undescribed private fourcc WARNs in v4l_enum_fmt).
+
+The compressed body pages stay driver-owned (session lifetime), as
+in the vendor stack; the header a frame carries references only that
+frame's pages.
+
+Validated on a VIM3 (G12B) with the ffmpeg 0003 counterpart: Kodi
+plays HEVC Main10 4K with the overlay showing YU10 +
+MOD_AMLOGIC_FBC(SCATTER) at 9% CPU, 8-bit HEVC takes
+YU08+MEM_SAVING, play/stop/seek stress clean, and the NV12M paths
+are regression-exact (HEVC MD5 identical, VP9 golden-exact to the
+known EOS quirk, MPEG PSNR 61.2/61.4 dB).
+---
+ drivers/media/v4l2-core/v4l2-ioctl.c               |  1 +
+ .../staging/media/meson/vdec/codec_hevc_common.h   |  5 ++---
+ drivers/staging/media/meson/vdec/vdec.c            | 14 ++++++++++++++
+ drivers/staging/media/meson/vdec/vdec.h            | 12 ++++++++++++
+ drivers/staging/media/meson/vdec/vdec_helpers.c    |  3 +++
+ drivers/staging/media/meson/vdec/vdec_platform.c   |  3 ++-
+ include/uapi/linux/videodev2.h                     |  1 +
+ 7 files changed, 35 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
+index 17ba1ae70735..69252278862a 100644
+--- a/drivers/media/v4l2-core/v4l2-ioctl.c
++++ b/drivers/media/v4l2-core/v4l2-ioctl.c
+@@ -1549,6 +1549,7 @@ static void v4l_fill_fmtdesc(struct v4l2_fmtdesc *fmt)
+ 		case V4L2_PIX_FMT_AV1:		descr = "AV1 OBU Stream"; break;
+ 		case V4L2_PIX_FMT_MT2110T:	descr = "Mediatek 10bit Tile Mode"; break;
+ 		case V4L2_PIX_FMT_MT2110R:	descr = "Mediatek 10bit Raster Mode"; break;
++		case V4L2_PIX_FMT_MESON_AM21C:	descr = "Amlogic FBC (Scatter)"; break;
+ 		case V4L2_PIX_FMT_HEXTILE:	descr = "Hextile Compressed Format"; break;
+ 		case V4L2_PIX_FMT_PISP_COMP1_RGGB: descr = "PiSP 8b RGRG/GBGB mode1 compr"; break;
+ 		case V4L2_PIX_FMT_PISP_COMP1_GRBG: descr = "PiSP 8b GRGR/BGBG mode1 compr"; break;
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc_common.h b/drivers/staging/media/meson/vdec/codec_hevc_common.h
+index 36646da5821e..6241993f77e2 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc_common.h
++++ b/drivers/staging/media/meson/vdec/codec_hevc_common.h
+@@ -36,14 +36,13 @@ struct codec_hevc_common {
+ /* Returns 1 if we must use framebuffer compression */
+ static inline int codec_hevc_use_fbc(u32 pixfmt, int is_10bit)
+ {
+-	/* TOFIX: Handle Amlogic Compressed buffer for 8bit also */
+-	return is_10bit;
++	return is_10bit || pixfmt == V4L2_PIX_FMT_MESON_AM21C;
+ }
+ 
+ /* Returns 1 if we are decoding 10-bit but outputting 8-bit NV12 */
+ static inline int codec_hevc_use_downsample(u32 pixfmt, int is_10bit)
+ {
+-	return is_10bit;
++	return is_10bit && pixfmt != V4L2_PIX_FMT_MESON_AM21C;
+ }
+ 
+ /* Returns 1 if we are decoding using the IOMMU */
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index 8459aa2399eb..4e0663f7ad55 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -223,6 +223,11 @@ static int vdec_queue_setup(struct vb2_queue *q, unsigned int *num_buffers,
+ 				    sizes[2] < output_size / 4)
+ 					return -EINVAL;
+ 				break;
++			case V4L2_PIX_FMT_MESON_AM21C:
++				if (*num_planes != 1 ||
++				    sizes[0] < AM21C_HEADER_SIZE)
++					return -EINVAL;
++				break;
+ 			default:
+ 				return -EINVAL;
+ 			}
+@@ -252,6 +257,10 @@ static int vdec_queue_setup(struct vb2_queue *q, unsigned int *num_buffers,
+ 			sizes[2] = output_size / 4;
+ 			*num_planes = 3;
+ 			break;
++		case V4L2_PIX_FMT_MESON_AM21C:
++			sizes[0] = AM21C_HEADER_SIZE;
++			*num_planes = 1;
++			break;
+ 		default:
+ 			return -EINVAL;
+ 		}
+@@ -631,6 +640,11 @@ vdec_try_fmt_common(struct amvdec_session *sess, u32 size,
+ 			pfmt[2].sizeimage = output_size / 2;
+ 			pfmt[2].bytesperline = ALIGN(pixmp->width, 64) / 2;
+ 			pixmp->num_planes = 3;
++		} else if (pixmp->pixelformat == V4L2_PIX_FMT_MESON_AM21C) {
++			/* one plane: the FBC/MMU compression header */
++			pfmt[0].sizeimage = AM21C_HEADER_SIZE;
++			pfmt[0].bytesperline = 0;
++			pixmp->num_planes = 1;
+ 		}
+ 	}
+ 
+diff --git a/drivers/staging/media/meson/vdec/vdec.h b/drivers/staging/media/meson/vdec/vdec.h
+index a0b515ad1b11..e04898c54b40 100644
+--- a/drivers/staging/media/meson/vdec/vdec.h
++++ b/drivers/staging/media/meson/vdec/vdec.h
+@@ -20,6 +20,18 @@
+ /* 32 buffers in 3-plane YUV420 */
+ #define MAX_CANVAS (32 * 3)
+ 
++/*
++ * Amlogic framebuffer-compressed capture (the decoder's native
++ * reference format, zero-copy scanout-able by the VD1 overlay as
++ * DRM_FORMAT_YUV420_10BIT + DRM_FORMAT_MOD_AMLOGIC_FBC(SCATTER)).
++ * One plane: the 0x48000-byte compression header ("scatter" MMU
++ * header); the compressed body pages stay driver-owned and are
++ * reached through the page table the header contains.
++ * The fourcc itself lives in uapi videodev2.h.
++ */
++/* must match MMU_COMPRESS_HEADER_SIZE in codec_hevc_common.c */
++#define AM21C_HEADER_SIZE 0x48000
++
+ struct amvdec_buffer {
+ 	struct list_head list;
+ 	struct vb2_buffer *vb;
+diff --git a/drivers/staging/media/meson/vdec/vdec_helpers.c b/drivers/staging/media/meson/vdec/vdec_helpers.c
+index d984ab11a4ad..5f74182b90aa 100644
+--- a/drivers/staging/media/meson/vdec/vdec_helpers.c
++++ b/drivers/staging/media/meson/vdec/vdec_helpers.c
+@@ -296,6 +296,9 @@ static void dst_buf_done(struct amvdec_session *sess,
+ 		vb2_set_plane_payload(&vbuf->vb2_buf, 1, output_size / 4);
+ 		vb2_set_plane_payload(&vbuf->vb2_buf, 2, output_size / 4);
+ 		break;
++	case V4L2_PIX_FMT_MESON_AM21C:
++		vb2_set_plane_payload(&vbuf->vb2_buf, 0, AM21C_HEADER_SIZE);
++		break;
+ 	}
+ 
+ 	vbuf->vb2_buf.timestamp = timestamp;
+diff --git a/drivers/staging/media/meson/vdec/vdec_platform.c b/drivers/staging/media/meson/vdec/vdec_platform.c
+index 6d2bc5dc2695..cdb142f46507 100644
+--- a/drivers/staging/media/meson/vdec/vdec_platform.c
++++ b/drivers/staging/media/meson/vdec/vdec_platform.c
+@@ -275,7 +275,8 @@ static const struct amvdec_format vdec_formats_g12a[] = {
+ 		.vdec_ops = &vdec_hevc_ops,
+ 		.codec_ops = &codec_hevc_ops,
+ 		.firmware_path = "meson/vdec/g12a_hevc_mmu.bin",
+-		.pixfmts_cap = { V4L2_PIX_FMT_NV12M, 0 },
++		.pixfmts_cap = { V4L2_PIX_FMT_NV12M,
++				 V4L2_PIX_FMT_MESON_AM21C, 0 },
+ 		.flags = V4L2_FMT_FLAG_COMPRESSED |
+ 			 V4L2_FMT_FLAG_DYN_RESOLUTION,
+ 	}, {
+diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
+index 5373dba640fa..32e38e0d7a7a 100644
+--- a/include/uapi/linux/videodev2.h
++++ b/include/uapi/linux/videodev2.h
+@@ -820,6 +820,7 @@ struct v4l2_pix_format {
+ #define V4L2_PIX_FMT_HI240    v4l2_fourcc('H', 'I', '2', '4') /* BTTV 8-bit dithered RGB */
+ #define V4L2_PIX_FMT_QC08C    v4l2_fourcc('Q', '0', '8', 'C') /* Qualcomm 8-bit compressed */
+ #define V4L2_PIX_FMT_QC10C    v4l2_fourcc('Q', '1', '0', 'C') /* Qualcomm 10-bit compressed */
++#define V4L2_PIX_FMT_MESON_AM21C v4l2_fourcc('A', 'M', '2', '1') /* Amlogic FBC scatter-mode compressed (one plane: compression header) */
+ #define V4L2_PIX_FMT_AJPG     v4l2_fourcc('A', 'J', 'P', 'G') /* Aspeed JPEG */
+ #define V4L2_PIX_FMT_HEXTILE  v4l2_fourcc('H', 'X', 'T', 'L') /* Hextile compressed */
+ 
+-- 
+2.43.0
+

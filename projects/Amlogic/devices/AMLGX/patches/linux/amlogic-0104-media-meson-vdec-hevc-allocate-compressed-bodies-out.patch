@@ -1,0 +1,273 @@
+From 1c2614d8dcae30e9749ad753e1fa516a9c984b19 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Mon, 7 Sep 2026 15:21:23 -0700
+Subject: [PATCH 104/145] media: meson: vdec: hevc: allocate compressed bodies
+ outside CMA
+
+In MMU mode the compressed body is the largest allocation a session makes -
+measured at 320 MiB for a 4K 10-bit stream, the biggest single draw on CMA
+in the driver - and it is the one allocation that provably does not need to
+be contiguous at all.  The hardware never strides it: it reaches
+body pages only through the frame page map.  Four independent points in the
+existing code say so.  codec_hevc_fill_mmu_map() builds a per-4 KiB-page PFN
+table; codec_hevc_setup_decode_head() writes HEVCD_MPP_DECOMP_CTL2 = 0 in
+MMU mode, deliberately neutering the stride register; meson_overlay.c sets
+vd1_afbc_body_addr = 0 in scatter mode because the header carries the
+layout; and the chunk pool this patch modifies already hands out 16
+unrelated 1 MiB pieces per 4K frame and measures 61.98 dB PSNR - if the
+hardware strode linearly, 15 of those 16 MiB would land outside the buffer.
+
+So the body was already page-mapped.  It was simply being allocated in a
+unit - 1 MiB, coherent - that only CMA can serve.  Allocate it a page at a
+time instead: dma_alloc_contiguous() returns NULL for a PAGE_SIZE request
+when the device has no per-device CMA area, so the allocation falls through
+to the page allocator and never enters CMA.  Chunks stay 256 pages so the
+pool's bookkeeping, and the generational parking rule that protects a body
+the display may still be scanning out, are unchanged.
+
+Three details that are not free choices:
+
+  - dma_alloc_pages(), not alloc_pages().  The device runs on the default
+    32-bit coherent mask; dma_alloc_pages() applies it and retries from a
+    lower zone, which raw page allocation would skip.
+
+  - The pages are cached, where the coherent range they replace was not.
+    Nothing in this driver reads or writes a body through the CPU - only the
+    decoder and the display touch it, at the point of coherency - so the
+    cache needs handling exactly twice: invalidate after allocation, or the
+    dirty lines dma_alloc_pages() leaves behind when it zeroes the page get
+    written back over decoded data, and invalidate again before the page
+    returns to the allocator, so no speculatively-loaded stale line outlives
+    it.  Chunks moving through the pool need nothing in between.
+
+  - __GFP_NORETRY.  An order-0 GFP_KERNEL allocation does not fail; it
+    reclaims and then invokes the OOM killer.  A 4K session asks for ~65k of
+    them, and a decode that cannot get memory has to fail cleanly - the
+    caller already turns that into -ENOMEM - rather than kill the player to
+    make room for itself.
+
+The !use_mmu path is deliberately untouched: pre-G12A FBC really does stride
+the body, and there the body stays one contiguous coherent range.
+
+Measured on a Khadas VIM3 (A311D), one 4K Main10 HEVC session, low-water
+mark sampled while the session is live rather than the residue afterwards:
+
+                        before        after
+  CmaFree           161,724 kB    489,404 kB     (+320 MiB exactly)
+  CMA maxchunk       35,840 kB    117,768 kB
+  MemFree         1,953,112 kB  1,939,852 kB     (unchanged)
+
+MemFree holding still is the point: CMA pages count toward MemFree, so the
+total demand is the same and exactly 320 MiB of it moved out of the
+contended pool.
+
+Output is unchanged.  Against a software decode with the same ffmpeg, both
+builds score 47.281935 dB average / 41.056775 dB min on 4K Main10 HEVC,
+54.153593 dB on 1080p Main10, and 54.153062 dB on 4K VP9 Profile 2 - equal
+to six decimals - while 8-bit HEVC, VP9 and H.264 stay bit-exact 24/24.
+
+Lifetime was checked separately, because no correctness test can see a
+use-after-free that now lands in the page allocator rather than in CMA: 24
+sessions across three codecs and both depths, including mid-stream
+teardowns, then 2 GiB of file I/O to force reuse of every returned page, all
+under debug_pagealloc=on slub_debug=FZP.  Zero kernel faults, zero driver
+complaints, and CmaFree flat across cycles.
+
+Signed-off-by: gus bourg <gus@bourg.net>
+---
+ .../media/meson/vdec/codec_hevc_common.c      | 119 ++++++++++++++----
+ 1 file changed, 94 insertions(+), 25 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc_common.c b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+index 08b37d321894..61e23c95ef10 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc_common.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+@@ -3,6 +3,9 @@
+  * Copyright (C) 2018 Maxime Jourdan <mjourdan@baylibre.com>
+  */
+ 
++#include <linux/dma-mapping.h>
++#include <linux/mm.h>
++
+ #include <media/v4l2-mem2mem.h>
+ #include <media/videobuf2-dma-contig.h>
+ 
+@@ -17,11 +20,30 @@
+  * Pooled chunk allocator for MMU-mode compressed bodies.
+  *
+  * In MMU mode the hardware reaches body pages only through the frame
+- * page map, so the body needs no contiguity: it is assembled from
+- * fixed-size chunks.  That removes the 16 MiB-contiguous allocation a
+- * 4K 10-bit frame used to need - the single biggest source of CMA
+- * pressure - and makes chunks fungible between sessions regardless of
+- * resolution or bit depth.
++ * page map, so the body needs no contiguity at all: it is assembled
++ * from single pages, grouped into fixed-size chunks purely so the pool
++ * has a manageable unit of bookkeeping.  That removes the 16 MiB
++ * contiguous allocation a 4K 10-bit frame used to need, and makes
++ * chunks fungible between sessions regardless of resolution or depth.
++ *
++ * The pages come from dma_alloc_pages() one at a time.  A PAGE_SIZE
++ * request short-circuits dma_alloc_contiguous(), so it is served by the
++ * page allocator and never touches CMA - which is what takes ~256 MiB
++ * of a 4K 10-bit session out of the contended pool.  It is not
++ * alloc_pages(): dma_alloc_pages() applies the device's DMA mask (this
++ * one has the default 32-bit coherent mask) and retries from a lower
++ * zone, a check raw page allocation would skip.
++ *
++ * The pages are CACHED, unlike the coherent range they replace, and
++ * nothing in this driver ever reads or writes a body through the CPU -
++ * only the decoder and the display do, at the point of coherency.  So
++ * the cache is handled exactly twice: invalidate after allocation, to
++ * drop the dirty lines dma_alloc_pages() leaves behind when it zeroes
++ * the page (they would otherwise write back over decoded data), and
++ * invalidate again before the page goes back to the allocator, so no
++ * speculatively-loaded stale line outlives it.  Chunks moving through
++ * the pool need no maintenance in between, because no CPU access
++ * happens in between.
+  *
+  * Display safety is unchanged and still generational: a chunk released
+  * by a session is NEVER handed straight back out, because the VD1
+@@ -41,8 +63,8 @@ codec_hevc_capture_buffers(struct amvdec_session *sess,
+ 
+ struct fbc_chunk {
+ 	struct list_head list;
+-	void *vaddr;
+-	dma_addr_t paddr;
++	struct page **pages;	/* FBC_CHUNK_PAGES single pages */
++	dma_addr_t  *dma;	/* their bus addresses, in the same order */
+ };
+ 
+ static struct {
+@@ -59,15 +81,38 @@ static struct {
+ 		   LIST_HEAD_INIT(fbc_pool.park[1]) },
+ };
+ 
++static void fbc_chunk_free(struct device *dev, struct fbc_chunk *c)
++{
++	u32 i;
++
++	if (c->pages) {
++		for (i = 0; i < FBC_CHUNK_PAGES; ++i) {
++			if (!c->pages[i])
++				continue;
++			/*
++			 * The decoder wrote this page without going through
++			 * the cache; drop anything the CPU may have pulled in
++			 * speculatively before the page is reused.
++			 */
++			dma_sync_single_for_cpu(dev, c->dma[i], PAGE_SIZE,
++						DMA_FROM_DEVICE);
++			dma_free_pages(dev, PAGE_SIZE, c->pages[i], c->dma[i],
++				       DMA_FROM_DEVICE);
++		}
++	}
++
++	kfree(c->pages);
++	kfree(c->dma);
++	kfree(c);
++}
++
+ static void fbc_chunks_release_locked(struct list_head *h)
+ {
+ 	struct fbc_chunk *c, *n;
+ 
+ 	list_for_each_entry_safe(c, n, h, list) {
+ 		list_del(&c->list);
+-		dma_free_coherent(fbc_pool.dev, FBC_CHUNK_SIZE,
+-				  c->vaddr, c->paddr);
+-		kfree(c);
++		fbc_chunk_free(fbc_pool.dev, c);
+ 		fbc_pool.nr_total--;
+ 	}
+ }
+@@ -115,6 +160,7 @@ EXPORT_SYMBOL_GPL(codec_hevc_fbc_pool_drain);
+ static struct fbc_chunk *fbc_chunk_get_locked(struct device *dev)
+ {
+ 	struct fbc_chunk *c;
++	u32 i;
+ 
+ 	if (!list_empty(&fbc_pool.free)) {
+ 		c = list_first_entry(&fbc_pool.free, struct fbc_chunk, list);
+@@ -126,22 +172,40 @@ static struct fbc_chunk *fbc_chunk_get_locked(struct device *dev)
+ 	if (!c)
+ 		return NULL;
+ 
+-	/*
+-	 * A failure here is handled: the caller fails the session with a
+-	 * clean -ENOMEM.  Without __GFP_NOWARN, cma_alloc() dumps its entire
+-	 * free-range map on every miss - one 4K session that cannot get its
+-	 * ~256 chunks produced 200 such dumps, ~159 KB of dmesg, and at
+-	 * 115200 baud that is ~14 s of console writes per failed session.
+-	 */
+-	c->vaddr = dma_alloc_coherent(dev, FBC_CHUNK_SIZE, &c->paddr,
+-				      GFP_KERNEL | __GFP_NOWARN);
+-	if (!c->vaddr) {
+-		kfree(c);
+-		return NULL;
++	c->pages = kcalloc(FBC_CHUNK_PAGES, sizeof(*c->pages), GFP_KERNEL);
++	c->dma   = kcalloc(FBC_CHUNK_PAGES, sizeof(*c->dma), GFP_KERNEL);
++	if (!c->pages || !c->dma)
++		goto err;
++
++	for (i = 0; i < FBC_CHUNK_PAGES; ++i) {
++		/*
++		 * __GFP_NORETRY, not bare GFP_KERNEL: an order-0 GFP_KERNEL
++		 * allocation does not fail, it reclaims and then invokes the
++		 * OOM killer.  A 4K session asks for ~65k of these, and a
++		 * decode that cannot get memory must fail cleanly - the
++		 * caller turns this into -ENOMEM - rather than kill the
++		 * player to make room for itself.  __GFP_NOWARN keeps a
++		 * handled failure off the console, as it did for the
++		 * cma_alloc() path this replaces.
++		 */
++		c->pages[i] = dma_alloc_pages(dev, PAGE_SIZE, &c->dma[i],
++					      DMA_FROM_DEVICE,
++					      GFP_KERNEL | __GFP_NORETRY |
++					      __GFP_NOWARN);
++		if (!c->pages[i])
++			goto err;
++
++		/* Drop the dirty lines left by the zeroing above */
++		dma_sync_single_for_device(dev, c->dma[i], PAGE_SIZE,
++					   DMA_FROM_DEVICE);
+ 	}
+ 
+ 	fbc_pool.nr_total++;
+ 	return c;
++
++err:
++	fbc_chunk_free(dev, c);
++	return NULL;
+ }
+ 
+ /*
+@@ -212,8 +276,14 @@ static void fbc_chunks_park_locked(struct codec_hevc_common *comm,
+ 
+ dma_addr_t codec_hevc_fbc_body_addr(struct codec_hevc_common *comm, u32 idx)
+ {
++	/*
++	 * Vestigial in MMU mode - HEVCD_MPP_DECOMP_CTL2 is zeroed there and
++	 * the hardware walks the page map instead - but still programmed,
++	 * and codec_hevc_frame_buffer_backed() tests it for zero.  The
++	 * body's first page is the faithful answer.
++	 */
+ 	if (comm->fbc_chunks[idx] && comm->fbc_chunks[idx][0])
+-		return comm->fbc_chunks[idx][0]->paddr;
++		return comm->fbc_chunks[idx][0]->dma[0];
+ 
+ 	return comm->fbc_buffer_paddr[idx];
+ }
+@@ -862,8 +932,7 @@ void codec_hevc_fill_mmu_map(struct amvdec_session *sess,
+ 				break;
+ 			}
+ 
+-			mmu_map[i] = (c->paddr >> PAGE_SHIFT) +
+-				     (i % FBC_CHUNK_PAGES);
++			mmu_map[i] = c->dma[i % FBC_CHUNK_PAGES] >> PAGE_SHIFT;
+ 		}
+ 	} else {
+ 		u32 first_page =
+-- 
+2.43.0
+

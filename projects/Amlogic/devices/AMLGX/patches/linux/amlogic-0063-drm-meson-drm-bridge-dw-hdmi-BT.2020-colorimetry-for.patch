@@ -1,0 +1,96 @@
+From c814dd9b9af02ab0d5a6f6b00244a25ef82bdb56 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 063/145] drm/meson, drm/bridge/dw-hdmi: BT.2020 colorimetry
+ for HDR output
+
+The HDR path was half-wired: meson attaches HDR_OUTPUT_METADATA and
+dw-hdmi emits the DRM (HDR metadata) infoframe with the PQ EOTF, but
+nothing could signal BT.2020 colorimetry in the AVI infoframe - dw-hdmi
+derives colorimetry from the encoding (601/709 only) and never looks at
+the connector Colorspace property, which meson never attached in the
+first place.  TVs that key strictly off AVI colorimetry will not treat
+the output as BT.2020/HDR.
+
+- meson_encoder_hdmi: create and attach the HDMI Colorspace property
+  (BT2020_RGB | BT2020_YCC) next to the HDR metadata property, and
+  force a mode reconfiguration when the colorspace changes so the
+  infoframes are re-emitted mid-session (same mechanism as the existing
+  HDR-metadata check).
+- dw-hdmi: when the connector state carries a non-default colorspace,
+  override the encoding-derived colorimetry with
+  drm_hdmi_avi_infoframe_colorimetry() - valid for RGB output too
+  (COLORIMETRY_EXTENDED + BT2020 in the AVI infoframe).
+
+Validated on the bench against a synthesized HDR10-capable sink: Kodi
+sets HDR_OUTPUT_METADATA (EOTF=PQ) and Colorspace=BT2020_YCC on HDR10
+playback, both re-emitted through the forced modeset.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.c  | 10 ++++++++++
+ drivers/gpu/drm/meson/meson_encoder_hdmi.c | 18 ++++++++++++++++--
+ 2 files changed, 26 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+index 48d0408efd17..f3dbd9665ff9 100644
+--- a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
++++ b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+@@ -1795,6 +1795,16 @@ static void hdmi_config_AVI(struct dw_hdmi *hdmi,
+ 			HDMI_EXTENDED_COLORIMETRY_XV_YCC_601;
+ 	}
+ 
++	/*
++	 * When userspace selected an explicit colorimetry through the
++	 * connector Colorspace property (e.g. BT.2020 for HDR10), it
++	 * overrides the encoding-derived guess above.  Valid for RGB
++	 * output too (EXTENDED + BT2020 in the AVI infoframe).
++	 */
++	if (connector->state &&
++	    connector->state->colorspace != DRM_MODE_COLORIMETRY_DEFAULT)
++		drm_hdmi_avi_infoframe_colorimetry(&frame, connector->state);
++
+ 	/*
+ 	 * The Designware IP uses a different byte format from standard
+ 	 * AVI info frames, though generally the bits are in the correct
+diff --git a/drivers/gpu/drm/meson/meson_encoder_hdmi.c b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+index b233e39a33b6..b663b3c6deee 100644
+--- a/drivers/gpu/drm/meson/meson_encoder_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+@@ -304,7 +304,8 @@ static int meson_encoder_hdmi_atomic_check(struct drm_bridge *bridge,
+ 
+ 	dev_dbg(priv->dev, "output_bus_fmt %lx\n", encoder_hdmi->output_bus_fmt);
+ 
+-	if (!drm_connector_atomic_hdr_metadata_equal(old_conn_state, conn_state))
++	if (!drm_connector_atomic_hdr_metadata_equal(old_conn_state, conn_state) ||
++	    old_conn_state->colorspace != conn_state->colorspace)
+ 		crtc_state->mode_changed = true;
+ 
+ 	return 0;
+@@ -402,9 +403,22 @@ int meson_encoder_hdmi_probe(struct meson_drm *priv)
+ 
+ 	if (meson_vpu_is_compatible(priv, VPU_COMPATIBLE_GXL) ||
+ 	    meson_vpu_is_compatible(priv, VPU_COMPATIBLE_GXM) ||
+-	    meson_vpu_is_compatible(priv, VPU_COMPATIBLE_G12A))
++	    meson_vpu_is_compatible(priv, VPU_COMPATIBLE_G12A)) {
+ 		drm_connector_attach_hdr_output_metadata_property(meson_encoder_hdmi->connector);
+ 
++		/*
++		 * HDR10 output needs BT.2020 colorimetry signalled in the
++		 * AVI infoframe alongside the PQ EOTF in the DRM infoframe;
++		 * userspace (Kodi) selects it through the Colorspace
++		 * property.  dw-hdmi builds the AVI frame from the
++		 * connector state.
++		 */
++		if (!drm_mode_create_hdmi_colorspace_property(meson_encoder_hdmi->connector,
++							      BIT(DRM_MODE_COLORIMETRY_BT2020_RGB) |
++							      BIT(DRM_MODE_COLORIMETRY_BT2020_YCC)))
++			drm_connector_attach_colorspace_property(meson_encoder_hdmi->connector);
++	}
++
+ 	drm_connector_attach_max_bpc_property(meson_encoder_hdmi->connector, 8, 8);
+ 
+ 	priv->encoders[MESON_ENC_HDMI] = meson_encoder_hdmi;
+-- 
+2.43.0
+

@@ -1,0 +1,46 @@
+From fe2d2cbb0daf5e83237090cd9cc12c67fb6a0da1 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 056/145] media: meson: vdec: fix u32 underflow in the VP9
+ esparser throttle
+
+num_dst_bufs -= 3 wraps when fewer than 3 CAPTURE buffers are known -
+in particular before userspace has set up the CAPTURE queue, where the
+count is 0 - defeating the throttle entirely.  Clamp the subtraction
+and gate the whole throttle on streamon_cap: during the pre-CAPTURE
+header-parsing phase the parser must feed freely (bounded by VIFIFO
+space) so the firmware can raise the initial source-change event.
+---
+ drivers/staging/media/meson/vdec/esparser.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/esparser.c b/drivers/staging/media/meson/vdec/esparser.c
+index 4632346f04a9..1564a73e2d25 100644
+--- a/drivers/staging/media/meson/vdec/esparser.c
++++ b/drivers/staging/media/meson/vdec/esparser.c
+@@ -308,12 +308,20 @@ esparser_queue(struct amvdec_session *sess, struct vb2_v4l2_buffer *vbuf)
+ 	 * they could pause when there is no capture buffer available and
+ 	 * resume on this notification.
+ 	 */
+-	if (sess->fmt_out->pixfmt == V4L2_PIX_FMT_VP9) {
++	if (sess->fmt_out->pixfmt == V4L2_PIX_FMT_VP9 && sess->streamon_cap) {
++		/*
++		 * This throttle only makes sense once the CAPTURE queue
++		 * exists: before that (during header parsing for the
++		 * initial source-change event) the counts are 0 and the
++		 * u32 subtraction below used to wrap, accidentally letting
++		 * the header through - gate on streamon_cap and clamp so
++		 * both phases behave as intended.
++		 */
+ 		if (codec_ops->num_pending_bufs)
+ 			num_dst_bufs = codec_ops->num_pending_bufs(sess);
+ 
+ 		num_dst_bufs += v4l2_m2m_num_dst_bufs_ready(sess->m2m_ctx);
+-		num_dst_bufs -= 3;
++		num_dst_bufs = num_dst_bufs > 3 ? num_dst_bufs - 3 : 0;
+ 
+ 		if (esparser_vififo_get_free_space(sess) < payload_size ||
+ 		    atomic_read(&sess->esparser_queued_bufs) >= num_dst_bufs)
+-- 
+2.43.0
+

@@ -1,0 +1,57 @@
+From a6dfd65438205d224376cf520f740c610cb0189d Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 10:24:07 +0000
+Subject: [PATCH 136/145] media: meson: vdec: size the capture plane from the
+ CTU-aligned height
+
+A 3840x2160 HEVC stream never produces a frame on gxbb.  The firmware
+stops in the last coding-tree row of the first picture, at the same
+place every time - HEVC_PARSER_LCU_START reads 0x7e5, LCU 2021 of the
+2040 a 4K picture has with 64x64 CTUs - and the stall watchdog then
+recovers and retries for as long as the player keeps feeding it.
+
+The decoder works in whole CTU rows and writes the last one in full.
+2160 is 33.75 rows of 64, so the hardware writes 2176 lines: 8355840
+bytes at a 3840 stride, against the 8323072 this plane is sized to and
+HEVC_SAO_Y_LENGTH is programmed with.  The vendor driver sizes the same
+plane from lcu_total * lcu_size * lcu_size, i.e. the CTU-aligned area,
+which comes to 8388608 here.
+
+Round the height as well as the width.  64 is the largest CTU, so the
+result covers any stream and matches the vendor for 4K, and 1080p is
+unchanged: 1920x1088 is 2088960, which the 64 KiB round-up already
+carried.  What made 4K the case that broke is that its shortfall,
+16 lines at a 3840 stride, is larger than that round-up.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/staging/media/meson/vdec/vdec.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index ce1b5cfa9086..5a3177b1fd42 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -41,10 +41,17 @@ struct dummy_buf {
+  * stride happens to work for CPU consumers reading the linear memory,
+  * but direct scanout of such buffers (DRMPRIME) shears into columns for
+  * any width that is not a multiple of 64 (e.g. DVD 720, VCD 352).
++ *
++ * The height is rounded the same way because the decoder works in whole
++ * coding-tree rows and writes the last one in full, past the bottom of
++ * a picture whose height is not a multiple of the CTU size.  64 is the
++ * largest CTU, so this covers every stream; it is also how the vendor
++ * driver sizes the plane, from the CTU-aligned area rather than the
++ * coded one.
+  */
+ static u32 get_output_size(u32 width, u32 height)
+ {
+-	return ALIGN(ALIGN(width, 64) * height, SZ_64K);
++	return ALIGN(ALIGN(width, 64) * ALIGN(height, 64), SZ_64K);
+ }
+ 
+ u32 amvdec_get_output_size(struct amvdec_session *sess)
+-- 
+2.43.0
+

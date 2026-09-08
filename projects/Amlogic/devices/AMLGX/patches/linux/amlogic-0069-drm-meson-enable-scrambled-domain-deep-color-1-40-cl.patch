@@ -1,0 +1,196 @@
+From 889b7cadd11241c6af6dac65b29a1dacbd43666a Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 069/145] drm/meson: enable scrambled-domain deep color (1/40
+ clock pattern fix, 4K60 YUV420 12-bit)
+
+Deep color above the 340 MHz no-scramble ceiling negotiated cleanly but
+produced no picture: the sink could not even detect a TMDS clock.  Root
+cause (proven with SCDC status readback against a real HDMI 2.0 sink):
+the TMDS clock-pattern selection in dw_hdmi_phy_init() excluded YUV420
+modes from the 1/40 pattern.  That !mode_is_420 test was a correct
+proxy back when the comparison used the unhalved mode clock (420 at
+8-bit is the only >340 MHz mode-clock case that really runs below 340),
+but with the true TMDS character rate available it is exactly wrong:
+4K60 YUV420 @ 10-bit runs at 371.25 MHz and needs the 1/40 pattern like
+any other scrambled mode.  The source advertised a 1/40 clock ratio
+over SCDC while transmitting a 1/10 clock lane at 371 MHz - beyond any
+sink's clock detector.
+
+Key the pattern selection purely on the TMDS character rate.  With the
+fix, 4K60 YUV420 @ 10-bit shows a locked, descrambled, zero-character-
+error link and a clean picture (LG ultrawide, CTA HF-VSDB
+Max_TMDS_Char_Rate 600 MHz, DC_30bit_420/DC_36bit_420).
+
+On top of that:
+
+- add the 4K60/4K50 YUV420 12-bit clock entry (PLL 4455 MHz, the
+  fractional divider 7.5 path already used by 1080p @ 12-bit); with it
+  4K60 YUV420 @ 12-bit (445.5 MHz) locks and displays as well,
+- add MEDIA_BUS_FMT_UYYVYY12_0_5X36 to the encoder's supported wire
+  formats (it was the only missing 420 depth),
+- with the scrambled domain validated on real silicon+sink, offer deep
+  color up to the sink's declared TMDS limit by default; a
+  scrambled_deep=N module parameter restricts negotiation to the
+  unscrambled domain as a field-debug kill-switch,
+- demote the PHY band-selection trace to DRM_DEBUG_DRIVER.
+
+Validation (VIM3 / A311D, LG 34-class ultrawide over SCDC readback):
+371.25 MHz 420-10: clock detected, channels locked, descrambling,
+CED counters zero, owner-verified picture.  445.5 MHz 420-12: locked
+and descrambling with a visually clean picture; sparse CED activity on
+two channels (~1e-9 char error rate) noted as sink/cable margin - if a
+given rig ever shows sparkles at 12-bit, capping the connector's
+"max bpc" property at 10 is the intended escape hatch (video content
+is 10-bit anyway).
+---
+ drivers/gpu/drm/meson/meson_dw_hdmi.c      | 15 +++++++++--
+ drivers/gpu/drm/meson/meson_encoder_hdmi.c | 31 ++++++++++++++++------
+ drivers/gpu/drm/meson/meson_vclk.c         | 14 ++++++++++
+ 3 files changed, 50 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/gpu/drm/meson/meson_dw_hdmi.c b/drivers/gpu/drm/meson/meson_dw_hdmi.c
+index a142ef4a1f5e..bf8912b5b648 100644
+--- a/drivers/gpu/drm/meson/meson_dw_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_dw_hdmi.c
+@@ -295,6 +295,9 @@ static void meson_hdmi_phy_setup_mode(struct meson_dw_hdmi *dw_hdmi,
+ 	if (tmds_clock)
+ 		pixel_clock = tmds_clock;
+ 
++	DRM_DEBUG_DRIVER("band select: mode %dkHz 420=%d tmds=%lukHz -> key=%ukHz\n",
++			 mode->clock, mode_is_420, tmds_clock, pixel_clock);
++
+ 	if (dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
+ 	    dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxm-dw-hdmi")) {
+ 		if (pixel_clock >= 371250) {
+@@ -388,8 +391,16 @@ static int dw_hdmi_phy_init(struct dw_hdmi *hdmi, void *data,
+ 	    dw_hdmi_bus_fmt_is_420(hdmi))
+ 		mode_is_420 = true;
+ 
+-	/* TMDS pattern setup */
+-	if (tmds_clock > 340000 && !mode_is_420) {
++	/*
++	 * TMDS pattern setup.  The clock lane switches to the 1/40
++	 * pattern purely on the TMDS character rate: with deep color a
++	 * YUV420 mode can exceed 340 MHz too (4K60 @ 10-bit = 371.25),
++	 * and excluding 420 here leaves the clock lane at 1/10 while
++	 * SCDC advertises 1/40 - the sink then can't even detect a
++	 * clock.  (The old !mode_is_420 test was a proxy for the char
++	 * rate back when this compared the unhalved mode clock.)
++	 */
++	if (tmds_clock > 340000) {
+ 		dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_01,
+ 				  0);
+ 		dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_23,
+diff --git a/drivers/gpu/drm/meson/meson_encoder_hdmi.c b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+index d83b0df95dba..e64b3cc6454d 100644
+--- a/drivers/gpu/drm/meson/meson_encoder_hdmi.c
++++ b/drivers/gpu/drm/meson/meson_encoder_hdmi.c
+@@ -33,6 +33,17 @@
+ #include "meson_venc.h"
+ #include "meson_encoder_hdmi.h"
+ 
++/*
++ * Deep color above the 340 MHz no-scramble TMDS ceiling (e.g. 4K60
++ * YUV420 @ 10-bit = 371.25 MHz) is offered whenever the sink's
++ * declared max TMDS character rate allows it; this kill-switch
++ * restricts negotiation to the unscrambled domain for field debug.
++ */
++static bool scrambled_deep = true;
++module_param(scrambled_deep, bool, 0644);
++MODULE_PARM_DESC(scrambled_deep,
++		 "Offer deep color above 340 MHz TMDS (default Y; N restricts to the unscrambled domain)");
++
+ struct meson_encoder_hdmi {
+ 	struct drm_encoder encoder;
+ 	struct drm_bridge bridge;
+@@ -62,7 +73,8 @@ static int meson_encoder_hdmi_attach(struct drm_bridge *bridge,
+ static bool meson_encoder_hdmi_fmt_is_420(u32 fmt)
+ {
+ 	return fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24 ||
+-	       fmt == MEDIA_BUS_FMT_UYYVYY10_0_5X30;
++	       fmt == MEDIA_BUS_FMT_UYYVYY10_0_5X30 ||
++	       fmt == MEDIA_BUS_FMT_UYYVYY12_0_5X36;
+ }
+ 
+ static bool meson_encoder_hdmi_fmt_is_422(u32 fmt)
+@@ -79,6 +91,7 @@ static unsigned int meson_encoder_hdmi_fmt_depth(u32 fmt)
+ 	case MEDIA_BUS_FMT_UYYVYY10_0_5X30:
+ 		return 10;
+ 	case MEDIA_BUS_FMT_YUV12_1X36:
++	case MEDIA_BUS_FMT_UYYVYY12_0_5X36:
+ 		return 12;
+ 	default:
+ 		return 8;
+@@ -346,6 +359,7 @@ static const u32 meson_encoder_hdmi_out_bus_fmts[] = {
+ 	MEDIA_BUS_FMT_UYVY10_1X20,
+ 	MEDIA_BUS_FMT_UYYVYY10_0_5X30,
+ 	MEDIA_BUS_FMT_YUV12_1X36,
++	MEDIA_BUS_FMT_UYYVYY12_0_5X36,
+ };
+ 
+ static u32 *
+@@ -376,12 +390,13 @@ meson_encoder_hdmi_get_inp_bus_fmts(struct drm_bridge *bridge,
+ 	 * - the mode is a CEA/VIC mode (the CEA frame phase and the
+ 	 *   clock tree entries are what we validated; PC/DMT sinks
+ 	 *   frequently accept RGB/YCbCr-8 only at their native modes);
+-	 * - the deeper TMDS character rate stays at or below BOTH the
+-	 *   340 MHz no-scramble ceiling and the sink's declared TMDS
+-	 *   limit.  Scrambled deep-color combinations (e.g. 4K60
+-	 *   YUV420 @ 10-bit = 371.25 MHz) negotiate cleanly but were
+-	 *   never validated against real silicon+sink; a sink that
+-	 *   accepts the mode at 8-bit then shows NO SIGNAL at depth.
++	 * - the deeper TMDS character rate stays at or below the sink's
++	 *   declared TMDS limit (and below 340 MHz when the
++	 *   scrambled_deep kill-switch is off).  Scrambled deep color
++	 *   (e.g. 4K60 YUV420 @ 10-bit = 371.25 MHz) is validated on
++	 *   real silicon+sink; it additionally requires the 1/40 TMDS
++	 *   clock pattern in the PHY (see meson_dw_hdmi.c) - without
++	 *   it the sink cannot even detect a clock.
+ 	 * - (non-422) this exact mode has a clock-tree entry at the
+ 	 *   deeper TMDS rate; otherwise the bridge chain would
+ 	 *   negotiate a depth the modeset cannot deliver.  422 carries
+@@ -394,7 +409,7 @@ meson_encoder_hdmi_get_inp_bus_fmts(struct drm_bridge *bridge,
+ 		unsigned long long vclk_freq = mode->clock * 1000ULL;
+ 		unsigned long long phy_freq;
+ 		unsigned long long tmds_khz;
+-		unsigned int max_tmds_khz = 340000;
++		unsigned int max_tmds_khz = scrambled_deep ? 600000 : 340000;
+ 		int vic = drm_match_cea_mode(mode);
+ 
+ 		if (!vic)
+diff --git a/drivers/gpu/drm/meson/meson_vclk.c b/drivers/gpu/drm/meson/meson_vclk.c
+index 117beea74b6f..1c2c1014c535 100644
+--- a/drivers/gpu/drm/meson/meson_vclk.c
++++ b/drivers/gpu/drm/meson/meson_vclk.c
+@@ -371,6 +371,8 @@ enum {
+ 	MESON_VCLK_HDMI_594000_YUV420_10B,
+ /* 4455 /2 /1 /1 /7.5 /2  => /1 /1      1080p @ 12-bit */
+ 	MESON_VCLK_HDMI_148500_12B,
++/* 4455 /1 /1 /1 /7.5 /1  => /1 /2      4K60 YUV420 @ 12-bit */
++	MESON_VCLK_HDMI_594000_YUV420_12B,
+ };
+ 
+ struct meson_vclk_params {
+@@ -529,6 +531,18 @@ struct meson_vclk_params {
+ 		.vid_pll_div = VID_PLL_DIV_7p5,
+ 		.vclk_div = 2,
+ 	},
++	[MESON_VCLK_HDMI_594000_YUV420_12B] = {
++		.pll_freq = 4455000000,
++		.phy_freq = 4455000000,
++		.venc_freq = 594000000,
++		.vclk_freq = 594000000,
++		.pixel_freq = 297000000,
++		.pll_od1 = 1,
++		.pll_od2 = 1,
++		.pll_od3 = 1,
++		.vid_pll_div = VID_PLL_DIV_7p5,
++		.vclk_div = 1,
++	},
+ 	{ /* sentinel */ },
+ };
+ 
+-- 
+2.43.0
+

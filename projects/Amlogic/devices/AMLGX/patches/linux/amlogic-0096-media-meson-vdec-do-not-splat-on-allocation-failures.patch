@@ -1,0 +1,101 @@
+From 33d2f3a9747ac44ebf2194985d5813690afc08cd Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 19:45:00 -0700
+Subject: [PATCH 096/145] media: meson: vdec: do not splat on allocation
+ failures the driver already handles
+
+Three allocations in this driver fail routinely under CMA pressure and are
+handled: the FBC chunk pool returns NULL and the session fails with a clean
+-ENOMEM; the per-buffer FBC MMU header allocation frees what it took and
+returns -ENOMEM; and a CAPTURE REQBUFS that cannot be satisfied is reported
+to the client as -ENOMEM, which it copes with.
+
+None passed __GFP_NOWARN, so every miss was treated as unexpected.
+cma_alloc() prints "alloc failed" (ratelimited) and then
+cma_debug_show_areas() - which is NOT ratelimited - dumps the entire CMA
+free-range map, and the page allocator emits a full WARNING with a stack
+trace from __alloc_frozen_pages_noprof().
+
+Measured on a Khadas VIM3 with CMA deliberately pinned so a 4K 10-bit
+session could not get its buffers - two pre-fix baselines: ONE failed
+session produced 200 and 256 free-map dumps, 3 WARNING stack traces each,
+and 159-166 KB of dmesg.  On a 115200 baud serial console that is ~14 s of
+blocking console output per failed session, for a condition the driver
+correctly reported to the player as "No dst buffer available / Aborting
+decoding session".
+
+With the first two sites fixed the same test gave 12 dumps, 0 WARNINGs and
+8 KB of dmesg; the remaining 12 were all 72-page (0x48000) requests - the
+MMU header - which is the third site here.
+
+Add __GFP_NOWARN in all three places:
+
+ - fbc_chunk_get_locked(): the pool's 1 MiB dma_alloc_coherent().
+ - codec_hevc_alloc_mmu_headers(): the 0x48000 per-buffer header.
+ - m2m_queue_init(): dst_vq->gfp_flags, which vb2 ORs into the CAPTURE
+   allocation (videobuf2-dma-contig: GFP_KERNEL | q->gfp_flags).
+
+The OUTPUT queue, workspace and VIFIFO are left alone: their failures are
+not expected conditions and should still be loud.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_hevc_common.c | 12 ++++++++++--
+ drivers/staging/media/meson/vdec/vdec.c              |  9 +++++++++
+ 2 files changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc_common.c b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+index 55e0704cc565..0edf0afda0e6 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc_common.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc_common.c
+@@ -126,8 +126,15 @@ static struct fbc_chunk *fbc_chunk_get_locked(struct device *dev)
+ 	if (!c)
+ 		return NULL;
+ 
++	/*
++	 * A failure here is handled: the caller fails the session with a
++	 * clean -ENOMEM.  Without __GFP_NOWARN, cma_alloc() dumps its entire
++	 * free-range map on every miss - one 4K session that cannot get its
++	 * ~256 chunks produced 200 such dumps, ~159 KB of dmesg, and at
++	 * 115200 baud that is ~14 s of console writes per failed session.
++	 */
+ 	c->vaddr = dma_alloc_coherent(dev, FBC_CHUNK_SIZE, &c->paddr,
+-				      GFP_KERNEL);
++				      GFP_KERNEL | __GFP_NOWARN);
+ 	if (!c->vaddr) {
+ 		kfree(c);
+ 		return NULL;
+@@ -488,8 +495,9 @@ static int codec_hevc_alloc_mmu_headers(struct amvdec_session *sess,
+ 		if (!bufs[idx] || comm->mmu_header_vaddr[idx])
+ 			continue;
+ 
++		/* Handled: failure frees what was taken and returns -ENOMEM. */
+ 		vaddr = dma_alloc_coherent(dev, MMU_COMPRESS_HEADER_SIZE,
+-					   &paddr, GFP_KERNEL);
++					   &paddr, GFP_KERNEL | __GFP_NOWARN);
+ 		if (!vaddr) {
+ 			codec_hevc_free_mmu_headers(sess, comm);
+ 			return -ENOMEM;
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index 398adcb85cf1..dd15d9894255 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -1015,6 +1015,15 @@ static int m2m_queue_init(void *priv, struct vb2_queue *src_vq,
+ 		return ret;
+ 
+ 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
++	/*
++	 * CAPTURE buffers are 4K-class contiguous CMA allocations (an NV12M
++	 * plane is 8 MiB) and a failed REQBUFS is reported to the client as a
++	 * plain -ENOMEM, which it handles.  Ask vb2 to allocate with
++	 * __GFP_NOWARN so the page allocator does not splat a WARNING with a
++	 * full stack trace, and cma_alloc() does not dump its free map, for
++	 * a condition the driver already handles gracefully.
++	 */
++	dst_vq->gfp_flags = __GFP_NOWARN;
+ 	dst_vq->io_modes = VB2_MMAP | VB2_DMABUF;
+ 	dst_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+ 	dst_vq->ops = &vdec_vb2_ops;
+-- 
+2.43.0
+

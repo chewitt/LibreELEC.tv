@@ -1,0 +1,35 @@
+From 396fb53e943a3336fdc65666b0009200082a59bd Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 12:40:42 +0000
+Subject: [PATCH 140/145] media: meson: vdec: declare the HEVC and VC-1
+ firmware
+
+gxl_hevc.bin is loaded by the gxbb, gxl, gxlx and gxm HEVC entries and
+g12a_vc1.bin by the G12A VC-1 entry, but neither is declared, so
+neither reaches the module's firmware list - and nothing that builds an
+initramfs or packages firmware by module can know to include them.
+
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/staging/media/meson/vdec/vdec_platform.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec_platform.c b/drivers/staging/media/meson/vdec/vdec_platform.c
+index e49878811704..e0e89920f8c9 100644
+--- a/drivers/staging/media/meson/vdec/vdec_platform.c
++++ b/drivers/staging/media/meson/vdec/vdec_platform.c
+@@ -441,8 +441,10 @@ MODULE_FIRMWARE("meson/vdec/g12a_h264.bin");
+ MODULE_FIRMWARE("meson/vdec/g12a_vp9.bin");
+ MODULE_FIRMWARE("meson/vdec/gxbb_h264.bin");
+ MODULE_FIRMWARE("meson/vdec/gxl_h264.bin");
++MODULE_FIRMWARE("meson/vdec/gxl_hevc.bin");
+ MODULE_FIRMWARE("meson/vdec/gxl_mpeg12.bin");
+ MODULE_FIRMWARE("meson/vdec/gxl_vp9.bin");
+ MODULE_FIRMWARE("meson/vdec/gxm_h264.bin");
+ MODULE_FIRMWARE("meson/vdec/sm1_vp9_mmu.bin");
+ MODULE_FIRMWARE("meson/vdec/g12a_hevc_mmu.bin");
++MODULE_FIRMWARE("meson/vdec/g12a_vc1.bin");
+-- 
+2.43.0
+

@@ -1,0 +1,57 @@
+From b7e8fc646f6b4491237a807998df857dec07d7a5 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Sat, 12 Sep 2026 11:57:16 +0000
+Subject: [PATCH 138/145] media: meson: vdec: hevc: return the input credit for
+ a discarded picture
+
+A transport stream joined mid-GOP reaches its first IRAP and then
+starves in the middle of the picture after it.  Sampled with the
+watchdog off: the IDR arrives 79 slices in, and the firmware then sits
+at HEVC_CODED_SLICE_SEGMENT_DAT with the LCU counter frozen at 2021 of
+2040, the shifter byte count frozen, and 378 bytes left in the stream
+FIFO.  It is not wedged - it is waiting for bitstream, and the same
+leftover data every time is why it always stops at the same LCU.
+
+The reason none arrives is in the same sample: esparser_queued_bufs is
+80 while the CAPTURE queue allows 17 (a DPB of 1 plus 19 ready, less
+the 3 the gate holds back).  Every one of those 79 discarded pictures
+took a credit that only amvdec_dst_buf_done() returns, and a discarded
+picture produces no frame to return it with, so the counter ends the
+skip phase far above the limit and the ESPARSER never feeds again.
+
+Return the credit where the picture is dropped, once per picture -
+dependent and continuation slice segments share the credit of the
+picture they belong to, so only a first slice segment repays.
+
+Fixes: c493d1097b16 ("media: meson: vdec: hevc: keep a resynchronising decoder alive")
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index 85ca428bbd2d..e05aa878ea06 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -1737,6 +1737,17 @@ static void codec_hevc_process_segment_header(struct amvdec_session *sess)
+ static int codec_hevc_skip_slice(struct amvdec_session *sess)
+ {
+ 	struct amvdec_core *core = sess->core;
++	struct codec_hevc *hevc = sess->priv;
++
++	/*
++	 * A discarded picture produces no frame, and a frame is the only
++	 * thing that ever returns the input credit the ESPARSER spent on
++	 * it.  Return it here, once per picture, or a session that
++	 * discards for any length of time leaves the counter above what
++	 * the CAPTURE queue allows and never gets fed again.
++	 */
++	if (hevc->rpm_param.p.first_slice_segment_in_pic_flag)
++		atomic_dec_if_positive(&sess->esparser_queued_bufs);
+ 
+ 	amvdec_clear_dos_bits(core, HEVC_WAIT_FLAG, BIT(1));
+ 	amvdec_write_dos(core, HEVC_DEC_STATUS_REG, HEVC_ACTION_DONE);
+-- 
+2.43.0
+

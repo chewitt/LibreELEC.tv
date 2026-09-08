@@ -1,0 +1,61 @@
+From 52ea3e1655956a4c94f5dae91efba9545f91e7e3 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:14:55 -0700
+Subject: [PATCH 084/145] media: meson: vdec: hevc: queue stall work on
+ system_dfl_wq
+
+system_wq is deprecated and the core says so at runtime once workqueue
+debugging is enabled:
+
+  workqueue: work func codec_hevc_stall_work [meson_vdec] enqueued on
+  deprecated workqueue. Use system_{percpu|dfl}_wq instead.
+
+The stall poller is unbound work with no per-CPU affinity requirement, so
+system_dfl_wq is the right replacement.
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/codec_hevc.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/codec_hevc.c b/drivers/staging/media/meson/vdec/codec_hevc.c
+index 5dff79217302..bea2cd1b42e0 100644
+--- a/drivers/staging/media/meson/vdec/codec_hevc.c
++++ b/drivers/staging/media/meson/vdec/codec_hevc.c
+@@ -1466,7 +1466,7 @@ static void codec_hevc_stall_arm(struct codec_hevc *hevc)
+ 	hevc->stall_status = 0xffffffff;
+ 	hevc->stall_ticks = 0;
+ 	atomic_set(&hevc->stall_state, STALL_ARMED);
+-	mod_delayed_work(system_wq, &hevc->stall_work,
++	mod_delayed_work(system_dfl_wq, &hevc->stall_work,
+ 			 msecs_to_jiffies(STALL_TIMEOUT_MS));
+ }
+ 
+@@ -1585,7 +1585,7 @@ static void codec_hevc_stall_work(struct work_struct *work)
+ 	    status == HEVC_DECPIC_DATA_DONE ||
+ 	    status == HEVC_ACTION_DONE ||
+ 	    status == 0) {
+-		mod_delayed_work(system_wq, &hevc->stall_work,
++		mod_delayed_work(system_dfl_wq, &hevc->stall_work,
+ 				 msecs_to_jiffies(STALL_TIMEOUT_MS));
+ 		return;
+ 	}
+@@ -1614,13 +1614,13 @@ static void codec_hevc_stall_work(struct work_struct *work)
+ 		hevc->stall_lcu = lcu;
+ 		hevc->stall_status = status;
+ 		hevc->stall_ticks = 0;
+-		mod_delayed_work(system_wq, &hevc->stall_work,
++		mod_delayed_work(system_dfl_wq, &hevc->stall_work,
+ 				 msecs_to_jiffies(STALL_TIMEOUT_MS));
+ 		return;
+ 	}
+ 
+ 	if (++hevc->stall_ticks < 3) {
+-		mod_delayed_work(system_wq, &hevc->stall_work,
++		mod_delayed_work(system_dfl_wq, &hevc->stall_work,
+ 				 msecs_to_jiffies(STALL_GRACE_MS));
+ 		return;
+ 	}
+-- 
+2.43.0
+

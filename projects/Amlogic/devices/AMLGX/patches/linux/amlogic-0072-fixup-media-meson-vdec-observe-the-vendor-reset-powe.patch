@@ -1,0 +1,40 @@
+From ed9965f78b22cba6ff2025093e5ed8d443d22486 Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Mon, 7 Sep 2026 13:36:19 +0000
+Subject: [PATCH 072/145] fixup! media: meson: vdec: observe the vendor
+ reset/power-transition discipline
+
+Drop the stale esparser_reset_base fallback in esparser_quiesce().
+
+struct amvdec_core has no esparser_reset_base member; the parser reset
+is the reset_control esparser_reset, which esparser_init() acquires with
+devm_reset_control_get_exclusive() and fails probe without.  It is
+therefore always valid by the time esparser_quiesce() runs, exactly as
+esparser_reset() already assumes when it calls reset_control_reset()
+unguarded.
+
+Reset unconditionally rather than inventing an mmio offset for a
+register path this tree does not have.
+---
+ drivers/staging/media/meson/vdec/esparser.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/esparser.c b/drivers/staging/media/meson/vdec/esparser.c
+index 7ac0a096cda0..75177df58532 100644
+--- a/drivers/staging/media/meson/vdec/esparser.c
++++ b/drivers/staging/media/meson/vdec/esparser.c
+@@ -475,10 +475,7 @@ void esparser_quiesce(struct amvdec_core *core)
+ 	amvdec_write_parser(core, PARSER_INT_STATUS, 0xffff);
+ 	amvdec_write_parser(core, PARSER_VIDEO_HOLE, 0);
+ 
+-	if (core->esparser_reset)
+-		reset_control_reset(core->esparser_reset);
+-	else if (core->esparser_reset_base)
+-		writel(BIT(8), core->esparser_reset_base);
++	reset_control_reset(core->esparser_reset);
+ }
+ EXPORT_SYMBOL_GPL(esparser_quiesce);
+ 
+-- 
+2.43.0
+

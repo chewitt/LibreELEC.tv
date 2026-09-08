@@ -1,0 +1,166 @@
+From 35ad1d5a992c10a70cd80403bf99ed5f299e134b Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Sun, 6 Sep 2026 08:15:01 -0700
+Subject: [PATCH 092/145] media: meson: vdec: recycle buffers by firmware
+ index, not vb2 index
+
+Seeking in interlaced MPEG-2 corrupted the picture from the seek onwards
+and never recovered: heavy macroblock garbage over the top field-half and
+an all-green chroma plane.  The driver logged, only after the seek:
+
+  meson-vdec: Buffer 2 done but it doesn't exist in m2m_ctx
+  meson-vdec: Buffer 7 done but it doesn't exist in m2m_ctx    (x11)
+
+The firmware addresses CAPTURE buffers by the canvas slot it was handed in
+amvdec_set_canvases(), not by the vb2 buffer index.  The driver keeps
+fw_idx_to_vb2_idx[] for the direction it needs in the ISR, but the recycle
+path ran the mapping backwards without converting:
+
+	codec_ops->recycle(core, tmp->vb->index);
+
+Those two index spaces are identical only while the CAPTURE buffers were
+queued in index order, which is true on a first play and false after a
+seek - userspace returns buffers in whatever order the renderer lets go of
+them, and an interlaced stream holds more of them for longer.
+
+Once the mapping is not the identity, recycling by vb2 index frees the
+wrong canvas slot.  The firmware then writes the next frame into a buffer
+the display is still scanning out - which is the visible corruption - while
+the slot that really was free is never handed back, so the firmware
+eventually runs out and reuses buffers userspace still owns.  Every such
+frame also fails v4l2_m2m_dst_buf_remove_by_idx() in
+amvdec_dst_buf_done_idx(), which is the log above.
+
+Progressive content mostly survives because its buffers tend to come back
+in order, so the identity holds by luck.
+
+Build the inverse map alongside the forward one and convert in the recycle
+thread.  A buffer the firmware was never given a canvas for is dropped from
+the recycle list rather than freeing an arbitrary slot.
+
+Affects every codec with a recycle op (MPEG-1/2 and H.264).
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ drivers/staging/media/meson/vdec/vdec.c       | 31 ++++++++++++++++++-
+ drivers/staging/media/meson/vdec/vdec.h       |  7 +++++
+ .../staging/media/meson/vdec/vdec_helpers.c   | 18 ++++++++++-
+ 3 files changed, 54 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/media/meson/vdec/vdec.c b/drivers/staging/media/meson/vdec/vdec.c
+index c6f0dc18b2b0..398adcb85cf1 100644
+--- a/drivers/staging/media/meson/vdec/vdec.c
++++ b/drivers/staging/media/meson/vdec/vdec.c
+@@ -69,10 +69,39 @@ static int vdec_recycle_thread(void *data)
+ 	while (!kthread_should_stop()) {
+ 		mutex_lock(&sess->bufs_recycle_lock);
+ 		list_for_each_entry_safe(tmp, n, &sess->bufs_recycle, list) {
++			u32 vb2_idx = tmp->vb->index;
++			u32 fw_idx;
++
+ 			if (!codec_ops->can_recycle(core))
+ 				break;
+ 
+-			codec_ops->recycle(core, tmp->vb->index);
++			/*
++			 * The firmware addresses CAPTURE buffers by the canvas
++			 * slot it was given in amvdec_set_canvases(), not by
++			 * the vb2 index.  Those two spaces are only the same
++			 * while the buffers happen to have been queued in
++			 * index order, which is true on a first play and not
++			 * after a seek - userspace returns buffers in whatever
++			 * order the renderer lets go of them.
++			 *
++			 * Handing the firmware a vb2 index then frees the
++			 * wrong slot: it writes the next frame into a buffer
++			 * the display is still scanning out (visible
++			 * corruption), while the slot that really was free is
++			 * never returned, so the firmware runs out and starts
++			 * reusing buffers userspace still owns.
++			 */
++			fw_idx = vb2_idx < ARRAY_SIZE(sess->vb2_idx_to_fw_idx) ?
++				 sess->vb2_idx_to_fw_idx[vb2_idx] :
++				 VB2_IDX_UNMAPPED;
++			if (fw_idx == VB2_IDX_UNMAPPED) {
++				/* Never given to the firmware: nothing to free */
++				list_del(&tmp->list);
++				kfree(tmp);
++				continue;
++			}
++
++			codec_ops->recycle(core, fw_idx);
+ 			list_del(&tmp->list);
+ 			kfree(tmp);
+ 		}
+diff --git a/drivers/staging/media/meson/vdec/vdec.h b/drivers/staging/media/meson/vdec/vdec.h
+index 21a386ac8b3c..a5b33fa8c40a 100644
+--- a/drivers/staging/media/meson/vdec/vdec.h
++++ b/drivers/staging/media/meson/vdec/vdec.h
+@@ -190,6 +190,9 @@ enum amvdec_status {
+ 	STATUS_NEEDS_RESUME,
+ };
+ 
++/* No firmware buffer index is mapped to this vb2 buffer */
++#define VB2_IDX_UNMAPPED	U32_MAX
++
+ /**
+  * struct amvdec_session - decoding session parameters
+  *
+@@ -238,6 +241,9 @@ enum amvdec_status {
+  * @last_offset: tracks last offset of vififo
+  * @wrap_count: number of times the vififo wrapped around
+  * @fw_idx_to_vb2_idx: firmware buffer index to vb2 buffer index
++ * @vb2_idx_to_fw_idx: vb2 buffer index to firmware buffer index, the
++ *	inverse of @fw_idx_to_vb2_idx.  VB2_IDX_UNMAPPED for a buffer the
++ *	firmware was never given a canvas for.
+  * @status: current decoding status
+  * @priv: codec private data
+  */
+@@ -296,6 +302,7 @@ struct amvdec_session {
+ 	u32 last_offset;
+ 	u32 wrap_count;
+ 	u32 fw_idx_to_vb2_idx[32];
++	u32 vb2_idx_to_fw_idx[32];
+ 
+ 	enum amvdec_status status;
+ 	void *priv;
+diff --git a/drivers/staging/media/meson/vdec/vdec_helpers.c b/drivers/staging/media/meson/vdec/vdec_helpers.c
+index c64bf394074a..cc66cb111c38 100644
+--- a/drivers/staging/media/meson/vdec/vdec_helpers.c
++++ b/drivers/staging/media/meson/vdec/vdec_helpers.c
+@@ -273,7 +273,21 @@ int amvdec_set_canvases(struct amvdec_session *sess,
+ 	int i = 0;
+ 	int ret;
+ 
++	for (i = 0; i < ARRAY_SIZE(sess->vb2_idx_to_fw_idx); ++i)
++		sess->vb2_idx_to_fw_idx[i] = VB2_IDX_UNMAPPED;
++	i = 0;
++
+ 	v4l2_m2m_for_each_dst_buf(sess->m2m_ctx, buf) {
++		u32 vb2_idx = buf->vb.vb2_buf.index;
++
++		if (i >= ARRAY_SIZE(sess->fw_idx_to_vb2_idx) ||
++		    vb2_idx >= ARRAY_SIZE(sess->vb2_idx_to_fw_idx)) {
++			dev_err(sess->core->dev,
++				"Too many CAPTURE buffers to map (fw %d, vb2 %u)\n",
++				i, vb2_idx);
++			return -EINVAL;
++		}
++
+ 		if (!reg_base[reg_base_cur])
+ 			return -EINVAL;
+ 
+@@ -304,7 +318,9 @@ int amvdec_set_canvases(struct amvdec_session *sess,
+ 			reg_num_cur = 0;
+ 		}
+ 
+-		sess->fw_idx_to_vb2_idx[i++] = buf->vb.vb2_buf.index;
++		sess->fw_idx_to_vb2_idx[i] = vb2_idx;
++		sess->vb2_idx_to_fw_idx[vb2_idx] = i;
++		i++;
+ 	}
+ 
+ 	return 0;
+-- 
+2.43.0
+
