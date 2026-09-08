@@ -1,0 +1,195 @@
+From b269398c386084686b76231c52a448c415e85e19 Mon Sep 17 00:00:00 2001
+From: Gus Bourg <gus@bourg.net>
+Date: Wed, 2 Sep 2026 17:30:00 -0700
+Subject: [PATCH 2/3] v4l2m2m: zero-copy Amlogic FBC capture for DRMPRIME
+ output
+
+The meson vdec offers a second HEVC capture format, 'AM21'
+(V4L2_PIX_FMT_MESON_AM21C): one plane holding the decoder's native
+framebuffer-compression header (AFBC "scatter"/MMU layout).  The G12
+VD1 video overlay scans that plane out directly as
+DRM_FORMAT_YUV420_8BIT/10BIT + DRM_FORMAT_MOD_AMLOGIC_FBC(SCATTER),
+so a decoded frame reaches the display with no downsample-to-NV12
+second write and no 8-bit truncation - the full 10-bit decode output
+goes to the plane.
+
+- capture format selection: when the client asked for DRMPRIME frames
+  (output_drm) and no explicit pixel format override was given, prefer
+  AM21 over NV12 if the decoder offers it.  Software consumers
+  (output_drm=0) keep NV12 exactly as before.
+- DRM descriptor export: map AM21 to the AFBC fourcc+modifier pair the
+  meson overlay accepts, keyed on the raw V4L2 format (there is no
+  AVPixelFormat for it); bit depth comes from the coded stream
+  (profile / bits_per_raw_sample) - the negotiated sw format is
+  always 8-bit NV12 and says nothing about the decode depth.  The
+  header plane exports pitch 0 (the DRM core sizes cpp==0 fbs as
+  (height-1)*pitch against the header-sized GEM object).
+
+Signed-off-by: Gus Bourg <gus@bourg.net>
+---
+ libavcodec/v4l2_buffers.c | 72 +++++++++++++++++++++++++++++++++++++++
+ libavcodec/v4l2_context.c | 37 ++++++++++++++++++++
+ libavcodec/v4l2_m2m.h     |  9 +++++
+ 3 files changed, 118 insertions(+)
+
+diff --git a/libavcodec/v4l2_buffers.c b/libavcodec/v4l2_buffers.c
+index 1364d123a7..1dbd258759 100644
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -46,6 +46,32 @@
+ #include <drm_fourcc.h>
+ #endif
+ 
++/* AFBC-only fourccs + the Amlogic FBC modifier may be missing from
++ * older libdrm headers - the values are ABI. */
++#ifndef DRM_FORMAT_YUV420_8BIT
++#define DRM_FORMAT_YUV420_8BIT fourcc_code('Y', 'U', '0', '8')
++#endif
++#ifndef DRM_FORMAT_YUV420_10BIT
++#define DRM_FORMAT_YUV420_10BIT fourcc_code('Y', 'U', '1', '0')
++#endif
++#ifndef DRM_FORMAT_MOD_VENDOR_AMLOGIC
++#define DRM_FORMAT_MOD_VENDOR_AMLOGIC 0x0a
++#endif
++#ifndef DRM_FORMAT_MOD_AMLOGIC_FBC
++#define __fourcc_mod_amlogic_layout_mask 0xff
++#define __fourcc_mod_amlogic_options_shift 8
++#define __fourcc_mod_amlogic_options_mask 0xff
++#define DRM_FORMAT_MOD_AMLOGIC_FBC(__layout, __options) \
++    fourcc_mod_code(AMLOGIC, \
++            ((__layout) & __fourcc_mod_amlogic_layout_mask) | \
++            (((__options) & __fourcc_mod_amlogic_options_mask) \
++             << __fourcc_mod_amlogic_options_shift))
++#endif
++#ifndef AMLOGIC_FBC_LAYOUT_SCATTER
++#define AMLOGIC_FBC_LAYOUT_SCATTER (2ULL)
++#define AMLOGIC_FBC_OPTION_MEM_SAVING (1ULL << 0)
++#endif
++
+ #ifndef USEC_PER_SEC
+ #define USEC_PER_SEC 1000000
+ #endif
+@@ -438,6 +464,52 @@ static uint8_t * v4l2_get_drm_frame(V4L2Buffer *avbuf)
+         layer->planes[i].pitch = avbuf->plane_info[i].bytesperline;
+     }
+ 
++    if (V4L2_TYPE_IS_MULTIPLANAR(avbuf->buf.type) &&
++        avbuf->context->format.fmt.pix_mp.pixelformat ==
++            V4L2_PIX_FMT_MESON_AM21C) {
++        /*
++         * The negotiated sw format can't carry the depth (the driver
++         * only enumerates NV12 as a sw alternative), so take it from
++         * the stream: the decoder writes 10-bit FBC blocks exactly
++         * when the coded stream is 10-bit.
++         */
++        const AVCodecContext * const bufavctx = buf_to_m2mctx(avbuf)->avctx;
++        int is_10bit = bufavctx->bits_per_raw_sample > 8 ||
++            (bufavctx->codec_id == AV_CODEC_ID_HEVC &&
++             bufavctx->profile == AV_PROFILE_HEVC_MAIN_10);
++
++        /*
++         * Kodi opens the wrapper with profile unset - read the depth
++         * straight out of the hvcC configuration record
++         * (bit_depth_luma_minus8, byte 17).
++         */
++        if (!is_10bit && bufavctx->codec_id == AV_CODEC_ID_HEVC &&
++            bufavctx->extradata && bufavctx->extradata_size >= 23 &&
++            bufavctx->extradata[0] == 1)
++            is_10bit = (bufavctx->extradata[17] & 0x07) > 0;
++
++        /*
++         * One plane: the AFBC scatter header.  The header itself
++         * carries the physical body-page layout, so there is no
++         * meaningful pitch - and it must be 0: the DRM core sizes a
++         * cpp==0 fb as (height-1)*pitch and rejects any nonzero
++         * pitch against the header-sized GEM object.  The meson
++         * overlay derives all geometry from the fb width/height.
++         */
++        layer->format = is_10bit ? DRM_FORMAT_YUV420_10BIT :
++                                   DRM_FORMAT_YUV420_8BIT;
++        layer->nb_planes = 1;
++        layer->planes[0].object_index = 0;
++        layer->planes[0].offset = 0;
++        layer->planes[0].pitch = 0;
++
++        avbuf->drm_frame.objects[0].format_modifier =
++            DRM_FORMAT_MOD_AMLOGIC_FBC(AMLOGIC_FBC_LAYOUT_SCATTER,
++                is_10bit ? 0 : AMLOGIC_FBC_OPTION_MEM_SAVING);
++
++        return (uint8_t *) drm_desc;
++    }
++
+     switch (avbuf->context->av_pix_fmt) {
+     case AV_PIX_FMT_0BGR:
+         layer->format = DRM_FORMAT_RGBX8888;
+diff --git a/libavcodec/v4l2_context.c b/libavcodec/v4l2_context.c
+index cf4b90155e..3f03ebee30 100644
+--- a/libavcodec/v4l2_context.c
++++ b/libavcodec/v4l2_context.c
+@@ -807,6 +807,43 @@ static int v4l2_get_raw_format(V4L2Context* ctx, enum AVPixelFormat *p)
+     memset(&fdesc, 0, sizeof(fdesc));
+     fdesc.type = ctx->type;
+ 
++    /*
++     * Amlogic vdec: prefer the zero-copy FBC capture format when the
++     * client wants DRMPRIME frames and gave no explicit format
++     * override.  Keep ctx->av_pix_fmt as the negotiated sw format -
++     * the DRM descriptor export keys on the raw V4L2 format and only
++     * uses av_pix_fmt for the bit depth.
++     */
++    if (s->output_drm && priv->pix_fmt == AV_PIX_FMT_NONE) {
++        struct v4l2_fmtdesc fd_am;
++
++        memset(&fd_am, 0, sizeof(fd_am));
++        fd_am.type = ctx->type;
++
++        for (;; ++fd_am.index) {
++            if (ioctl(ctx_to_m2mctx(ctx)->fd, VIDIOC_ENUM_FMT, &fd_am))
++                break;
++
++            if (fd_am.pixelformat != V4L2_PIX_FMT_MESON_AM21C)
++                continue;
++
++            struct v4l2_format *fmt = &ctx->format;
++
++            fmt->type = ctx->type;
++            if (V4L2_TYPE_IS_MULTIPLANAR(ctx->type))
++                fmt->fmt.pix_mp.pixelformat = fd_am.pixelformat;
++            else
++                fmt->fmt.pix.pixelformat = fd_am.pixelformat;
++
++            if (!ioctl(ctx_to_m2mctx(ctx)->fd, VIDIOC_TRY_FMT, fmt)) {
++                *p = pixfmt != AV_PIX_FMT_NONE ? pixfmt :
++                    AV_PIX_FMT_YUV420P;
++                return 0;
++            }
++            break;
++        }
++    }
++
+     if (pixfmt != AV_PIX_FMT_NONE) {
+         ret = v4l2_try_raw_format(ctx, pixfmt);
+         if (!ret)
+diff --git a/libavcodec/v4l2_m2m.h b/libavcodec/v4l2_m2m.h
+index b958a0ac34..a4246370a0 100644
+--- a/libavcodec/v4l2_m2m.h
++++ b/libavcodec/v4l2_m2m.h
+@@ -41,6 +41,15 @@
+     { "num_output_buffers", "Number of buffers in the output context",\
+         OFFSET(num_output_buffers), AV_OPT_TYPE_INT, { .i64 = 16 }, 2, INT_MAX, FLAGS }
+ 
++/*
++ * Amlogic vdec zero-copy capture: one plane carrying the AFBC/MMU
++ * compression header ("scatter" layout), scanned out directly by the
++ * VD1 overlay.  Private to the meson vdec driver.
++ */
++#ifndef V4L2_PIX_FMT_MESON_AM21C
++#define V4L2_PIX_FMT_MESON_AM21C v4l2_fourcc('A', 'M', '2', '1')
++#endif
++
+ #define FF_V4L2_M2M_TRACK_SIZE 128
+ typedef struct V4L2m2mTrackEl {
+     int     discard;   // If we see this buffer its been flushed, so discard
+-- 
+2.43.0
+
