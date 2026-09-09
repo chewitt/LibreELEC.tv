@@ -1,0 +1,57 @@
+From: Gus Bourg <gus@bourg.net>
+Subject: [PATCH] panfrost: check BO capacity before in-place linear conversion
+
+Repeated full texture uploads can switch a 16x16 tiled resource to linear
+without reallocating its BO. A 720-wide R8 texture needs a 768-byte linear
+stride, which can exceed the original tiled allocation. In release builds,
+the assertion does not prevent util_copy_rect from writing past the mapping.
+
+Compute the prospective linear layout before changing the resource. Keep
+the tiled layout and normal staging writeback when the existing BO is too
+small. This preserves the optimization for layouts that fit.
+
+Reproduced on Mali-G52 with a standalone GLES luminance upload/readback test
+and Kodi's software-decoded 720x480 video. No decoder stride changes.
+
+--- a/src/gallium/drivers/panfrost/pan_resource.c
++++ b/src/gallium/drivers/panfrost/pan_resource.c
+@@ -2004,6 +2004,21 @@
+    }
+ }
+ 
++/* Linear rows can require more alignment than 16x16 tiles. The streaming
++ * optimization reuses the tiled BO, so only convert when the entire linear
++ * layout fits. Otherwise retain tiling and use the normal staging writeback.
++ */
++static bool
++panfrost_can_linear_convert_in_place(struct pipe_screen *screen,
++                                    struct panfrost_resource *prsrc)
++{
++   struct panfrost_resource linear = {.base = prsrc->base};
++
++   return panfrost_resource_try_setup(screen, &linear, DRM_FORMAT_MOD_LINEAR,
++                                     prsrc->image.props.format, 0) &&
++          linear.plane.layout.data_size_B <= panfrost_bo_size(prsrc->bo);
++}
++
+ /* Queue a CS modifier conversion job to calculate and store the payload sizes
+  * of the current AFBC BO into a new AFBC-P payload layout BO. Returns true on
+  * success. */
+@@ -2389,13 +2404,14 @@
+ 
+          if (prsrc->modifier ==
+              DRM_FORMAT_MOD_ARM_16X16_BLOCK_U_INTERLEAVED) {
+-            if (panfrost_should_linear_convert(ctx, prsrc, transfer)) {
++            if (panfrost_should_linear_convert(ctx, prsrc, transfer) &&
++                panfrost_can_linear_convert_in_place(screen, prsrc)) {
+                pan_resource_afbcp_stop(prsrc);
+                panfrost_resource_setup(screen, prsrc, DRM_FORMAT_MOD_LINEAR,
+                                        prsrc->image.props.format, 0);
+ 
+-               /* converting the resource from tiled to linear and back
+-                * shouldn't increase memory usage...
++               /* The prospective linear layout was checked before changing
++                * the resource's modifier or writing to the existing BO.
+                 */
+                assert(prsrc->plane.layout.data_size_B <= panfrost_bo_size(bo));
+ 
