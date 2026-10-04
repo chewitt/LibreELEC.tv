@@ -1,17 +1,47 @@
-From 607a95a08c8863417ff90297c0e2897b9c88fe77 Mon Sep 17 00:00:00 2001
+From b10fa9f04d8efa3abb018ae09a009ab429ed620c Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
-Date: Fri, 8 Mar 2024 08:12:18 +0000
-Subject: [PATCH 6/6] WIP: doc: boards: amlogic: add documentation for Minix
+Date: Fri, 9 Oct 2026 09:50:16 +0000
+Subject: [PATCH 23/43] WIP: doc: boards: amlogic: add documentation for Minix
  Neo U9-H
 
-Add build instructions for the Minix Neo U9-H board.
+Add build instructions for the Minix Neo U9-H board, list them in the
+Amlogic board index, and add the board files to the q200 MAINTAINERS
+file.
 
 Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
 ---
+ board/amlogic/q200/MAINTAINERS  |   2 +
+ doc/board/amlogic/index.rst     |   1 +
  doc/board/amlogic/minix-u9h.rst | 111 ++++++++++++++++++++++++++++++++
- 1 file changed, 111 insertions(+)
+ 3 files changed, 114 insertions(+)
  create mode 100644 doc/board/amlogic/minix-u9h.rst
 
+diff --git a/board/amlogic/q200/MAINTAINERS b/board/amlogic/q200/MAINTAINERS
+index aece8d5e05c..f8747bcea5b 100644
+--- a/board/amlogic/q200/MAINTAINERS
++++ b/board/amlogic/q200/MAINTAINERS
+@@ -8,7 +8,9 @@ F:	configs/beelink-gt1-ultimate_defconfig
+ F:	configs/khadas-vim2_defconfig
+ F:	configs/libretech-s905d-pc_defconfig
+ F:	configs/libretech-s912-pc_defconfig
++F:	configs/minix-u9h_defconfig
+ F:	configs/wetek-core2_defconfig
+ F:	doc/board/amlogic/beelink-gt1-ultimate.rst
+ F:	doc/board/amlogic/khadas-vim2.rst
++F:	doc/board/amlogic/minix-u9h.rst
+ F:	doc/board/amlogic/wetek-core2.rst
+diff --git a/doc/board/amlogic/index.rst b/doc/board/amlogic/index.rst
+index e8bb421ed8c..34940d9751f 100644
+--- a/doc/board/amlogic/index.rst
++++ b/doc/board/amlogic/index.rst
+@@ -104,6 +104,7 @@ Board Documentation
+    khadas-vim3l
+    libretech-ac
+    libretech-cc
++   minix-u9h
+    nanopi-k2
+    odroid-c2
+    odroid-c4
 diff --git a/doc/board/amlogic/minix-u9h.rst b/doc/board/amlogic/minix-u9h.rst
 new file mode 100644
 index 00000000000..2c70b38d367

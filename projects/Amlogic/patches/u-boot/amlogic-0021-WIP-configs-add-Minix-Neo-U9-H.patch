@@ -1,7 +1,7 @@
-From 32b48b64ea3135a11451e409753a65a1da9876d2 Mon Sep 17 00:00:00 2001
+From 8bfaf89cdd4be7935db8eecc132a9225dfcb4ce4 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 8 Mar 2024 07:51:35 +0000
-Subject: [PATCH 3/6] WIP: configs: add Minix Neo U9-H
+Subject: [PATCH 21/43] WIP: configs: add Minix Neo U9-H
 
 Add a board config for the Minix Neo U9-H Android STB.
 
