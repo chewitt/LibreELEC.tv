@@ -3,8 +3,8 @@
 
 PKG_NAME="amlogic-boot-fip"
 PKG_LICENSE="LicenseRef-nonfree"
-PKG_VERSION="b6600f2857fdf81d11f18ea7a2e44aa989e7bcc4"
-PKG_SHA256="272cc3d6bb660f5ab3af1461dc205ab97a395e631b5b01f3c035afc02f71cae2"
+PKG_VERSION="b3018ac4859669169de5c7edb0bd966fc480e534" # minix-u9h
+PKG_SHA256="29087eb70e6dbb99331f0bf8282194b98a16ccbd38f4eb57b2f96174d9821243"
 PKG_SITE="https://github.com/LibreELEC/amlogic-boot-fip"
 PKG_URL="https://github.com/LibreELEC/amlogic-boot-fip/archive/${PKG_VERSION}.tar.gz"
 PKG_LONGDESC="Firmware Image Package (FIP) sources used to sign Amlogic u-boot binaries in LibreELEC images"
