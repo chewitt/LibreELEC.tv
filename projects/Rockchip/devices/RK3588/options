@@ -18,6 +18,11 @@
         ;;
     esac
 
+  # Firmware
+    UBOOT_FIRMWARE+=" atf"
+    ATF_PLATFORM="rk3588"
+    ATF_BL31_BINARY="bl31/bl31.elf"
+
   # Kernel to use
     LINUX="rockchip"
 
