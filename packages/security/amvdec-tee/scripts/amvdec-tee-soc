@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026-present Team LibreELEC (https://libreelec.tv)
+
+# print the per-SoC TA directory name for the running SoC
+
+for soc in s4 t7; do
+  if tr '\0' '\n' </proc/device-tree/compatible | grep -qx "amlogic,${soc}"; then
+    echo "${soc}"
+    exit 0
+  fi
+done
+
+exit 1

@@ -13,6 +13,9 @@ PKG_TOOLCHAIN="make"
 
 makeinstall_target() {
   make DESTDIR=${INSTALL} install
+
+  mkdir -p ${INSTALL}/usr/lib/libreelec
+    cp ${PKG_DIR}/scripts/amvdec-tee-soc ${INSTALL}/usr/lib/libreelec
 }
 
 post_install() {

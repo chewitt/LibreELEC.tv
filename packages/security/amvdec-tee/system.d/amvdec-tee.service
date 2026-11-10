@@ -1,6 +1,7 @@
 [Unit]
 Description=Amlogic video decoder ucode pre-load
-ConditionFirmware=device-tree-compatible(amlogic,s4)
+ConditionFirmware=|device-tree-compatible(amlogic,s4)
+ConditionFirmware=|device-tree-compatible(amlogic,t7)
 Requires=tee-supplicant.service
 After=tee-supplicant.service
 Before=kodi.service
