@@ -1,7 +1,7 @@
-From 74f23ba3b645a3dbf7a4a3258aee226c7d9d6d2a Mon Sep 17 00:00:00 2001
+From 51eb5e3026444b9d20ff62f671309f67ef2f6c3d Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 18 Sep 2026 15:07:28 +0000
-Subject: [PATCH 208/267] ASoC: meson: aiu: support eight channels on the
+Subject: [PATCH 208/269] ASoC: meson: aiu: support eight channels on the
  S/PDIF encoder
 
 The S/PDIF encoder advertises two channels, but it also feeds the HDMI

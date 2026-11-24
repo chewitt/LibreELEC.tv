@@ -1,7 +1,7 @@
-From 8caa188dc7aff57e83d40f8ace2811e07be16047 Mon Sep 17 00:00:00 2001
+From 28070800b982d6ecc5b226e5a756a7d822a8a286 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 11 Jun 2025 11:47:31 +0000
-Subject: [PATCH 146/267] WIP: arm64: dts: meson-g12a-x96-max: support the
+Subject: [PATCH 146/269] WIP: arm64: dts: meson-g12a-x96-max: support the
  fd628 display
 
 The X96-Max has an FD628 display. Add support using the tm166xx

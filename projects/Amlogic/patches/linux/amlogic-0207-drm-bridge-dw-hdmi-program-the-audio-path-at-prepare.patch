@@ -1,7 +1,7 @@
-From caaec871893904d7cd3c127ccc4e1717196edd27 Mon Sep 17 00:00:00 2001
+From 0d8b6e583c80a9c86398e727e9fdddf2a9dc3050 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 17 Sep 2026 06:07:14 +0000
-Subject: [PATCH 207/267] drm/bridge: dw-hdmi: program the audio path at
+Subject: [PATCH 207/269] drm/bridge: dw-hdmi: program the audio path at
  prepare
 
 The audio path is programmed from hw_params, which reads the channel

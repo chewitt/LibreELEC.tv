@@ -1,7 +1,7 @@
-From a653f1b6b3ff555096c156b7d69f16bb6748211c Mon Sep 17 00:00:00 2001
+From b8e2b969dd116c8be749623830101176872002b1 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:35 +0300
-Subject: [PATCH 050/267] FROMGIT(7.4): drm/display: hdmi: Advertise SCDC
+Subject: [PATCH 050/269] FROMGIT(7.4): drm/display: hdmi: Advertise SCDC
  source version when scrambling
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

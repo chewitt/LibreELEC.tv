@@ -1,7 +1,7 @@
-From 727a1acab3202c8457f63a3f45d57e2630938711 Mon Sep 17 00:00:00 2001
+From 9d686f6d8ba450adfe8cc8c3645edcab4c94add1 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jean-Fran=C3=A7ois=20Lessard?= <jefflessard3@gmail.com>
 Date: Fri, 21 Nov 2025 09:59:04 -0500
-Subject: [PATCH 102/267] FROMLIST(v6): auxdisplay: Add TM16xx 7-segment LED
+Subject: [PATCH 102/269] FROMLIST(v6): auxdisplay: Add TM16xx 7-segment LED
  matrix display controllers driver
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

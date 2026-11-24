@@ -1,7 +1,7 @@
-From 179090819a31cac2aa973f642e57bc970d14f5d1 Mon Sep 17 00:00:00 2001
+From f1975274fbc904c9928d788bcf2ac70df1512e79 Mon Sep 17 00:00:00 2001
 From: Igor Velkov <iav@iav.lv>
 Date: Tue, 20 Oct 2026 20:28:37 +0300
-Subject: [PATCH 125/267] FROMLIST(v1): watchdog: meson_gxbb_wdt: fix
+Subject: [PATCH 125/269] FROMLIST(v1): watchdog: meson_gxbb_wdt: fix
  suspend/resume handling of HW_RUNNING watchdog
 
 meson_gxbb_wdt_suspend() and meson_gxbb_wdt_resume() only check

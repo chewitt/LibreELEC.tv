@@ -1,7 +1,7 @@
-From e9883309e4854a75e8971789e3f1cb100a91b934 Mon Sep 17 00:00:00 2001
+From 91b7c6b9b1258d7f88a65e0520ca89cae01ab20f Mon Sep 17 00:00:00 2001
 From: Igor Velkov <iav@iav.lv>
 Date: Fri, 9 Oct 2026 17:02:59 +0000
-Subject: [PATCH 132/267] FROMLIST(v3): mmc: meson-gx: report busy from DAT0
+Subject: [PATCH 132/269] FROMLIST(v3): mmc: meson-gx: report busy from DAT0
  alone
 
 meson_mmc_card_busy() reports busy only while DAT0..3 are all low. A

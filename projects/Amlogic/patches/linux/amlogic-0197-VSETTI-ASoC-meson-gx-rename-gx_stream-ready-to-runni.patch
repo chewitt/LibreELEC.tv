@@ -1,7 +1,7 @@
-From f0c12ac6d23d6de301afd8e969131bc839cd5664 Mon Sep 17 00:00:00 2001
+From 55d1c3264c55fe0c0d5391fe1cb1cb8ac29ecced Mon Sep 17 00:00:00 2001
 From: Valerio Setti <vsetti@baylibre.com>
 Date: Thu, 1 Oct 2026 00:30:31 +0200
-Subject: [PATCH 197/267] VSETTI: ASoC: meson: gx: rename gx_stream ready to
+Subject: [PATCH 197/269] VSETTI: ASoC: meson: gx: rename gx_stream ready to
  running
 
 The flag now only tracks whether the formatters are enabled, so name it

@@ -1,7 +1,7 @@
-From 482d54dcbc52c6d63c17f9979beda116ec4e0ff5 Mon Sep 17 00:00:00 2001
+From 8b0773ec7257c4d8cb1bca134a8b930952f797c4 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 16 May 2026 14:28:43 +0000
-Subject: [PATCH 070/267] FROMLIST(v7): drm: bridge: dw_hdmi: Remove
+Subject: [PATCH 070/269] FROMLIST(v7): drm: bridge: dw_hdmi: Remove
  previous_mode and mode_set
 
 With the use of adjusted_mode directly from the crtc_state there is no

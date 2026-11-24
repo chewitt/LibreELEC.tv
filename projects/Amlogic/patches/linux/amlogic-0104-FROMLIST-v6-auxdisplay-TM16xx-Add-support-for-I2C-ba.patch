@@ -1,7 +1,7 @@
-From bf43d7f63ef7c857ab7c4d104eb1436e8a8fcef3 Mon Sep 17 00:00:00 2001
+From f615347853832a6d9650cc8c8c39b0942614f046 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jean-Fran=C3=A7ois=20Lessard?= <jefflessard3@gmail.com>
 Date: Fri, 21 Nov 2025 09:59:06 -0500
-Subject: [PATCH 104/267] FROMLIST(v6): auxdisplay: TM16xx: Add support for
+Subject: [PATCH 104/269] FROMLIST(v6): auxdisplay: TM16xx: Add support for
  I2C-based controllers
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

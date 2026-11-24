@@ -1,7 +1,7 @@
-From ad9230d45f4ce9f668e21ae357227a045b056562 Mon Sep 17 00:00:00 2001
+From 6dc98885c6ad444992eae2b9065cd3114a1dc63e Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 5 Oct 2026 10:29:28 +0000
-Subject: [PATCH 230/267] ASoC: meson: axg-spdifout: add S4 support
+Subject: [PATCH 230/269] ASoC: meson: axg-spdifout: add S4 support
 
 The S4 SPDIF output has a 16-bit sample mask in SPDIFOUT_CTRL0[15:0],
 two bits per lane, where AXG and G12A use CTRL0[11:4]. Writing the

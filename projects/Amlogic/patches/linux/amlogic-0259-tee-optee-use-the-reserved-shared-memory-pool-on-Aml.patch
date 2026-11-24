@@ -1,7 +1,7 @@
-From 2da7e5d66a50aad39a61c3ecb6c7e452161cd15c Mon Sep 17 00:00:00 2001
+From 99ad512186a43b1339d02f2d04c7df4e4fbf5be9 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 7 Oct 2026 04:14:14 +0000
-Subject: [PATCH 259/267] tee: optee: use the reserved shared memory pool on
+Subject: [PATCH 259/269] tee: optee: use the reserved shared memory pool on
  Amlogic SoCs
 
 The OP-TEE builds that Amlogic ships in its BL32 blobs advertise both

@@ -1,7 +1,7 @@
-From 116fb51ee9f0f077e2edf4f8c13f610f1bf08ec6 Mon Sep 17 00:00:00 2001
+From caf665d386b14da87f13f75a958c14cfc05edb56 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:47:58 +0100
-Subject: [PATCH 023/267] FROMGIT(7.4): drm/panfrost: Fix PM refcnt and
+Subject: [PATCH 023/269] FROMGIT(7.4): drm/panfrost: Fix PM refcnt and
  autosuspend issues at device probe/remove
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

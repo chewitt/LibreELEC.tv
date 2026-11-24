@@ -1,7 +1,7 @@
-From 434be9035bd5920ff77b86c9947b93196ea6ea65 Mon Sep 17 00:00:00 2001
+From 6c1638a811302b27d4aad2d3f156cbe1f163f99f Mon Sep 17 00:00:00 2001
 From: Nick Xie <nick@khadas.com>
 Date: Mon, 2 Feb 2026 11:00:40 +0800
-Subject: [PATCH 240/267] arm64: dts: amlogic: meson-s4: add USB2 support
+Subject: [PATCH 240/269] arm64: dts: amlogic: meson-s4: add USB2 support
 
 Add USB2 support to S4 SoC family
 

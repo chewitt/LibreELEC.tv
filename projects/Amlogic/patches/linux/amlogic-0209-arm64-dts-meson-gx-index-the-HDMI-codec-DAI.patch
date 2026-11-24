@@ -1,7 +1,7 @@
-From f60c932a9753642269de2a986e8911151235caba Mon Sep 17 00:00:00 2001
+From 4751cf61754c0d4769866e80ebed9c8d78504d99 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 19:19:12 +0000
-Subject: [PATCH 209/267] arm64: dts: meson: gx: index the HDMI codec DAI
+Subject: [PATCH 209/269] arm64: dts: meson: gx: index the HDMI codec DAI
 
 hdmi_tx has an I2S and an S/PDIF DAI, so a link must say which one it
 uses. Add a sound-dai cell to the node and name the I2S DAI in the

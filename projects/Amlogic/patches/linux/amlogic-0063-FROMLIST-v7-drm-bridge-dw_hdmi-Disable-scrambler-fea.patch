@@ -1,7 +1,7 @@
-From aa6b9e856b680711b8b7323d9f7a5406bbe23902 Mon Sep 17 00:00:00 2001
+From e4ca92a5bb48c4acdab8296b0a70aa5bb73ca5e2 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:37 +0000
-Subject: [PATCH 063/267] FROMLIST(v7): drm: bridge: dw_hdmi: Disable scrambler
+Subject: [PATCH 063/269] FROMLIST(v7): drm: bridge: dw_hdmi: Disable scrambler
  feature when not supported
 
 The scrambler feature can be left enabled when hotplugging from a sink

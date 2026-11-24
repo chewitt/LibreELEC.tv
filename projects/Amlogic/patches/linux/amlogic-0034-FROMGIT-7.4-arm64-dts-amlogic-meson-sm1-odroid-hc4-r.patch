@@ -1,7 +1,7 @@
-From c431ba76a6f0ac33a1a0e8ca21763c91b0c3563a Mon Sep 17 00:00:00 2001
+From 403e55ff200e714851c011a4112a6e93aa6f8c13 Mon Sep 17 00:00:00 2001
 From: Igor Velkov <iav@iav.lv>
 Date: Wed, 30 Sep 2026 16:52:15 +0000
-Subject: [PATCH 034/267] FROMGIT(7.4): arm64: dts: amlogic:
+Subject: [PATCH 034/269] FROMGIT(7.4): arm64: dts: amlogic:
  meson-sm1-odroid-hc4: run the SPI NOR at 40 MHz
 
 At 104 MHz, reads return corrupted data: bit 0 of the first byte of a

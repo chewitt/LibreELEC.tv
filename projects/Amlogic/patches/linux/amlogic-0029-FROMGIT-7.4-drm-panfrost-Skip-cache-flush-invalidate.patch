@@ -1,7 +1,7 @@
-From 02814b7fa74baa7c425c306774e2175377de90a8 Mon Sep 17 00:00:00 2001
+From 76858f9c7ff57fed305798589259c2a8a825f1dd Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:48:04 +0100
-Subject: [PATCH 029/267] FROMGIT(7.4): drm/panfrost: Skip cache
+Subject: [PATCH 029/269] FROMGIT(7.4): drm/panfrost: Skip cache
  flush/invalidate when enabling perfcnt
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
-From 75d681fc1cbc1c73f2facebc16d530a7a4a6e733 Mon Sep 17 00:00:00 2001
+From 111dd0c9b0f94357f0675d2db564a62c228423ec Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:30 +0000
-Subject: [PATCH 087/267] FROMLIST(v1): drm/meson: dw-hdmi: Protect from
+Subject: [PATCH 087/269] FROMLIST(v1): drm/meson: dw-hdmi: Protect from
  possible NULL pointer dereference
 
 The IRQ handler can be called at any time after the call to

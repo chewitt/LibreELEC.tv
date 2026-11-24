@@ -1,7 +1,7 @@
-From 9bc16758ad7fea2a810ced606ee989a390e02ec7 Mon Sep 17 00:00:00 2001
+From 7f075474a6e89d1b4864c74d2c2c9746ae85bc1b Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 26 Sep 2026 16:13:24 +0000
-Subject: [PATCH 165/267] drm/bridge: dw-hdmi: use the DDC address for E-DDC
+Subject: [PATCH 165/269] drm/bridge: dw-hdmi: use the DDC address for E-DDC
  segment reads
 
 An E-DDC read of EDID block 2 or higher starts with a write of the

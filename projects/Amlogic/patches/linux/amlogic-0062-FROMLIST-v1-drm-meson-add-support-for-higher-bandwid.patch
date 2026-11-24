@@ -1,7 +1,7 @@
-From e1396cdeafab87a1d03bfceb01adf1774fe1d30e Mon Sep 17 00:00:00 2001
+From 93e18547ebb91a9a96ed648bf8d03b732312c194 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Mon, 5 Jan 2026 13:05:10 +0100
-Subject: [PATCH 062/267] FROMLIST(v1): drm/meson: add support for higher
+Subject: [PATCH 062/269] FROMLIST(v1): drm/meson: add support for higher
  bandwidth DMT modes
 
 There's a report from a user with a DELL U3415W monitor and a Khadas

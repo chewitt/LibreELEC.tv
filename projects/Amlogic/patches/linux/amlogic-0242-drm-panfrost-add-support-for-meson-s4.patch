@@ -1,7 +1,7 @@
-From 853e1c72513498f1353400246a684e4b143fb0e9 Mon Sep 17 00:00:00 2001
+From c560cb08ae0223e069eeb4201304652df05f50c4 Mon Sep 17 00:00:00 2001
 From: Nick Xie <nick@khadas.com>
 Date: Mon, 2 Feb 2026 10:56:58 +0800
-Subject: [PATCH 242/267] drm/panfrost: add support for meson-s4
+Subject: [PATCH 242/269] drm/panfrost: add support for meson-s4
 
 Signed-off-by: Nick Xie <nick@khadas.com>
 ---

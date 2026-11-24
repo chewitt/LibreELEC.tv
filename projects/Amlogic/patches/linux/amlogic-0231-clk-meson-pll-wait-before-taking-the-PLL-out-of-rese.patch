@@ -1,7 +1,7 @@
-From fcdc2d18d87e7772806eeccbab937c5a096d57bd Mon Sep 17 00:00:00 2001
+From 5e97b39b868a92e8c1c93f55eb6e289b97f76e35 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 16:18:36 +0000
-Subject: [PATCH 231/267] clk: meson: pll: wait before taking the PLL out of
+Subject: [PATCH 231/269] clk: meson: pll: wait before taking the PLL out of
  reset
 
 On S4 the HIFI PLL fails to lock when it is enabled, so every attempt

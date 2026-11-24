@@ -1,7 +1,7 @@
-From 37ed73331f9c99c8a1209be873dc8c0262359bc0 Mon Sep 17 00:00:00 2001
+From 6921213778a41f722151a816165c1899c4545a48 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 2 Feb 2026 16:41:26 +0000
-Subject: [PATCH 248/267] arm64: dts: amlogic: meson-s4-s905y4-khadas-vim1s:
+Subject: [PATCH 248/269] arm64: dts: amlogic: meson-s4-s905y4-khadas-vim1s:
  add chosen node
 
 Describe the UART console settings.

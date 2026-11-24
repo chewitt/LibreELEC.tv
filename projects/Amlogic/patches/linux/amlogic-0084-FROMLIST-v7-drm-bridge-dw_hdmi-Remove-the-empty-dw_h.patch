@@ -1,7 +1,7 @@
-From c4dc12c64bb58aa8950d78b0f89a18770c26bc53 Mon Sep 17 00:00:00 2001
+From 0d7240b35ed8d219ba2ad6475974757f2b1e7efd Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:58 +0000
-Subject: [PATCH 084/267] FROMLIST(v7): drm: bridge: dw_hdmi: Remove the empty
+Subject: [PATCH 084/269] FROMLIST(v7): drm: bridge: dw_hdmi: Remove the empty
  dw_hdmi_phy_update_hpd()
 
 The dw_hdmi_phy_update_hpd() helper is empty and no longer needed after

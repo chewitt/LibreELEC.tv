@@ -1,7 +1,7 @@
-From a6097e7731b28685ef317fd26e6bbec8346c74ad Mon Sep 17 00:00:00 2001
+From 26a2e50d6d3e7eabda3d70f14346ce0139452a74 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Sat, 26 Sep 2026 09:14:54 -0700
-Subject: [PATCH 186/267] media: amlogic: amvdec: add HEVC decoding
+Subject: [PATCH 186/269] media: amlogic: amvdec: add HEVC decoding
 
 Decode HEVC slice requests with synthesized headers, short-term reference
 sets and timestamp-resolved DPB entries. Validate coded geometry, tiles

@@ -1,7 +1,7 @@
-From bcdbd69475ecf2bb0c8bd460473a13727988f1d5 Mon Sep 17 00:00:00 2001
+From 8671ea60da8049cbd366b095a09721b4c21f0a5b Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 19 Sep 2026 11:00:56 +0000
-Subject: [PATCH 200/267] ASoC: meson: aiu: put the channel status bytes in the
+Subject: [PATCH 200/269] ASoC: meson: aiu: put the channel status bytes in the
  right order
 
 AIU_958_CHSTAT_L0 holds bits 15:0 of the channel status word with bit 0

@@ -1,7 +1,7 @@
-From 5159012e009caee7d772e94a00443fc472ecb91e Mon Sep 17 00:00:00 2001
+From b890048d1de79dae7e09a60f526968c437d72c9f Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 15 Sep 2026 04:06:15 +0000
-Subject: [PATCH 220/267] arm64: dts: meson: sm1: add the second SPDIF output
+Subject: [PATCH 220/269] arm64: dts: meson: sm1: add the second SPDIF output
 
 SM1 has the same two S/PDIF outputs as G12, and the audio clock
 controller already provides the clocks and reset for the second, but

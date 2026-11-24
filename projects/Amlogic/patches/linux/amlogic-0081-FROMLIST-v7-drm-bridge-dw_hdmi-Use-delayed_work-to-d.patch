@@ -1,7 +1,7 @@
-From 841c74001e54f2c303f1bd25e41933ff8dc15408 Mon Sep 17 00:00:00 2001
+From b3efb8f03edd3415e6db2f243d967dbabece1ace Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:55 +0000
-Subject: [PATCH 081/267] FROMLIST(v7): drm: bridge: dw_hdmi: Use delayed_work
+Subject: [PATCH 081/269] FROMLIST(v7): drm: bridge: dw_hdmi: Use delayed_work
  to debounce hotplug event
 
 HDMI Specification Version 1.4b chapter 8.5 mentions:

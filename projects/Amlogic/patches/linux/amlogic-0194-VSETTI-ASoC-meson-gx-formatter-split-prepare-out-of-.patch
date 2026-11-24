@@ -1,7 +1,7 @@
-From 996a0f0ec4e79306bf13bc73eb01d1ec94182d15 Mon Sep 17 00:00:00 2001
+From aad9226e05fd58b692da2882131ae7440895ab95 Mon Sep 17 00:00:00 2001
 From: Valerio Setti <vsetti@baylibre.com>
 Date: Wed, 30 Sep 2026 18:12:12 +0200
-Subject: [PATCH 194/267] VSETTI: ASoC: meson: gx-formatter: split prepare out
+Subject: [PATCH 194/269] VSETTI: ASoC: meson: gx-formatter: split prepare out
  of gx_formatter_enable()
 
 Move the formatter prepare step to its own helper. No functional change.

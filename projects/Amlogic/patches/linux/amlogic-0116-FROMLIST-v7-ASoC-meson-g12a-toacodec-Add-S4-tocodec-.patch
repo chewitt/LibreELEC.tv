@@ -1,7 +1,7 @@
-From 139360b66c2281563eebe1def8078a798f0f413e Mon Sep 17 00:00:00 2001
+From 9689919ddca3a2513bc587ebbb4b0f22d10cb9dc Mon Sep 17 00:00:00 2001
 From: Jiebing Chen <jiebing.chen@amlogic.com>
 Date: Wed, 21 Oct 2026 15:08:30 +0800
-Subject: [PATCH 116/267] FROMLIST(v7): ASoC: meson: g12a-toacodec: Add S4
+Subject: [PATCH 116/269] FROMLIST(v7): ASoC: meson: g12a-toacodec: Add S4
  tocodec driver
 
 The S4 requires additional clock control bits to be turn on while enabled.

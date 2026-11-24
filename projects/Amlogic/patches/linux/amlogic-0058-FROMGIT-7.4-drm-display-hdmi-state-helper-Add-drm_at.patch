@@ -1,7 +1,7 @@
-From 496edeceac1f65deea26408307d4f86bff529942 Mon Sep 17 00:00:00 2001
+From ed3392f7edb334d75e6da8928dc5e6096cd5a82c Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:46 +0300
-Subject: [PATCH 058/267] FROMGIT(7.4): drm/display: hdmi-state-helper: Add
+Subject: [PATCH 058/269] FROMGIT(7.4): drm/display: hdmi-state-helper: Add
  drm_atomic_helper_connector_hdmi_force_ctx()
 
 Introduce drm_atomic_helper_connector_hdmi_force_ctx() as the HDMI

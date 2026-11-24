@@ -1,7 +1,7 @@
-From 5018106737a7a446a0552e16fd068ad8567507e3 Mon Sep 17 00:00:00 2001
+From c3422ff63628cd4752458ad4329b79874a8127a5 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 26 Sep 2026 10:07:54 +0000
-Subject: [PATCH 193/267] ASoC: meson: card: expose internal PCM controls on
+Subject: [PATCH 193/269] ASoC: meson: card: expose internal PCM controls on
  the front-ends
 
 Codecs on back-end and codec-to-codec links register their PCM controls

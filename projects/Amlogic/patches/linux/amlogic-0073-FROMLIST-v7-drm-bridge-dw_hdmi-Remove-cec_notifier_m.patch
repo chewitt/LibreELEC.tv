@@ -1,7 +1,7 @@
-From bcbd9c830d6c8c710c04b27a4ea1af7d23819ea0 Mon Sep 17 00:00:00 2001
+From cc9fca533317eb81adca02c1fae305651aab2e35 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:47 +0000
-Subject: [PATCH 073/267] FROMLIST(v7): drm: bridge: dw_hdmi: Remove
+Subject: [PATCH 073/269] FROMLIST(v7): drm: bridge: dw_hdmi: Remove
  cec_notifier_mutex
 
 With CEC phys addr invalidation moved away from the irq handler there is

@@ -1,0 +1,38 @@
+From 5719827af80d11671c75eb2ce9d812488aecee5c Mon Sep 17 00:00:00 2001
+From: Christian Hewitt <christianshewitt@gmail.com>
+Date: Fri, 27 Nov 2026 03:57:40 +0000
+Subject: [PATCH 269/269] media: cec: meson: ao-cec-g12a: use the vendor
+ rise_del_max on SM1
+
+The SM1 CECB controller is set up with a CTRL2 rise_del_max of 2, the
+value from the initial vendor bring-up. With some TVs connected every
+transmit then fails at once with an initiator error, so the polls for a
+logical address never reach the bus and no address can be claimed.
+
+The vendor driver later raised this value to 0x15 because arbitration
+was lost with other CEC devices on the bus, and then to 8 to pass CEC
+CTS test 9.6.1. Use 8.
+
+Fixes: aef5f47c9907 ("media: platform: meson-ao-cec-g12a: add support for SM1")
+Assisted-by: Claude:claude-opus-5-5
+Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
+---
+ drivers/media/cec/platform/meson/ao-cec-g12a.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/media/cec/platform/meson/ao-cec-g12a.c b/drivers/media/cec/platform/meson/ao-cec-g12a.c
+index 02a2a3f7960e..3426c95ccf0b 100644
+--- a/drivers/media/cec/platform/meson/ao-cec-g12a.c
++++ b/drivers/media/cec/platform/meson/ao-cec-g12a.c
+@@ -616,7 +616,7 @@ static int meson_ao_cec_g12a_adap_enable(struct cec_adapter *adap, bool enable)
+ 
+ 	if (ao_cec->data->ctrl2_setup)
+ 		regmap_write(ao_cec->regmap_cec, CECB_CTRL2,
+-			     FIELD_PREP(CECB_CTRL2_RISE_DEL_MAX, 2));
++			     FIELD_PREP(CECB_CTRL2_RISE_DEL_MAX, 8));
+ 
+ 	meson_ao_cec_g12a_irq_setup(ao_cec, true);
+ 
+-- 
+2.43.0
+

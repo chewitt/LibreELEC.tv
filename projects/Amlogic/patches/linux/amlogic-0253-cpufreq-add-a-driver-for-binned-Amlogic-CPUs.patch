@@ -1,7 +1,7 @@
-From ac421afb9c9e4ed1a90451b2fe5ca0075012fee5 Mon Sep 17 00:00:00 2001
+From 8764fafdf99082123bb1052ccb9a98d512d070df Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Wed, 7 Oct 2026 12:32:44 +0000
-Subject: [PATCH 253/267] cpufreq: add a driver for binned Amlogic CPUs
+Subject: [PATCH 253/269] cpufreq: add a driver for binned Amlogic CPUs
 
 Newer Amlogic SoCs are binned at manufacture, and better bins run the
 same CPU frequencies at lower voltages. Without this, every chip runs

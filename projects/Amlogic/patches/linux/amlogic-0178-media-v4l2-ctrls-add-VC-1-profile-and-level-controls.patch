@@ -1,7 +1,7 @@
-From 96dfbb65b60892528fb8e84a7a556518ba61f917 Mon Sep 17 00:00:00 2001
+From 6fd7e9eee00d7c166941b15e9cf7027aa164aa5d Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Tue, 10 Nov 2026 09:26:00 +0000
-Subject: [PATCH 178/267] media: v4l2-ctrls: add VC-1 profile and level
+Subject: [PATCH 178/269] media: v4l2-ctrls: add VC-1 profile and level
  controls
 
 Add the V4L2_CID_MPEG_VIDEO_VC1_PROFILE and V4L2_CID_MPEG_VIDEO_VC1_LEVEL

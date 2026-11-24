@@ -1,7 +1,7 @@
-From f24e75cec204b125c8ed2984d05396bfde53d80a Mon Sep 17 00:00:00 2001
+From 9b091fd390b0bb6fb9faa36a80579574d88c1c96 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 5 Oct 2026 05:26:02 +0000
-Subject: [PATCH 233/267] clk: meson: s4-pll: make the HDMI PLL read-only
+Subject: [PATCH 233/269] clk: meson: s4-pll: make the HDMI PLL read-only
 
 The display driver programs the HDMI PLL directly and has no clock
 reference on it, so the clock framework treats it as unused and turns it

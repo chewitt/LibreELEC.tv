@@ -1,7 +1,7 @@
-From d54f7609390bdf1cb74f798c1f9bc7e6fa842f40 Mon Sep 17 00:00:00 2001
+From 95d0734d4947285362c9a16788f153e3018294d5 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:29 +0300
-Subject: [PATCH 044/267] FROMGIT(7.4): drm/display: bridge_connector: Convert
+Subject: [PATCH 044/269] FROMGIT(7.4): drm/display: bridge_connector: Convert
  to drmm_connector_hdmi_init()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

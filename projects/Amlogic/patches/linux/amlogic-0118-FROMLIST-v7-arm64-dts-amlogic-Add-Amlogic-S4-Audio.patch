@@ -1,7 +1,7 @@
-From 60bebfc160bc0692cf0dd52e02a606d4759d79aa Mon Sep 17 00:00:00 2001
+From ffec54b94aca3f284c48b556487a8d1e770b98c4 Mon Sep 17 00:00:00 2001
 From: Jiebing Chen <jiebing.chen@amlogic.com>
 Date: Wed, 21 Oct 2026 15:08:32 +0800
-Subject: [PATCH 118/267] FROMLIST(v7): arm64: dts: amlogic: Add Amlogic S4
+Subject: [PATCH 118/269] FROMLIST(v7): arm64: dts: amlogic: Add Amlogic S4
  Audio
 
 Add basic audio driver support for the Amlogic S4 based

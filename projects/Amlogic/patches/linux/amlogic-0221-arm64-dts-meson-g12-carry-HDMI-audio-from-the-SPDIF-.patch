@@ -1,7 +1,7 @@
-From ce74a8d3c648db9b81df6efc809fd2aa5d452f00 Mon Sep 17 00:00:00 2001
+From 15b9e45ae5bbbdee6773bbf23cdb55fbc4f672f7 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 15 Sep 2026 01:09:15 +0000
-Subject: [PATCH 221/267] arm64: dts: meson: g12: carry HDMI audio from the
+Subject: [PATCH 221/269] arm64: dts: meson: g12: carry HDMI audio from the
  SPDIF encoder
 
 The G12 boards route HDMI audio through the I2S leg of the HDMI TX glue,

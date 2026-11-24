@@ -1,7 +1,7 @@
-From 952e1db42022ceb5215b4c4a47b15c96f98f3556 Mon Sep 17 00:00:00 2001
+From 66f7a2bfb0af3d7daf766ce704ed099f7ef4b7be Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:40 +0000
-Subject: [PATCH 097/267] FROMLIST(v1): drm/meson: dw-hdmi: Use
+Subject: [PATCH 097/269] FROMLIST(v1): drm/meson: dw-hdmi: Use
  dw_hdmi_schedule_hpd_work() helper
 
 Change to use the dw-hdmi HPD delayed work to handle HPD events.

@@ -1,7 +1,7 @@
-From 710b27c339a2cb9c90d61c21b7eaedca8f4232c2 Mon Sep 17 00:00:00 2001
+From 04df4878d80454b36144253a34e2735c100e5815 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 19:19:05 +0000
-Subject: [PATCH 202/267] dt-bindings: sound: meson-aiu: add the HDMI S/PDIF
+Subject: [PATCH 202/269] dt-bindings: sound: meson-aiu: add the HDMI S/PDIF
  output
 
 The AIU can feed the HDMI controller from its IEC958 encoder as well as

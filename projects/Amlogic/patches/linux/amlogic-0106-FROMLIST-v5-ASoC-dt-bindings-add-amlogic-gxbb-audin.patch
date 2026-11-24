@@ -1,7 +1,7 @@
-From a0343271f05beb6a2092e45bc1b1644d6436e719 Mon Sep 17 00:00:00 2001
+From e73b0606161b615a3ad1271f352e4fc82c690ddb Mon Sep 17 00:00:00 2001
 From: Valerio Setti <vsetti@baylibre.com>
 Date: Sun, 18 Oct 2026 12:17:58 +0200
-Subject: [PATCH 106/267] FROMLIST(v5): ASoC: dt-bindings: add
+Subject: [PATCH 106/269] FROMLIST(v5): ASoC: dt-bindings: add
  amlogic,gxbb-audin
 
 AUDIN provides I2S audio input support to the Meson GXBB and GXL SoCs.

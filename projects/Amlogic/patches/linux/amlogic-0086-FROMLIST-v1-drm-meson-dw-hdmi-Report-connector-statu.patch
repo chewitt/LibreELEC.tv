@@ -1,7 +1,7 @@
-From 1efc352949cecfebde8b6c4c8f590a18e4e9c74d Mon Sep 17 00:00:00 2001
+From 4d0393cf9ecf1ec7f202ada6b99c9c11f9ba8adf Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:29 +0000
-Subject: [PATCH 086/267] FROMLIST(v1): drm/meson: dw-hdmi: Report connector
+Subject: [PATCH 086/269] FROMLIST(v1): drm/meson: dw-hdmi: Report connector
  status based on HPD bit
 
 G12A added support for RX-SENSE, status for both HPD and RX-SENSE is

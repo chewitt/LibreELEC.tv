@@ -1,7 +1,7 @@
-From 41c1941223b1a4f8ef302e139e15f6b393624041 Mon Sep 17 00:00:00 2001
+From d8e5bd5fc138b08b006fda4856779e954efe63ce Mon Sep 17 00:00:00 2001
 From: Valerio Setti <vsetti@baylibre.com>
 Date: Sun, 18 Oct 2026 12:18:04 +0200
-Subject: [PATCH 112/267] FROMLIST(v5): arm64: dts: amlogic: gx: add AUDIN node
+Subject: [PATCH 112/269] FROMLIST(v5): arm64: dts: amlogic: gx: add AUDIN node
 
 AUDIN provides audio input support to Amlogic GXBB/GXL SoCs.
 

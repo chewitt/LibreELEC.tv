@@ -1,7 +1,7 @@
-From b14798ae39a657cbb161965ec8d09390a4150afd Mon Sep 17 00:00:00 2001
+From 951907753682d8fdae5e96b59ba41bc8cf3af23b Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 2 Oct 2026 12:58:48 +0000
-Subject: [PATCH 174/267] media: videobuf2: dma-contig: fix cache maintenance
+Subject: [PATCH 174/269] media: videobuf2: dma-contig: fix cache maintenance
  of non-coherent buffers
 
 The dma-buf begin_cpu_access() and end_cpu_access() callbacks were

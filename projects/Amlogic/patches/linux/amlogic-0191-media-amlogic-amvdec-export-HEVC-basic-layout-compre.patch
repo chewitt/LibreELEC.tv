@@ -1,7 +1,7 @@
-From a6113db766dccff7b123504c6ac7ac7656b88d03 Mon Sep 17 00:00:00 2001
+From 48f2879ab2176247d89d970ef4b283cb939a3466 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 28 Sep 2026 07:04:23 +0000
-Subject: [PATCH 191/267] media: amlogic: amvdec: export HEVC basic-layout
+Subject: [PATCH 191/269] media: amlogic: amvdec: export HEVC basic-layout
  compressed frames on GXM
 
 GXM decodes HEVC Main10 to compressed frames and then downsamples them

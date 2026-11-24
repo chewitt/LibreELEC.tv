@@ -1,7 +1,7 @@
-From be381f43ed4e25f13cb69870aba69618711cdea3 Mon Sep 17 00:00:00 2001
+From df5aea47c87dbdf54c3b684037c9a6c3920ad98f Mon Sep 17 00:00:00 2001
 From: jiebing chen <jiebing.chen@amlogic.com>
 Date: Mon, 2 Feb 2026 11:17:46 +0800
-Subject: [PATCH 228/267] ASoC: meson: g12a-tohdmitx: add S4 support
+Subject: [PATCH 228/269] ASoC: meson: g12a-tohdmitx: add S4 support
 
 Add support for the hdmitx control glue of the Amlogic S4 SoC family.
 This glue links the 3 TDM and 2 SPDIF output interfaces of the SoC to

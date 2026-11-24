@@ -1,7 +1,7 @@
-From 5f6d1ff6b265931bc51761e2ef8330f40405b058 Mon Sep 17 00:00:00 2001
+From 8b5d8cd654949b403c0f2f04f3cbb1b0d157b781 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 151/267] drm/display: bridge_connector: restore the max bpc
+Subject: [PATCH 151/269] drm/display: bridge_connector: restore the max bpc
  default
 
 drm_bridge_connector_create_state() leaves max_requested_bpc at 0, a

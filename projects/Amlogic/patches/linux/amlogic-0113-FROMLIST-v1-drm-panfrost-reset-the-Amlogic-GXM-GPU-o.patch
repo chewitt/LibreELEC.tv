@@ -1,7 +1,7 @@
-From 1834b06f2f856459a0c68e5dde4cb5b7c18b1758 Mon Sep 17 00:00:00 2001
+From e7c3b9d7c4720a4a3db5b92e4748e6058d708893 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 28 Sep 2026 04:39:24 +0000
-Subject: [PATCH 113/267] FROMLIST(v1): drm/panfrost: reset the Amlogic GXM GPU
+Subject: [PATCH 113/269] FROMLIST(v1): drm/panfrost: reset the Amlogic GXM GPU
  on runtime resume
 
 After its first runtime suspend, every power-off of the Mali-T820 in

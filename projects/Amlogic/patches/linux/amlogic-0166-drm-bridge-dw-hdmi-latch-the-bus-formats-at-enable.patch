@@ -1,7 +1,7 @@
-From 4003657343711598b320b73bf640f1251a307691 Mon Sep 17 00:00:00 2001
+From 22009c32ac783a8f071d8e9ac7a6ee2b23ed6fbe Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 26 Sep 2026 16:13:48 +0000
-Subject: [PATCH 166/267] drm/bridge: dw-hdmi: latch the bus formats at enable
+Subject: [PATCH 166/269] drm/bridge: dw-hdmi: latch the bus formats at enable
 
 atomic_check stores the negotiated input and output bus formats in the
 device, but check also runs for TEST_ONLY commits that are never

@@ -1,7 +1,7 @@
-From 2abf72700ff825d17c16f49618e7395dc20de11c Mon Sep 17 00:00:00 2001
+From 35ba483b12390c5e4d76b3f2451f77aaa8484452 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:48 +0000
-Subject: [PATCH 074/267] FROMLIST(v7): drm: bridge: dw_hdmi: Extract
+Subject: [PATCH 074/269] FROMLIST(v7): drm: bridge: dw_hdmi: Extract
  dw_hdmi_connector_status_update()
 
 Move connector EDID update and CEC phys addr handling to a helper

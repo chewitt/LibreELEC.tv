@@ -1,7 +1,7 @@
-From 9c3d65dcc31d8a9390e8b605db676e1c3b532144 Mon Sep 17 00:00:00 2001
+From 96b392cc0bea2802ec9330c1506d382d64561300 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 10 Nov 2026 12:52:35 +0000
-Subject: [PATCH 267/267] media: amlogic: amvdec: add AV1 decoding on S4
+Subject: [PATCH 267/269] media: amlogic: amvdec: add AV1 decoding on S4
 
 Add stateless AV1 (Main profile, 8 and 10-bit, up to 4096x2304) decoding
 on the S4 HEVC core with the secure-world AV1 MMU firmware.

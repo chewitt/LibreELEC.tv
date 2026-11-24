@@ -1,7 +1,7 @@
-From 42ad77e7db4294a9c007b54a1b8c677accc98481 Mon Sep 17 00:00:00 2001
+From 1d85e60c1ade90af0ae5ef9e0bd949c181f4754a Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 12 Sep 2026 15:17:52 +0000
-Subject: [PATCH 163/267] drm/meson: encoder_hdmi: offer 10-bit deep color on
+Subject: [PATCH 163/269] drm/meson: encoder_hdmi: offer 10-bit deep color on
  GXM
 
 GXM has a 10-bit video pipeline that dithers 12 bits down to 10, and

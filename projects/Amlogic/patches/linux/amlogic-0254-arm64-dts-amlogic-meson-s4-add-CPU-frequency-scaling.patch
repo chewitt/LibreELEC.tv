@@ -1,7 +1,7 @@
-From cb33d5a4636a93350a5fe3609b91d6ed019ba59f Mon Sep 17 00:00:00 2001
+From 5bc1ea1b0ad430b7dbc851dd2183affb3a3430c8 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 13:04:13 +0000
-Subject: [PATCH 254/267] arm64: dts: amlogic: meson-s4: add CPU frequency
+Subject: [PATCH 254/269] arm64: dts: amlogic: meson-s4: add CPU frequency
  scaling
 
 The CPU clocks on S4 are programmed by the secure firmware. Reference

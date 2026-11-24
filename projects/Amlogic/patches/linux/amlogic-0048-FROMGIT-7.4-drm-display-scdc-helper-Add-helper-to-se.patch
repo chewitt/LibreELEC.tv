@@ -1,7 +1,7 @@
-From ce9cff97d0828d1d4dac414c1768f4ac8e39a702 Mon Sep 17 00:00:00 2001
+From 59175667500ef0478fa742c9a5d893e8f378822c Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:33 +0300
-Subject: [PATCH 048/267] FROMGIT(7.4): drm/display: scdc-helper: Add helper to
+Subject: [PATCH 048/269] FROMGIT(7.4): drm/display: scdc-helper: Add helper to
  set SCDC version information
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

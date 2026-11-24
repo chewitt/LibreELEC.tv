@@ -1,7 +1,7 @@
-From d8808444a43f880f9040af06740e7622bf115b8b Mon Sep 17 00:00:00 2001
+From b3bb56c855e856296b6c2b4557460365cafbe19d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:48:01 +0100
-Subject: [PATCH 026/267] FROMGIT(7.4): drm/panfrost: Warn of RPM get failure
+Subject: [PATCH 026/269] FROMGIT(7.4): drm/panfrost: Warn of RPM get failure
  at device remove time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

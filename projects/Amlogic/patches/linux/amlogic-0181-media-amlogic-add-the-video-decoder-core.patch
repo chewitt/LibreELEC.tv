@@ -1,7 +1,7 @@
-From da6deb94b77916b0d5d52013bc2952f5e2e0adca Mon Sep 17 00:00:00 2001
+From 3082272705dfa93b09d65ae7c59e19014ec9282e Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Sat, 26 Sep 2026 09:14:36 -0700
-Subject: [PATCH 181/267] media: amlogic: add the video decoder core
+Subject: [PATCH 181/269] media: amlogic: add the video decoder core
 
 Add the meson-amvdec platform driver to replace staging meson/vdec on
 GXBB, GXL, GXLX, GXM, G12A, G12B and SM1. Provide a stateless-only V4L2

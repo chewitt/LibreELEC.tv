@@ -1,7 +1,7 @@
-From b00144c3a661d2b71ff04e9bbf2e8b3aee28c4d8 Mon Sep 17 00:00:00 2001
+From 002da3293be1f43d82528791e9244cef743438e6 Mon Sep 17 00:00:00 2001
 From: Valerio Setti <vsetti@baylibre.com>
 Date: Wed, 30 Sep 2026 18:12:46 +0200
-Subject: [PATCH 196/267] VSETTI: ASoC: meson: gx-formatter: only enable
+Subject: [PATCH 196/269] VSETTI: ASoC: meson: gx-formatter: only enable
  formatters in gx_stream_start()
 
 Formatters are now programmed by gx_stream_prepare(), so stop preparing

@@ -1,7 +1,7 @@
-From bc77c9175321ab27fba55e118b7997b1e75129a5 Mon Sep 17 00:00:00 2001
+From fd26b6ff6e066a305f290a3124bac544ece8b59d Mon Sep 17 00:00:00 2001
 From: Ao Xu <ao.xu@amlogic.com>
 Date: Mon, 2 Feb 2026 10:56:14 +0800
-Subject: [PATCH 235/267] drm/meson: add DRM support for S4 series SoCs
+Subject: [PATCH 235/269] drm/meson: add DRM support for S4 series SoCs
 
 This patch series adds DRM support for the Amlogic S4-series SoCs. Compared to the Amlogic G12-series, the S4-series introduces the following changes:
 

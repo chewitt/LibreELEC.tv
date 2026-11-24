@@ -1,7 +1,7 @@
-From a2d83b7c7509bb99b720298283028d06aa3d3720 Mon Sep 17 00:00:00 2001
+From dcadaa8c61e7f1f77c03ed5b95eb39b1d31be08f Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 7 Oct 2026 04:14:14 +0000
-Subject: [PATCH 262/267] arm64: dts: amlogic: meson-s4: add the OP-TEE node
+Subject: [PATCH 262/269] arm64: dts: amlogic: meson-s4: add the OP-TEE node
 
 Amlogic boards boot with an OP-TEE BL32. Describe it so the kernel TEE
 driver can talk to the secure OS. The video decoder needs it to load

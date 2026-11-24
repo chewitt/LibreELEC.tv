@@ -1,7 +1,7 @@
-From 04a5d443eda686a0d90b199c9e5319940aa0adef Mon Sep 17 00:00:00 2001
+From fdcabdc9cd2983c8992d713acb8dab6c5b140021 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 154/267] drm/bridge: dw-hdmi: add dw_hdmi_get_tmds_clock()
+Subject: [PATCH 154/269] drm/bridge: dw-hdmi: add dw_hdmi_get_tmds_clock()
 
 Platform PHY code selects band and swing settings by TMDS character
 rate, which differs from the pixel clock for deep color and YUV420

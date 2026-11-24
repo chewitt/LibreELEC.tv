@@ -1,7 +1,7 @@
-From f6e7f9f3aed30c81b0060b63367d0f46e0afe820 Mon Sep 17 00:00:00 2001
+From d288066763e14d4030046b03010f6d7e56df7747 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Sat, 26 Sep 2026 09:14:46 -0700
-Subject: [PATCH 183/267] media: amlogic: amvdec: add H.264 decoding
+Subject: [PATCH 183/269] media: amlogic: amvdec: add H.264 decoding
 
 Decode frame-based H.264 slice requests with multi-instance firmware.
 Validate SPS/PPS and slice syntax, synthesize in-band headers and build

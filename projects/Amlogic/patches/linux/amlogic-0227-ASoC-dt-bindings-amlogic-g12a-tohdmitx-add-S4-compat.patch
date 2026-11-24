@@ -1,7 +1,7 @@
-From 0c128b13a427c1896bae116ad6efe6563d4ceeef Mon Sep 17 00:00:00 2001
+From 7e4dfe71ca016652708995512da05404ac8de6cd Mon Sep 17 00:00:00 2001
 From: jiebing chen <jiebing.chen@amlogic.com>
 Date: Mon, 2 Feb 2026 11:17:46 +0800
-Subject: [PATCH 227/267] ASoC: dt-bindings: amlogic,g12a-tohdmitx: add S4
+Subject: [PATCH 227/269] ASoC: dt-bindings: amlogic,g12a-tohdmitx: add S4
  compatible
 
 Add the compatible for the hdmitx control glue of the Amlogic S4 SoC

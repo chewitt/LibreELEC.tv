@@ -1,7 +1,7 @@
-From 8d18775d7121f639a2fa9a5d98097e60c6bef562 Mon Sep 17 00:00:00 2001
+From 40988da81a82c0346392cd950cf86128daf58133 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 7 Oct 2026 04:14:15 +0000
-Subject: [PATCH 260/267] tee: optee: send the Amlogic boot complete
+Subject: [PATCH 260/269] tee: optee: send the Amlogic boot complete
  notification
 
 The OP-TEE builds in Amlogic BL32 blobs refuse to load any user TA

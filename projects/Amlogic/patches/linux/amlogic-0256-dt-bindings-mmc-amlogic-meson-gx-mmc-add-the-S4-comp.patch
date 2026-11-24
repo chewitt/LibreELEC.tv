@@ -1,7 +1,7 @@
-From c77efc4cfefb07f126e524da82e1b1ecc0383832 Mon Sep 17 00:00:00 2001
+From 692db8ac2c2463eaf908e0ed7345e5bc6c941e06 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 17:22:40 +0000
-Subject: [PATCH 256/267] dt-bindings: mmc: amlogic,meson-gx-mmc: add the S4
+Subject: [PATCH 256/269] dt-bindings: mmc: amlogic,meson-gx-mmc: add the S4
  compatible
 
 The S4 controllers are compatible with the AXG ones but have a second

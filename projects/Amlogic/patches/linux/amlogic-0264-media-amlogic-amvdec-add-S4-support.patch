@@ -1,7 +1,7 @@
-From 885709ef348836f35ae1e582a17b60548fe0840e Mon Sep 17 00:00:00 2001
+From ddea9bd2de8c0611e097c75d96d2362481394f58 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 5 Oct 2026 11:11:38 +0000
-Subject: [PATCH 264/267] media: amlogic: amvdec: add S4 support
+Subject: [PATCH 264/269] media: amlogic: amvdec: add S4 support
 
 The S4 decoder is register compatible with SM1, with these differences:
 

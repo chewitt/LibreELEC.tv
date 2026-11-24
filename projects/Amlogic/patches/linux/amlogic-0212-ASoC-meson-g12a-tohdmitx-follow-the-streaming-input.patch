@@ -1,7 +1,7 @@
-From 2e32e9ed30e8b2a74d0b2e6e14d4253866a6a8f9 Mon Sep 17 00:00:00 2001
+From cee1577c64ed300c41eb084b10b45ff9ac2d3887 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 15 Sep 2026 04:10:09 +0000
-Subject: [PATCH 212/267] ASoC: meson: g12a-tohdmitx: follow the streaming
+Subject: [PATCH 212/269] ASoC: meson: g12a-tohdmitx: follow the streaming
  input
 
 The HDMI TX glue selects one of three I2S and one of two S/PDIF inputs

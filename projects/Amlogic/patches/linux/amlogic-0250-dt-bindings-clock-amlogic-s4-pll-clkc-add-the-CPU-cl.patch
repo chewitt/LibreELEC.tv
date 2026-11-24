@@ -1,7 +1,7 @@
-From 3f426ba2d3ff253f4f5c58e531c98dc16d882900 Mon Sep 17 00:00:00 2001
+From cc66895b063bcc05e3f1e91f2271bd7cd3c4adc9 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 12:59:31 +0000
-Subject: [PATCH 250/267] dt-bindings: clock: amlogic,s4-pll-clkc: add the CPU
+Subject: [PATCH 250/269] dt-bindings: clock: amlogic,s4-pll-clkc: add the CPU
  clocks
 
 The S4 CPU is clocked from sys_pll or from a dynamic clock derived from

@@ -1,7 +1,7 @@
-From 55b0a5c98f3ea16afc780f2d2ebd34cd62bedc95 Mon Sep 17 00:00:00 2001
+From 71b51c36b338097511f856a04c2e410d08f08a69 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 26 Sep 2026 08:20:16 +0000
-Subject: [PATCH 189/267] dt-bindings: media: amlogic,gx-vdec: update
+Subject: [PATCH 189/269] dt-bindings: media: amlogic,gx-vdec: update
  maintainers
 
 Maxime Jourdan no longer works on the Amlogic video decoder. Replace him

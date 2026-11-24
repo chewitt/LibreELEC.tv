@@ -1,7 +1,7 @@
-From f412615a148919684058e07dc7995fdeb67734e0 Mon Sep 17 00:00:00 2001
+From 3150fa28e143c0b9a1afaf0997f9d9c9f476c62d Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:54 +0000
-Subject: [PATCH 080/267] FROMLIST(v7): drm: bridge: dw_hdmi: Drop call to
+Subject: [PATCH 080/269] FROMLIST(v7): drm: bridge: dw_hdmi: Drop call to
  drm_bridge_hpd_notify()
 
 The use of calls to both drm_helper_hpd_irq_event() and

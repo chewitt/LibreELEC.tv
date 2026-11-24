@@ -1,7 +1,7 @@
-From 98cf2c9fd3dd7bdcc653ed356c3da3b6e0226887 Mon Sep 17 00:00:00 2001
+From 547f7abf19be84a1eaee6529409360c8b8c6d513 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Sat, 26 Sep 2026 09:14:35 -0700
-Subject: [PATCH 176/267] media: uapi: add the Amlogic AM21B and AM21C
+Subject: [PATCH 176/269] media: uapi: add the Amlogic AM21B and AM21C
  compressed formats
 
 Describe the single-plane Amlogic framebuffer-compressed formats: AM21C,

@@ -1,7 +1,7 @@
-From 20dffb4aa779a61cf55463149b061924d2ec30f3 Mon Sep 17 00:00:00 2001
+From 5ee292376dbcd5b0ca03a3d04253fcc5ca0133c6 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 155/267] drm/meson: encoder_hdmi: attach the Colorspace
+Subject: [PATCH 155/269] drm/meson: encoder_hdmi: attach the Colorspace
  property
 
 HDR10 output requires BT.2020 colorimetry in the AVI infoframe.

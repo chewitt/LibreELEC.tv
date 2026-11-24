@@ -1,7 +1,7 @@
-From dcb1bb8d60806d2f3eae1161c8191a3f664f0bd8 Mon Sep 17 00:00:00 2001
+From 405c0202efcff3ccdf10e718deefd3ab8beae6bf Mon Sep 17 00:00:00 2001
 From: Valerio Setti <vsetti@baylibre.com>
 Date: Wed, 30 Sep 2026 18:12:30 +0200
-Subject: [PATCH 195/267] VSETTI: ASoC: meson: gx: add gx_stream_prepare()
+Subject: [PATCH 195/269] VSETTI: ASoC: meson: gx: add gx_stream_prepare()
 
 Add gx_stream_prepare() to program the attached formatters, and call it
 from the aiu-encoder-i2s prepare so the formatter is set up before the

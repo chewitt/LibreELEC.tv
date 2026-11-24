@@ -1,7 +1,7 @@
-From 97b4ba1f44bc179a4d84a9d12db51d167e2de65e Mon Sep 17 00:00:00 2001
+From 31be5e239073ffcc6aed2e613f39a08c1436e5aa Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 07:47:00 +0000
-Subject: [PATCH 091/267] FROMLIST(v1): drm/meson: encoder_hdmi: Use bridge
+Subject: [PATCH 091/269] FROMLIST(v1): drm/meson: encoder_hdmi: Use bridge
  connector CEC notifier
 
 The dw-hdmi bridge detect() func now updates EDID and CEC phys addr for

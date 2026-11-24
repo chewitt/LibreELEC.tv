@@ -1,7 +1,7 @@
-From 844d00f0915cf877bea4133698c3ce72c8538c11 Mon Sep 17 00:00:00 2001
+From da78d9d83c085cad666b38e3d9ca7eddde5cb7d4 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:48:07 +0100
-Subject: [PATCH 032/267] FROMGIT(7.4): drm/panfrost: Fix races between perfcnt
+Subject: [PATCH 032/269] FROMGIT(7.4): drm/panfrost: Fix races between perfcnt
  and reset sequence
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

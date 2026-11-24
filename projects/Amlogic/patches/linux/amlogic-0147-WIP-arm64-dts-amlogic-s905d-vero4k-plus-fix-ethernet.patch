@@ -1,7 +1,7 @@
-From 3ffad7673ffb48ee7ff0e95653c4342f2422e5b5 Mon Sep 17 00:00:00 2001
+From b5efb05601b2938731c2d4ec91b65908b1fc5eca Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?De=C3=A9=20G=C3=A1bor?= <dee.gabor@gmail.com>
 Date: Sun, 4 Jan 2026 16:45:39 +0100
-Subject: [PATCH 147/267] WIP: arm64: dts: amlogic: s905d-vero4k-plus: fix
+Subject: [PATCH 147/269] WIP: arm64: dts: amlogic: s905d-vero4k-plus: fix
  ethernet configuration
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

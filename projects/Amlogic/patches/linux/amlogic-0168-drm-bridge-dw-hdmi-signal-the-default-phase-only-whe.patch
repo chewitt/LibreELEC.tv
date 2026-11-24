@@ -1,7 +1,7 @@
-From 0cb2d39d259879bc57148efa7d9b18137471f7ee Mon Sep 17 00:00:00 2001
+From f195e8aeaff28b9d7f9aa6e61d7af5fe79f4f09c Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 26 Sep 2026 16:14:57 +0000
-Subject: [PATCH 168/267] drm/bridge: dw-hdmi: signal the default phase only
+Subject: [PATCH 168/269] drm/bridge: dw-hdmi: signal the default phase only
  when it holds
 
 The packetizer always sets IDEFAULT_PHASE, which asserts Default_Phase

@@ -1,7 +1,7 @@
-From 7c87640f390afa9538008cab9a53d0180916361e Mon Sep 17 00:00:00 2001
+From 473d2528cac6719a6b260753edc3de53cf655d42 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Sat, 26 Sep 2026 09:15:10 -0700
-Subject: [PATCH 188/267] arm64: defconfig: enable the Amlogic video decoder
+Subject: [PATCH 188/269] arm64: defconfig: enable the Amlogic video decoder
 
 Enable the Amlogic stateless video decoder as a module.
 

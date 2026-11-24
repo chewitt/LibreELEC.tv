@@ -1,7 +1,7 @@
-From 798f8f41412364087ee144a8c63195aaec82e1d6 Mon Sep 17 00:00:00 2001
+From 8c70c0bf1bd37cb5c1a934ebc22ade17f31d63cb Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:47:53 +0100
-Subject: [PATCH 018/267] FROMGIT(7.4): drm/panfrost: Move shrinker
+Subject: [PATCH 018/269] FROMGIT(7.4): drm/panfrost: Move shrinker
  initialization and unplug one level down
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

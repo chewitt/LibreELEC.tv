@@ -1,7 +1,7 @@
-From a735d08f2e560c6998c046def6cacadc5a0fc570 Mon Sep 17 00:00:00 2001
+From 238eb42e8c59228b66de6ead1f22690a42f0ef64 Mon Sep 17 00:00:00 2001
 From: Ronald Claveau <linux-kernel-dev@aliel.fr>
 Date: Thu, 1 Oct 2026 18:55:36 +0200
-Subject: [PATCH 121/267] FROMLIST(v4): arm64: dts: amlogic: a1-c3-s4-t7: Add
+Subject: [PATCH 121/269] FROMLIST(v4): arm64: dts: amlogic: a1-c3-s4-t7: Add
  bus clock to PWM controller nodes
 
 Describe the system clock of each PWM controller as a third clock,

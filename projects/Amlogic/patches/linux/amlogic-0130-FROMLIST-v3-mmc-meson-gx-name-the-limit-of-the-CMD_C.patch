@@ -1,7 +1,7 @@
-From d9bf63a75f805c6658ffb963e19cf22fac86e2c3 Mon Sep 17 00:00:00 2001
+From 6eee10f218a2d0a327d48801a7e94ede3d5f71e9 Mon Sep 17 00:00:00 2001
 From: Igor Velkov <iav@iav.lv>
 Date: Fri, 9 Oct 2026 17:02:57 +0000
-Subject: [PATCH 130/267] FROMLIST(v3): mmc: meson-gx: name the limit of the
+Subject: [PATCH 130/269] FROMLIST(v3): mmc: meson-gx: name the limit of the
  CMD_CFG timeout field
 
 The data timeout is capped at a literal 32768 ms with a comment next to

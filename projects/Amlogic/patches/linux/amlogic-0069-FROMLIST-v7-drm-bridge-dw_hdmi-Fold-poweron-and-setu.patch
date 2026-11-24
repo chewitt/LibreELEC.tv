@@ -1,7 +1,7 @@
-From 4c37af557677f097680a13d1b0681fb5c2149495 Mon Sep 17 00:00:00 2001
+From f63968f84f1c4685ae9e54612f8a32e2ebffec20 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 16 May 2026 14:26:49 +0000
-Subject: [PATCH 069/267] FROMLIST(v7): drm: bridge: dw_hdmi: Fold poweron and
+Subject: [PATCH 069/269] FROMLIST(v7): drm: bridge: dw_hdmi: Fold poweron and
  setup functions
 
 Fold the poweron and setup functions into one function and use the

@@ -1,7 +1,7 @@
-From ea15d05ffdee92a3dd6465df131471d5cb43c18c Mon Sep 17 00:00:00 2001
+From 7412acd7317b5e392c9ac57ef45cf124af18d038 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Sat, 26 Sep 2026 09:15:01 -0700
-Subject: [PATCH 187/267] media: amlogic: amvdec: add VP9 decoding
+Subject: [PATCH 187/269] media: amlogic: amvdec: add VP9 decoding
 
 Decode VP9 frame requests on GXL, GXM, G12A, G12B and SM1 through
 VDEC_HEVC. GX uses gxl_vp9.bin and non-MMU reference surfaces.

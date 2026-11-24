@@ -1,7 +1,7 @@
-From c4c7956204740cf282e67838c8018ec22351b547 Mon Sep 17 00:00:00 2001
+From f41be73ea5d3ac97e84db40d795e49064bd3c360 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:56 +0000
-Subject: [PATCH 082/267] FROMLIST(v7): drm: bridge: dw_hdmi: Rework HDP and
+Subject: [PATCH 082/269] FROMLIST(v7): drm: bridge: dw_hdmi: Rework HDP and
  RXSENSE interrupt handling
 
 The commit aeac23bda87f ("drm: bridge/dw_hdmi: improve HDMI

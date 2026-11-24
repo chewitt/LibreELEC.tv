@@ -1,7 +1,7 @@
-From 3f209fa9b36cb2007eb31e3a833a5028c3dfcb22 Mon Sep 17 00:00:00 2001
+From c763f9ce073be84ca203ca418eab51c933c642cd Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:38 +0000
-Subject: [PATCH 064/267] FROMLIST(v7): drm: bridge: dw_hdmi: Only notify
+Subject: [PATCH 064/269] FROMLIST(v7): drm: bridge: dw_hdmi: Only notify
  connected status on HPD interrupt
 
 drm_helper_hpd_irq_event() and drm_bridge_hpd_notify() may incorrectly

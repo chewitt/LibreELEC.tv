@@ -1,7 +1,7 @@
-From f375e2c214ece7dde5b20326da1c8f963ad603e1 Mon Sep 17 00:00:00 2001
+From 94966ec935eb29b023274d77284c2452f29408fe Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 161/267] drm/meson: dw_hdmi: key PHY setup on the TMDS
+Subject: [PATCH 161/269] drm/meson: dw_hdmi: key PHY setup on the TMDS
  character rate
 
 The PHY band and swing selection and the TMDS clock pattern are keyed on

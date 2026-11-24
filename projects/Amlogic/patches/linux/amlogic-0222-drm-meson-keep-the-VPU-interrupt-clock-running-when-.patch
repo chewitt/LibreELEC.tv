@@ -1,7 +1,7 @@
-From 3f4bb1bd5885007b2d3df7f296055cccd42691d5 Mon Sep 17 00:00:00 2001
+From d9917263c68811033f777c72cab8f13a2fda82c1 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 27 Sep 2026 13:21:23 +0000
-Subject: [PATCH 222/267] drm/meson: keep the VPU interrupt clock running when
+Subject: [PATCH 222/269] drm/meson: keep the VPU interrupt clock running when
  vsync is off
 
 Disabling vsync gates HHI_GCLK_MPEG2 bit 25 directly. That bit is the

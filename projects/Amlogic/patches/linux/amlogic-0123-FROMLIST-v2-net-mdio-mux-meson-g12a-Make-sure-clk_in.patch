@@ -1,7 +1,7 @@
-From cd2945a6058ea3e6e4e4813b5e25623b0a700f47 Mon Sep 17 00:00:00 2001
+From b5bb8f0371720a13f4ecd9d0eab4e45f8ddb5f02 Mon Sep 17 00:00:00 2001
 From: Geert Uytterhoeven <geert+renesas@glider.be>
 Date: Thu, 3 Sep 2026 11:00:40 +0200
-Subject: [PATCH 123/267] FROMLIST(v2): net: mdio: mux-meson-g12a: Make sure
+Subject: [PATCH 123/269] FROMLIST(v2): net: mdio: mux-meson-g12a: Make sure
  clk_init_data is fully initialized
 
 The clk_init_data structure contains several mutually-exclusive members

@@ -1,7 +1,7 @@
-From a683be730dd22da573c6b9e704e8e1458e071e70 Mon Sep 17 00:00:00 2001
+From 5a4e73b50e28b67c190d4ae465fae39eddf2ecad Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 13:02:36 +0000
-Subject: [PATCH 251/267] clk: meson: s4-pll: add the CPU clocks
+Subject: [PATCH 251/269] clk: meson: s4-pll: add the CPU clocks
 
 The S4 CPU clock follows the G12A layout: cpu_clk selects either sys_pll
 or a dynamic clock derived from xtal, fclk_div2 or fclk_div3. Unlike on

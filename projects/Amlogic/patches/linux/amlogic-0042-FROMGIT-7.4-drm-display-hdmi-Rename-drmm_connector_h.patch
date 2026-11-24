@@ -1,7 +1,7 @@
-From 3fc3e78b19383966ffd7f4fda0ad28c7681c857e Mon Sep 17 00:00:00 2001
+From b1f2fbf909f62858a7ad1da918db629f2a396a17 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:27 +0300
-Subject: [PATCH 042/267] FROMGIT(7.4): drm/display: hdmi: Rename
+Subject: [PATCH 042/269] FROMGIT(7.4): drm/display: hdmi: Rename
  drmm_connector_hdmi_init() to *_ini2()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -308,7 +308,7 @@ index 353a261d42da..4c2a400bc15a 100644
  				       &dummy_connector_funcs,
  				       hdmi_funcs,
 diff --git a/drivers/gpu/drm/vc4/vc4_hdmi.c b/drivers/gpu/drm/vc4/vc4_hdmi.c
-index caaa096fe04d..990e3547dfa1 100644
+index 856481bd2879..b6311174be77 100644
 --- a/drivers/gpu/drm/vc4/vc4_hdmi.c
 +++ b/drivers/gpu/drm/vc4/vc4_hdmi.c
 @@ -542,7 +542,7 @@ static int vc4_hdmi_connector_init(struct drm_device *dev,

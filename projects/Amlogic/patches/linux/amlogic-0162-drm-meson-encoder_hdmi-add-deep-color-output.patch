@@ -1,7 +1,7 @@
-From 86dcfb046e2d612ee4b4b966e3ea3323d2d72de4 Mon Sep 17 00:00:00 2001
+From aa7c1f9638b24e47680af67143746fe10397b015 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 162/267] drm/meson: encoder_hdmi: add deep color output
+Subject: [PATCH 162/269] drm/meson: encoder_hdmi: add deep color output
 
 Offer 10-bit and 12-bit YUV444 and YUV420 output on the G12A family.
 

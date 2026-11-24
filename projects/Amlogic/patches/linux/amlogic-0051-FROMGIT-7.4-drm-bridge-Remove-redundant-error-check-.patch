@@ -1,7 +1,7 @@
-From 3a5bf944218d7f0e9f88d04d1f909ad5c33f875b Mon Sep 17 00:00:00 2001
+From 918c54eb9f071ab209cd8c1218f61e065d80b5cf Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:39 +0300
-Subject: [PATCH 051/267] FROMGIT(7.4): drm/bridge: Remove redundant error
+Subject: [PATCH 051/269] FROMGIT(7.4): drm/bridge: Remove redundant error
  check in drm_bridge_helper_reset_crtc()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

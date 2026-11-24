@@ -1,7 +1,7 @@
-From d4aa9edcebae299250f2abaff83d16a7deb98d66 Mon Sep 17 00:00:00 2001
+From bf8f8256a8c66fb33697bb067df905db9735970f Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:51 +0000
-Subject: [PATCH 077/267] FROMLIST(v7): drm: bridge: dw_hdmi: Use generic CEC
+Subject: [PATCH 077/269] FROMLIST(v7): drm: bridge: dw_hdmi: Use generic CEC
  notifier helpers
 
 The commit 8b1a8f8b2002 ("drm/display: add CEC helpers code") added

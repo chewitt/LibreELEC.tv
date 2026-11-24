@@ -1,7 +1,7 @@
-From 36b396018cd4734e5a32b7cce38d286af1aa03a2 Mon Sep 17 00:00:00 2001
+From cbbaf097b16a363efd710db8fb1d5b65bb5d0549 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 20:33:25 +0000
-Subject: [PATCH 204/267] ASoC: hdmi-codec: register the sink controls once per
+Subject: [PATCH 204/269] ASoC: hdmi-codec: register the sink controls once per
  codec
 
 hdmi_codec_pcm_new() runs for each DAI, so a codec with both i2s and

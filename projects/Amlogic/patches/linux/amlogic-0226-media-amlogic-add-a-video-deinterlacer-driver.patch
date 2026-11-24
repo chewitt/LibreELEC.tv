@@ -1,7 +1,7 @@
-From a2db66ccac56956120f1657f0274f02e85c9f926 Mon Sep 17 00:00:00 2001
+From 45bb02d58718e7535bd23f9eb4b432f312371323 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 27 Sep 2026 11:23:16 +0000
-Subject: [PATCH 226/267] media: amlogic: add a video deinterlacer driver
+Subject: [PATCH 226/269] media: amlogic: add a video deinterlacer driver
 
 The G12A, G12B, SM1 and S4 SoCs have a video deinterlacer (DI) that
 runs from its own timing generators and writes its output to memory,

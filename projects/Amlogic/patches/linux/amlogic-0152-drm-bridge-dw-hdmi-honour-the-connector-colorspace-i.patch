@@ -1,7 +1,7 @@
-From 2821977ec14cc610b7ce06af926d40e8efc608bf Mon Sep 17 00:00:00 2001
+From a3fd38a0ba4e1f407649178f6226f2f725cbbc2c Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 152/267] drm/bridge: dw-hdmi: honour the connector colorspace
+Subject: [PATCH 152/269] drm/bridge: dw-hdmi: honour the connector colorspace
  in the AVI infoframe
 
 The AVI infoframe colorimetry is derived from the output encoding and

@@ -1,7 +1,7 @@
-From 8b34b87ab9ced44089bb7d5dad55d264748dee3d Mon Sep 17 00:00:00 2001
+From 4e59acce414dd31c92a836eac994013723124428 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 19 May 2026 08:12:03 +0000
-Subject: [PATCH 099/267] fixup! drm/meson: encoder_hdmi: fix undefined
+Subject: [PATCH 099/269] fixup! drm/meson: encoder_hdmi: fix undefined
  err_put_node label
 
 Commit df4fc5788130 ("FROMLIST(v1): drm/meson: encoder_hdmi: Use bridge

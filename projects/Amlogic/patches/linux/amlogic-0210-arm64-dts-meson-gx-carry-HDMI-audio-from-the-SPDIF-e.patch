@@ -1,7 +1,7 @@
-From 13661897f40289e6f3644da4c24cb4e6ad55bb87 Mon Sep 17 00:00:00 2001
+From 13db4ea1c71b8990371cbdd9a3519bf1800d6e59 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 19:20:44 +0000
-Subject: [PATCH 210/267] arm64: dts: meson: gx: carry HDMI audio from the
+Subject: [PATCH 210/269] arm64: dts: meson: gx: carry HDMI audio from the
  SPDIF encoder
 
 The AIU IEC958 encoder only feeds the optical output on boards that have

@@ -1,7 +1,7 @@
-From b4772ee9b13b0ce633718b9de1fe0448b7d7c5ed Mon Sep 17 00:00:00 2001
+From 3e6353facdae5d48f092eff0715607b907fcbe1e Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 1 Oct 2026 10:34:18 +0000
-Subject: [PATCH 171/267] drm/meson: update the HDR infoframe without a modeset
+Subject: [PATCH 171/269] drm/meson: update the HDR infoframe without a modeset
 
 The HDMI encoder forces a modeset whenever the HDR output metadata
 changes, so the output is torn down and the sink resynchronises. Players

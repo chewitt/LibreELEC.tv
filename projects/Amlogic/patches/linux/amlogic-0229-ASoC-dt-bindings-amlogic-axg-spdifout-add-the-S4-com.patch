@@ -1,7 +1,7 @@
-From 5623dfc1647ab491f229488108b31210d42d693e Mon Sep 17 00:00:00 2001
+From 9e84130fbc73cd65a6db064a387f39f7816c3ed1 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 5 Oct 2026 10:29:06 +0000
-Subject: [PATCH 229/267] ASoC: dt-bindings: amlogic,axg-spdifout: add the S4
+Subject: [PATCH 229/269] ASoC: dt-bindings: amlogic,axg-spdifout: add the S4
  compatible
 
 The S4 SPDIF output keeps its sample mask in a per-lane field at a

@@ -1,7 +1,7 @@
-From 686dbfae8ae57c6afc65ee08b3bee3662747416e Mon Sep 17 00:00:00 2001
+From a2760ccc23775efd22cda847f7090905b9183009 Mon Sep 17 00:00:00 2001
 From: Valerio Setti <vsetti@baylibre.com>
 Date: Wed, 21 Oct 2026 23:52:04 +0200
-Subject: [PATCH 139/267] FROMLIST(v1): ASoC: meson: gx-formatter: change
+Subject: [PATCH 139/269] FROMLIST(v1): ASoC: meson: gx-formatter: change
  stream lock from mutex to spinlock
 
 Currently a mutex is being used in 'struct gx_stream' to serialize

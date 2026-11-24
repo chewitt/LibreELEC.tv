@@ -1,7 +1,7 @@
-From 65586cb9015115b2f548a1956a65392f4f45259c Mon Sep 17 00:00:00 2001
+From 5fc14d8bcc660388015d80a17102933d03723bd9 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 17:23:54 +0000
-Subject: [PATCH 258/267] arm64: dts: amlogic: meson-s4: use the S4 MMC
+Subject: [PATCH 258/269] arm64: dts: amlogic: meson-s4: use the S4 MMC
  compatible
 
 The S4 MMC controllers need their own receive delay tuning. Use the S4

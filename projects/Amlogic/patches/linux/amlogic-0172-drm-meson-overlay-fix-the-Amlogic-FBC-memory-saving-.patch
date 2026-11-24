@@ -1,7 +1,7 @@
-From d7cedaff229c721c959441038a3a3f8913f34d80 Mon Sep 17 00:00:00 2001
+From 041f4e43bdf3e13472da4fe1af6ce0935af8ad39 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 28 Sep 2026 07:20:35 +0000
-Subject: [PATCH 172/267] drm/meson: overlay: fix the Amlogic FBC memory saving
+Subject: [PATCH 172/269] drm/meson: overlay: fix the Amlogic FBC memory saving
  mode check
 
 The memory saving test masks the modifier with a full Amlogic FBC

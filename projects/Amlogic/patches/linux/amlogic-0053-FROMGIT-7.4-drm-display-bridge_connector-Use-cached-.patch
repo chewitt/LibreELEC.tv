@@ -1,7 +1,7 @@
-From 8d5fa27a0524727dc5df6d6628dba16a0271fe55 Mon Sep 17 00:00:00 2001
+From dae9d4fecfef81e72946f4bf4925bce14f562558 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:41 +0300
-Subject: [PATCH 053/267] FROMGIT(7.4): drm/display: bridge_connector: Use
+Subject: [PATCH 053/269] FROMGIT(7.4): drm/display: bridge_connector: Use
  cached connector status in .get_modes()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

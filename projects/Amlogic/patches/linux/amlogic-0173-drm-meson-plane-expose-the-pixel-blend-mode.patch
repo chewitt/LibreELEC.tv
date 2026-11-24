@@ -1,7 +1,7 @@
-From 220291ffa2cec0428b7e76222ab402bf41e7686d Mon Sep 17 00:00:00 2001
+From a16fc5f80bfd95bab79023106a077a013e41ad25 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 2 Oct 2026 06:48:55 +0000
-Subject: [PATCH 173/267] drm/meson: plane: expose the pixel blend mode
+Subject: [PATCH 173/269] drm/meson: plane: expose the pixel blend mode
 
 The primary plane offers ARGB8888 and ABGR8888 without a pixel blend
 mode property, which the DRM core now reports at probe, and userspace

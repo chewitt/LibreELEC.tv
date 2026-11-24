@@ -1,7 +1,7 @@
-From 74e41b551250d8677903a6bf491df628ee8a2979 Mon Sep 17 00:00:00 2001
+From 6b3ba69a4e54ff4d40b440074f1bc3b8eb64495b Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 24 Jun 2026 12:22:22 +0000
-Subject: [PATCH 150/267] WIP: arm64: dts: amlogic: add Odroid-C2 HiFi-Shield2
+Subject: [PATCH 150/269] WIP: arm64: dts: amlogic: add Odroid-C2 HiFi-Shield2
  board
 
 Add a board variant for the Hardkernel HiFi-Shield2 mezzanine on the

@@ -1,7 +1,7 @@
-From 88d9fbc2c1ffbecde2f37330a4036ed03fb006eb Mon Sep 17 00:00:00 2001
+From 452a059ffa54b1aa151057b931314f1c3e8d6686 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:47:56 +0100
-Subject: [PATCH 021/267] FROMGIT(7.4): drm/panfrost: Skip NULL checks for
+Subject: [PATCH 021/269] FROMGIT(7.4): drm/panfrost: Skip NULL checks for
  clock enable/disabling
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

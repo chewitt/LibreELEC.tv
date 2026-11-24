@@ -1,7 +1,7 @@
-From e6cd922568e95bf87c1ff9258bbadffe7fe0a001 Mon Sep 17 00:00:00 2001
+From 008f6811fe85c33b9ffeb9c8ce983114bae4ec14 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:33 +0000
-Subject: [PATCH 090/267] FROMLIST(v1): drm/meson: encoder_hdmi: Use CEC phys
+Subject: [PATCH 090/269] FROMLIST(v1): drm/meson: encoder_hdmi: Use CEC phys
  addr from display_info
 
 The dw-hdmi bridge detect() func now updates EDID for the connector.

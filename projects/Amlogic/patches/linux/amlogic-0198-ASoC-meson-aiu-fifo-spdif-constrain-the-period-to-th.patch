@@ -1,7 +1,7 @@
-From 042c12515cad38f938705b0fa9da77e2459851a6 Mon Sep 17 00:00:00 2001
+From 0d3b48df560023446a7431b0cee6ba6007f32ea6 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 16:37:04 +0000
-Subject: [PATCH 198/267] ASoC: meson: aiu: fifo-spdif: constrain the period to
+Subject: [PATCH 198/269] ASoC: meson: aiu: fifo-spdif: constrain the period to
  the FIFO burst
 
 The S/PDIF FIFO reads DDR in whole 128 byte bursts, so a period that is

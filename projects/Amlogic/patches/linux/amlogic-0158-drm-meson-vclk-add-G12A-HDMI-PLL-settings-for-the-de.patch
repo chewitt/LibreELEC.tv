@@ -1,7 +1,7 @@
-From 0509233e3f269537ef1b01960916ebad3dbe7c4d Mon Sep 17 00:00:00 2001
+From 630c783ad78816bd0355f52a2bbcedc33802f998 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 158/267] drm/meson: vclk: add G12A HDMI PLL settings for the
+Subject: [PATCH 158/269] drm/meson: vclk: add G12A HDMI PLL settings for the
  deep color VCOs
 
 Deep color requires the HDMI PLL at 3712.5 MHz (TMDS x1.25) and

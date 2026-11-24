@@ -1,7 +1,7 @@
-From acc0ccab1606b67e1736db764881a88385b06151 Mon Sep 17 00:00:00 2001
+From 1a49075e8dbaeca1b00d49011011486a5065fe81 Mon Sep 17 00:00:00 2001
 From: Valerio Setti <vsetti@baylibre.com>
 Date: Sun, 18 Oct 2026 12:18:00 +0200
-Subject: [PATCH 108/267] FROMLIST(v5): ASoC: meson: aiu-encoder-i2s: ensure
+Subject: [PATCH 108/269] FROMLIST(v5): ASoC: meson: aiu-encoder-i2s: ensure
  clk divider gets disabled in hw_free
 
 A recent Sashiko review [1] on this code revealed the following problem:

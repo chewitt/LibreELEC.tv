@@ -1,7 +1,7 @@
-From 89377d5328efcb398478534864b662523a78987c Mon Sep 17 00:00:00 2001
+From 2be76390261dd48191049d94a5868c925ed1c958 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 18 Sep 2026 16:56:17 +0000
-Subject: [PATCH 216/267] clk: meson: g12a: keep the video decoder off the
+Subject: [PATCH 216/269] clk: meson: g12a: keep the video decoder off the
  audio and GP0 PLLs
 
 The video decoder muxes can select hifi_pll or gp0_pll and carry

@@ -1,7 +1,7 @@
-From 48417e96f7f2d65db5733d3d7c14ab65ec8c44ae Mon Sep 17 00:00:00 2001
+From 1cbf811634e91c6c507e41cc6f4b634d7468ad3d Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:53 +0000
-Subject: [PATCH 079/267] FROMLIST(v7): drm: bridge: dw_hdmi: Declare bridge
+Subject: [PATCH 079/269] FROMLIST(v7): drm: bridge: dw_hdmi: Declare bridge
  CEC notifier support
 
 EDID and CEC phys addr is now being updated in bridge detect() func,

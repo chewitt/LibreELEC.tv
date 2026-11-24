@@ -1,7 +1,7 @@
-From 956bddd2c49c60ca5271d3e804d77ed01d14a678 Mon Sep 17 00:00:00 2001
+From 76d494dc33c1da5ee067a932b4c54bb777476364 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:47:59 +0100
-Subject: [PATCH 024/267] FROMGIT(7.4): drm/panfrost: Explicitly enable MMU
+Subject: [PATCH 024/269] FROMGIT(7.4): drm/panfrost: Explicitly enable MMU
  interrupts at device init
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

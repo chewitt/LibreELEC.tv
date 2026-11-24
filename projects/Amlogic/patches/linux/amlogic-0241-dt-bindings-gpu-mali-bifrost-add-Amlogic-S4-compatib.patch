@@ -1,7 +1,7 @@
-From 4c8c3f69a123d8f7a555b06f0d0c2ad978ac6355 Mon Sep 17 00:00:00 2001
+From 868ab85748408413f7b378e6ef01923de2803465 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 3 Oct 2026 14:44:53 +0000
-Subject: [PATCH 241/267] dt-bindings: gpu: mali-bifrost: add Amlogic S4
+Subject: [PATCH 241/269] dt-bindings: gpu: mali-bifrost: add Amlogic S4
  compatible
 
 The Amlogic S4 SoC family has a Mali-G31 GPU integrated like the one

@@ -1,7 +1,7 @@
-From 4743eea1ea56cc37375f19fd428a5de32fd1c65e Mon Sep 17 00:00:00 2001
+From 7886218902499430a200582d7121318e11b565d2 Mon Sep 17 00:00:00 2001
 From: Igor Velkov <iav@iav.lv>
 Date: Fri, 9 Oct 2026 17:02:58 +0000
-Subject: [PATCH 131/267] FROMLIST(v3): mmc: meson-gx: honour the busy timeout
+Subject: [PATCH 131/269] FROMLIST(v3): mmc: meson-gx: honour the busy timeout
  for R1b commands
 
 For a command without data the driver programs a fixed 1024 ms into the

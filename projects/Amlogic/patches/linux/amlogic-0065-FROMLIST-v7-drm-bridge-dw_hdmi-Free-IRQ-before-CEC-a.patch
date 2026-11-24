@@ -1,7 +1,7 @@
-From 79f97691b5e137f228181ca0714e2fba4384252c Mon Sep 17 00:00:00 2001
+From d95d8faa2a076187a2159a8588f2984c4f0afaf5 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:39 +0000
-Subject: [PATCH 065/267] FROMLIST(v7): drm: bridge: dw_hdmi: Free IRQ before
+Subject: [PATCH 065/269] FROMLIST(v7): drm: bridge: dw_hdmi: Free IRQ before
  CEC adapter is unregistered
 
 The interrupt allocated with devm_request_threaded_irq() can be

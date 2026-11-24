@@ -1,7 +1,7 @@
-From ecc9992d17f9a78834cd017da80b6020942cb35a Mon Sep 17 00:00:00 2001
+From 17a1b121360c1487c92d5e9ba8533e39f299ae29 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 19:20:43 +0000
-Subject: [PATCH 203/267] ASoC: meson: aiu: give each HDMI source its own
+Subject: [PATCH 203/269] ASoC: meson: aiu: give each HDMI source its own
  output DAI
 
 The HDMI controller can be fed by the I2S or the IEC958 encoder, and the

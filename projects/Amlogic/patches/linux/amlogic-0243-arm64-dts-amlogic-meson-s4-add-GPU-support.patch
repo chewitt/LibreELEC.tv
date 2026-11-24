@@ -1,7 +1,7 @@
-From 39f1fe43c16b609b9d9e70278c56619017efd91f Mon Sep 17 00:00:00 2001
+From 42392bc59ca51d19a7d5dfe825f8e547487d77ae Mon Sep 17 00:00:00 2001
 From: Nick Xie <nick@khadas.com>
 Date: Mon, 2 Feb 2026 11:33:10 +0800
-Subject: [PATCH 243/267] arm64: dts: amlogic: meson-s4: add GPU support
+Subject: [PATCH 243/269] arm64: dts: amlogic: meson-s4: add GPU support
 
 Signed-off-by: Nick Xie <nick@khadas.com>
 [chewitt: add the arm,mali-bifrost fallback compatible, use the

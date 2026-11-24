@@ -1,7 +1,7 @@
-From 968c2b10bf98bf7f647b4c872ef006beb2a46063 Mon Sep 17 00:00:00 2001
+From 6eaf6b089e2aa2872ed8530f8e72bdfa3f085bb7 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:41 +0000
-Subject: [PATCH 098/267] FROMLIST(v1): drm/meson: dw-hdmi: Use
+Subject: [PATCH 098/269] FROMLIST(v1): drm/meson: dw-hdmi: Use
  suspend_late/resume_early/resume_noirq pm ops
 
 meson_drv_pm_suspend()/drm_mode_config_helper_suspend() and

@@ -1,7 +1,7 @@
-From 8acd69cda418a5c1afefc629d416af606c7924c9 Mon Sep 17 00:00:00 2001
+From ad8816ebb0ffd76bfea4e325053648e1e39d2193 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:25 +0300
-Subject: [PATCH 040/267] FROMGIT(7.4): video/hdmi: Introduce HDMI version enum
+Subject: [PATCH 040/269] FROMGIT(7.4): video/hdmi: Introduce HDMI version enum
 
 Add an enum to represent HDMI specification versions.  This will be used
 by upcoming changes to associate HDMI connectors and bridges with a

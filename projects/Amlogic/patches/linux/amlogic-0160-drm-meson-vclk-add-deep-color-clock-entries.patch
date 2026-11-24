@@ -1,7 +1,7 @@
-From d55d06201352bcc92501d3408193b159f901d3aa Mon Sep 17 00:00:00 2001
+From bed3bae82ba602439d83e84996c639eaa424995e Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 160/267] drm/meson: vclk: add deep color clock entries
+Subject: [PATCH 160/269] drm/meson: vclk: add deep color clock entries
 
 Deep color runs the TMDS character rate at 1.25x (10-bit) or 1.5x
 (12-bit) the pixel clock, which the fractional vid_pll dividers can

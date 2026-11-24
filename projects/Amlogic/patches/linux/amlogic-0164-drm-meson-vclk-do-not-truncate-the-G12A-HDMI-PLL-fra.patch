@@ -1,7 +1,7 @@
-From e4017f2045a91f9ebead69b65f00c8dbfe9e97a4 Mon Sep 17 00:00:00 2001
+From a9d6054c5d98c95f4105e0da33bf60fc05a6eb80 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 3 Oct 2026 14:57:52 +0000
-Subject: [PATCH 164/267] drm/meson: vclk: do not truncate the G12A HDMI PLL
+Subject: [PATCH 164/269] drm/meson: vclk: do not truncate the G12A HDMI PLL
  fraction
 
 The G12A HDMI PLL fraction is 17 bits wide, but the generic PLL path

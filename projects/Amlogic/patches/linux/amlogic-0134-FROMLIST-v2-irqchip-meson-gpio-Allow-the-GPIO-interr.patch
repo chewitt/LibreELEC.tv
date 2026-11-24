@@ -1,7 +1,7 @@
-From 4219db34887d6b6795a65270c5ae7a934e29c688 Mon Sep 17 00:00:00 2001
+From 92fa4c64cfc7e1451bcfb74d77d6bde29f37028a Mon Sep 17 00:00:00 2001
 From: Igor Velkov <iav@iav.lv>
 Date: Sat, 10 Oct 2026 18:20:30 +0000
-Subject: [PATCH 134/267] FROMLIST(v2): irqchip/meson-gpio: Allow the GPIO
+Subject: [PATCH 134/269] FROMLIST(v2): irqchip/meson-gpio: Allow the GPIO
  interrupts to wake the system
 
 meson_gpio_irq_chip has neither .irq_set_wake nor IRQCHIP_SKIP_SET_WAKE,

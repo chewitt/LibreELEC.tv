@@ -1,7 +1,7 @@
-From 3667b03272daa361707a67a04e733e46f69916e9 Mon Sep 17 00:00:00 2001
+From 2d5f1ab1047ce509404c359beb0aae2dcbcd0fe3 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 5 Oct 2026 11:11:38 +0000
-Subject: [PATCH 265/267] arm64: dts: amlogic: meson-s4: add the video decoder
+Subject: [PATCH 265/269] arm64: dts: amlogic: meson-s4: add the video decoder
 
 Add the DOS video decoder node, with the HEVC mailbox 0 interrupt that
 the AV1 firmware signals on, the VDEC_1 and VDEC_HEVC secure power

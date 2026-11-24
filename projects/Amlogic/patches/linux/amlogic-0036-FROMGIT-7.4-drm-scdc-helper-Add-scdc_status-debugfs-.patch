@@ -1,7 +1,7 @@
-From 6f946dddb54ccc76aba17681be2eb1f9d91805da Mon Sep 17 00:00:00 2001
+From 6530f9d8208d8f35cf96c3e13c2f8c52541ae7d5 Mon Sep 17 00:00:00 2001
 From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
 Date: Fri, 24 Jul 2026 16:22:37 +0200
-Subject: [PATCH 036/267] FROMGIT(7.4): drm/scdc-helper: Add scdc_status
+Subject: [PATCH 036/269] FROMGIT(7.4): drm/scdc-helper: Add scdc_status
  debugfs entry
 
 SCDC provides status information on the current display link. At the

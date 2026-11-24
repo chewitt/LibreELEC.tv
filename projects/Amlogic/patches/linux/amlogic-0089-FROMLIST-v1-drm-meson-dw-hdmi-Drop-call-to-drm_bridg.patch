@@ -1,7 +1,7 @@
-From 961d0e74d80bff7aa896e50f2195edc530764037 Mon Sep 17 00:00:00 2001
+From e272978ee09fc0144b89d755d440b40259a34339 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:32 +0000
-Subject: [PATCH 089/267] FROMLIST(v1): drm/meson: dw-hdmi: Drop call to
+Subject: [PATCH 089/269] FROMLIST(v1): drm/meson: dw-hdmi: Drop call to
  drm_bridge_hpd_notify()
 
 Calls to both drm_helper_hpd_irq_event() and drm_bridge_hpd_notify() in

@@ -1,7 +1,7 @@
-From f766d3520a2b36fff4b9f7e5c455ec07ff1d11ef Mon Sep 17 00:00:00 2001
+From 17c1b43047d9ab1cfa10ef70a03eac56f4d87ba9 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 16:37:22 +0000
-Subject: [PATCH 199/267] ASoC: meson: aiu: fifo-spdif: start the DCU before
+Subject: [PATCH 199/269] ASoC: meson: aiu: fifo-spdif: start the DCU before
  the FIFO
 
 The S/PDIF FIFO is started before the DCU that drains it, so the DCU

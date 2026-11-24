@@ -1,7 +1,7 @@
-From ac43f59df7cb06a086c5206be2055a2241aa50c7 Mon Sep 17 00:00:00 2001
+From 45d0dabe56d0bfe3fbead3544052f983ee1dcc29 Mon Sep 17 00:00:00 2001
 From: Jiebing Chen <jiebing.chen@amlogic.com>
 Date: Wed, 21 Oct 2026 15:08:31 +0800
-Subject: [PATCH 117/267] FROMLIST(v7): clk: meson: axg_audio: add S4 support
+Subject: [PATCH 117/269] FROMLIST(v7): clk: meson: axg_audio: add S4 support
 
 Add S4 support the axg audio clock controllers, Compared with the
 previous version, the selection of the audio's clock and data pad

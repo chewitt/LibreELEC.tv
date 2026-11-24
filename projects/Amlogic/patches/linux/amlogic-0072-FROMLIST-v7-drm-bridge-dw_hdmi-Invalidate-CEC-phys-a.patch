@@ -1,7 +1,7 @@
-From d9f4860c9f52bfe308207d1ec664b10236964679 Mon Sep 17 00:00:00 2001
+From 5420e8f0a0de11e48f4173e9a31292c8d0e3420a Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:46 +0000
-Subject: [PATCH 072/267] FROMLIST(v7): drm: bridge: dw_hdmi: Invalidate CEC
+Subject: [PATCH 072/269] FROMLIST(v7): drm: bridge: dw_hdmi: Invalidate CEC
  phys addr from connector detect
 
 Wait until the connector detect ops is called to invalidate CEC phys

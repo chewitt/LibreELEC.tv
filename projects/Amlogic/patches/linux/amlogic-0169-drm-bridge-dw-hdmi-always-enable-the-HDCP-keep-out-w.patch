@@ -1,7 +1,7 @@
-From dd89ffb26e599ee3d901ef33794c6b8f836230b2 Mon Sep 17 00:00:00 2001
+From 26851e330a3195b66235e05636a6f03106588d54 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 2 Oct 2026 05:58:23 +0000
-Subject: [PATCH 169/267] drm/bridge: dw-hdmi: always enable the HDCP keep-out
+Subject: [PATCH 169/269] drm/bridge: dw-hdmi: always enable the HDCP keep-out
  window
 
 The frame composer enables the HDCP keep-out window only when HDCP is

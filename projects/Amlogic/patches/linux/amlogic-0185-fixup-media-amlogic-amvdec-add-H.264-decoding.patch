@@ -1,7 +1,7 @@
-From 27580eee3452e617734c28a3b0afc88f4364cba7 Mon Sep 17 00:00:00 2001
+From ba7145863a940af21d76662f4b6ba88ba9d39e81 Mon Sep 17 00:00:00 2001
 From: Andreas Baierl <ichgeh@imkreisrum.de>
 Date: Mon, 9 Nov 2026 09:54:54 +0100
-Subject: [PATCH 185/267] fixup! media: amlogic: amvdec: add H.264 decoding
+Subject: [PATCH 185/269] fixup! media: amlogic: amvdec: add H.264 decoding
 
 media: amlogic: amvdec: h264: abort a frame if no capture is picked
 

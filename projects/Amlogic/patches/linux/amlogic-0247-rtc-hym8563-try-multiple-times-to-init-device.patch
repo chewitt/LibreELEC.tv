@@ -1,7 +1,7 @@
-From 12f1e13ac746ba2a1a1c1fa918defb71983bf564 Mon Sep 17 00:00:00 2001
+From e0f72a23eda74ff67fae400901cfa2952053d3a4 Mon Sep 17 00:00:00 2001
 From: Nick Xie <nick@khadas.com>
 Date: Wed, 20 Aug 2025 10:23:32 +0800
-Subject: [PATCH 247/267] rtc: hym8563: try multiple times to init device
+Subject: [PATCH 247/269] rtc: hym8563: try multiple times to init device
 
 Signed-off-by: Nick Xie <nick@khadas.com>
 Change-Id: I28da2c1edc4b51f616675b4f5478d2b092fbdf42

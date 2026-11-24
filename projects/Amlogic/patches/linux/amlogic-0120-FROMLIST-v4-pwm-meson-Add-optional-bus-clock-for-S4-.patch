@@ -1,7 +1,7 @@
-From 0e21901d1244bc45d65a7236fbc7ee6a82a327c4 Mon Sep 17 00:00:00 2001
+From 21a063989d02a5553b4e0dee4569f6fe4897e96a Mon Sep 17 00:00:00 2001
 From: Ronald Claveau <linux-kernel-dev@aliel.fr>
 Date: Thu, 1 Oct 2026 18:55:35 +0200
-Subject: [PATCH 120/267] FROMLIST(v4): pwm: meson: Add optional bus clock for
+Subject: [PATCH 120/269] FROMLIST(v4): pwm: meson: Add optional bus clock for
  S4 PWM
 
 On some SoCs (e.g. T7), the PWM controller has a system clock that must

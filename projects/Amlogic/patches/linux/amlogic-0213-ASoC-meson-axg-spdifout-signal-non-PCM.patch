@@ -1,7 +1,7 @@
-From a8216bd2ec4f0be65d8306dc0092a78ad2c71925 Mon Sep 17 00:00:00 2001
+From c2c3c010b997198107eceed80556a8f04235945f Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 15 Sep 2026 01:46:26 +0000
-Subject: [PATCH 213/267] ASoC: meson: axg-spdifout: signal non-PCM
+Subject: [PATCH 213/269] ASoC: meson: axg-spdifout: signal non-PCM
 
 The S/PDIF output always signals linear PCM. The channel status is built
 from the hardware parameters with the non-audio bit clear, and there is

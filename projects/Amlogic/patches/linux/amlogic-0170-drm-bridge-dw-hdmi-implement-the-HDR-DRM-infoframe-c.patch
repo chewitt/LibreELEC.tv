@@ -1,7 +1,7 @@
-From be61392d12f41d5b908f5dd0b6e26d310ea02b04 Mon Sep 17 00:00:00 2001
+From a947cb53904ea858ca8e54893f82a40bed3470df Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 1 Oct 2026 10:33:08 +0000
-Subject: [PATCH 170/267] drm/bridge: dw-hdmi: implement the HDR DRM infoframe
+Subject: [PATCH 170/269] drm/bridge: dw-hdmi: implement the HDR DRM infoframe
  callbacks
 
 The Dynamic Range and Mastering infoframe is only programmed when the

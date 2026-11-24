@@ -1,7 +1,7 @@
-From a41cd8c64f2a9cdbc2cde0e2b46cf41d15779b46 Mon Sep 17 00:00:00 2001
+From e0137cb79c2bf9849a1258a93e4944e52a72b8bb Mon Sep 17 00:00:00 2001
 From: Valerio Setti <vsetti@baylibre.com>
 Date: Sun, 18 Oct 2026 12:17:59 +0200
-Subject: [PATCH 107/267] FROMLIST(v5): ASoC: meson: build gx-formatter as a
+Subject: [PATCH 107/269] FROMLIST(v5): ASoC: meson: build gx-formatter as a
  separate module
 
 Instead of including it in 'snd-soc-meson-aiu', create a separate module

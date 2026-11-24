@@ -1,7 +1,7 @@
-From bd6c0c047a9548dd088bcddbc7cf7a9c435873f0 Mon Sep 17 00:00:00 2001
+From 57f5d28dd7bd43b1a9181514ab25a1d096350914 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jean-Fran=C3=A7ois=20Lessard?= <jefflessard3@gmail.com>
 Date: Fri, 21 Nov 2025 09:59:03 -0500
-Subject: [PATCH 101/267] FROMLIST(v6): dt-bindings: auxdisplay: add Titan
+Subject: [PATCH 101/269] FROMLIST(v6): dt-bindings: auxdisplay: add Titan
  Micro Electronics TM16xx
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

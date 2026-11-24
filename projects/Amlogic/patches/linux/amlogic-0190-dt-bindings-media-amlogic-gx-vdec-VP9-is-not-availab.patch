@@ -1,7 +1,7 @@
-From f03bb5093b4339c71e53c5caef1589aaa1becded Mon Sep 17 00:00:00 2001
+From 91a4807534b65fafd6180ae7e55ef88de3af7f37 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 26 Sep 2026 08:20:28 +0000
-Subject: [PATCH 190/267] dt-bindings: media: amlogic,gx-vdec: VP9 is not
+Subject: [PATCH 190/269] dt-bindings: media: amlogic,gx-vdec: VP9 is not
  available on GXBB and GXLX
 
 The description says VDEC_HEVC decodes VP9, but GXBB and GXLX have no

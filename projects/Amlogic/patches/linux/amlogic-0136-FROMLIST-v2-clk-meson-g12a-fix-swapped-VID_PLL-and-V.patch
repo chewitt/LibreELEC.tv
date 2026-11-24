@@ -1,7 +1,7 @@
-From 13af601b37bcfb28c4326e03986931c0d08b7258 Mon Sep 17 00:00:00 2001
+From f6b6f275cf97a7bc721bf4e5090c0168a7ca4ec6 Mon Sep 17 00:00:00 2001
 From: Ronald Claveau <linux-kernel-dev@aliel.fr>
 Date: Fri, 23 Oct 2026 14:53:51 +0200
-Subject: [PATCH 136/267] FROMLIST(v2): clk: meson: g12a: fix swapped VID_PLL
+Subject: [PATCH 136/269] FROMLIST(v2): clk: meson: g12a: fix swapped VID_PLL
  and VID_PLL_DIV clock ids
 
 In g12a onecell data table CLKID_VID_PLL points to g12a_vid_pll_div

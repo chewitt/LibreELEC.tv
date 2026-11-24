@@ -1,7 +1,7 @@
-From 34ab246927033f17bf52c7b6aef5f8ec537abba7 Mon Sep 17 00:00:00 2001
+From 96dd0f7bca278b153faab0748a1b8bc8a9d7e882 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:26 +0300
-Subject: [PATCH 041/267] FROMGIT(7.4): drm/connector: hdmi: Handle reset()
+Subject: [PATCH 041/269] FROMGIT(7.4): drm/connector: hdmi: Handle reset()
  state allocation failure
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

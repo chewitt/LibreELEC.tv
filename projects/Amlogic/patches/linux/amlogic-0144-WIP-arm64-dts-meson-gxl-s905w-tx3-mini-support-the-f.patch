@@ -1,7 +1,7 @@
-From 056fe68ad2a86cef3880afb0a8fbb01e2058db5d Mon Sep 17 00:00:00 2001
+From 892a1bfd5d41824a9be571195825fc8c8c11a0b9 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 11 Jun 2025 11:23:44 +0000
-Subject: [PATCH 144/267] WIP: arm64: dts: meson-gxl-s905w-tx3-mini: support
+Subject: [PATCH 144/269] WIP: arm64: dts: meson-gxl-s905w-tx3-mini: support
  the fd628 display
 
 The TX3-mini has an FD628 display. Add support using the tm166xx

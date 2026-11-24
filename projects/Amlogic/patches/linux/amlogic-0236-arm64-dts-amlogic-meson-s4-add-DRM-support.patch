@@ -1,7 +1,7 @@
-From e9a347113e9f0f8cfdc8a1aacac2773083bd7f61 Mon Sep 17 00:00:00 2001
+From 0eb0f0d8e832651d5f1e4c2a5a3b4ca149964a6c Mon Sep 17 00:00:00 2001
 From: Nick Xie <nick@khadas.com>
 Date: Mon, 2 Feb 2026 11:29:10 +0800
-Subject: [PATCH 236/267] arm64: dts: amlogic: meson-s4: add DRM support
+Subject: [PATCH 236/269] arm64: dts: amlogic: meson-s4: add DRM support
 
 Signed-off-by: Nick Xie <nick@khadas.com>
 [chewitt: drop the duplicate reset header include, move the USB

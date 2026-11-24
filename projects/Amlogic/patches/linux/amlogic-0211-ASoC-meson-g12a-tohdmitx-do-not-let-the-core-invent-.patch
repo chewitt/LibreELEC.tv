@@ -1,7 +1,7 @@
-From 9629589691b1521e629a81de45f29c9927741882 Mon Sep 17 00:00:00 2001
+From 6c11e0455754c298d4c05e6af9e987ed2b9db0b7 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 17 Sep 2026 07:39:29 +0000
-Subject: [PATCH 211/267] ASoC: meson: g12a-tohdmitx: do not let the core
+Subject: [PATCH 211/269] ASoC: meson: g12a-tohdmitx: do not let the core
  invent a slot mask
 
 The card driver gives codecs the per-lane TDM slot count, and

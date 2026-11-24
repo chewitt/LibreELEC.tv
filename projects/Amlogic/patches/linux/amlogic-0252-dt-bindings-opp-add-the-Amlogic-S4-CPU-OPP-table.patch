@@ -1,7 +1,7 @@
-From 53b918c929d893bca0405001c1ece51ca8fa0797 Mon Sep 17 00:00:00 2001
+From ad355a171ac9c6e91fb3081e48ef1edf1fe3cb6a Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 7 Oct 2026 12:32:44 +0000
-Subject: [PATCH 252/267] dt-bindings: opp: add the Amlogic S4 CPU OPP table
+Subject: [PATCH 252/269] dt-bindings: opp: add the Amlogic S4 CPU OPP table
 
 Amlogic S4 SoCs are binned at manufacture, and better bins run the same
 CPU frequencies at lower voltages. The bin is stored in efuse and is

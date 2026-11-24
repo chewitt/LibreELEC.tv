@@ -1,7 +1,7 @@
-From ea070285c5afe40261abc560a60ee1d671106277 Mon Sep 17 00:00:00 2001
+From 6efe7f796da12d88e365a57f11c0e6defc5f39fc Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:30 +0300
-Subject: [PATCH 045/267] FROMGIT(7.4): drm/probe-helper: Introduce
+Subject: [PATCH 045/269] FROMGIT(7.4): drm/probe-helper: Introduce
  .force_ctx() connector callback
 
 The .force() connector callback is invoked by

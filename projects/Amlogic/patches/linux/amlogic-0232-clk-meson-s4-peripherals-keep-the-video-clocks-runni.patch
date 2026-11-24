@@ -1,7 +1,7 @@
-From 312b9082c2b04cffaea1207aeb2ed4700f20b2a7 Mon Sep 17 00:00:00 2001
+From 9c926f104e409dda16bcc2efdb964d95ea4bbebf Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 5 Oct 2026 05:10:26 +0000
-Subject: [PATCH 232/267] clk: meson: s4-peripherals: keep the video clocks
+Subject: [PATCH 232/269] clk: meson: s4-peripherals: keep the video clocks
  running
 
 The display driver programs the video clock tree directly, so the clock

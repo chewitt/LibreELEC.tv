@@ -1,7 +1,7 @@
-From 2bf444fce35bdc290d487e2a01f2c5c5920af1cc Mon Sep 17 00:00:00 2001
+From b131f6595bd8b16b7f628b7a985a4cfc73c1491f Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Sat, 26 Sep 2026 09:14:38 -0700
-Subject: [PATCH 182/267] media: amlogic: amvdec: add MPEG-2 decoding
+Subject: [PATCH 182/269] media: amlogic: amvdec: add MPEG-2 decoding
 
 Decode MPEG-2 slice requests with the multi-instance firmware. Synthesize
 sequence and picture headers from controls, resolve prediction buffers

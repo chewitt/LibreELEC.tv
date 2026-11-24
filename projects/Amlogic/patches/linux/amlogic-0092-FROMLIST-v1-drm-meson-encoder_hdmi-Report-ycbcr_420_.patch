@@ -1,7 +1,7 @@
-From e45d14ab8abb73b5a2e430162557834c3be7b0c6 Mon Sep 17 00:00:00 2001
+From d28c9803151eca741635d434baa2dca30b2b89d2 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:35 +0000
-Subject: [PATCH 092/267] FROMLIST(v1): drm/meson: encoder_hdmi: Report
+Subject: [PATCH 092/269] FROMLIST(v1): drm/meson: encoder_hdmi: Report
  ycbcr_420_allowed from encoder
 
 The bridge connector report ycbcr_420_allowed support when all bridges

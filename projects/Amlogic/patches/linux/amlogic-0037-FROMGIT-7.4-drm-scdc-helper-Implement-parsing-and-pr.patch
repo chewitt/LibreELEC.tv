@@ -1,7 +1,7 @@
-From cad6a5040285d0184c3762c8a54696b7ebfbf863 Mon Sep 17 00:00:00 2001
+From e02b22c66c315aae4789e5dd406aad9cf602c257 Mon Sep 17 00:00:00 2001
 From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
 Date: Fri, 24 Jul 2026 16:22:38 +0200
-Subject: [PATCH 037/267] FROMGIT(7.4): drm/scdc-helper: Implement parsing and
+Subject: [PATCH 037/269] FROMGIT(7.4): drm/scdc-helper: Implement parsing and
  printing HDMI 2.1 fields
 
 HDMI 2.1 redefines previously reserved fields in SCDC for various new

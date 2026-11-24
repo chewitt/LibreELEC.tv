@@ -1,7 +1,7 @@
-From fbeab347cf78098b65f613dbf4ccf9c8ee095332 Mon Sep 17 00:00:00 2001
+From a2ec9db87b5d01ce02deb96cb1d1c7941d710a3d Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 15:10:10 +0000
-Subject: [PATCH 255/267] arm64: dts: amlogic: meson-s4-s905y4-khadas-vim1s:
+Subject: [PATCH 255/269] arm64: dts: amlogic: meson-s4-s905y4-khadas-vim1s:
  let the SD supply power off
 
 The SD card supply was always on, so the card kept power across a warm

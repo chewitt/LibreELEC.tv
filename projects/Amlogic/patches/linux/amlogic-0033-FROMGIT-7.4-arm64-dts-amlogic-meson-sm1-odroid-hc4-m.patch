@@ -1,7 +1,7 @@
-From 4d56163b3104be9de12a6964186eb677147c501c Mon Sep 17 00:00:00 2001
+From 7ef8dc377572b90b11fce653211c8098275d2ea7 Mon Sep 17 00:00:00 2001
 From: Igor Velkov <iav@iav.lv>
 Date: Fri, 2 Oct 2026 21:36:46 +0300
-Subject: [PATCH 033/267] FROMGIT(7.4): arm64: dts: amlogic:
+Subject: [PATCH 033/269] FROMGIT(7.4): arm64: dts: amlogic:
  meson-sm1-odroid-hc4: mux the SPI NOR HOLD# and WP# pins
 
 The SPI NOR flash uses six lines, but nor_pins covers only four: data,

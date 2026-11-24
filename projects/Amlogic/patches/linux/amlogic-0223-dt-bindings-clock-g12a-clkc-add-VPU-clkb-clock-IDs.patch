@@ -1,7 +1,7 @@
-From 19fd469c43b93d057a2ecc73b4a277b71ccb9c02 Mon Sep 17 00:00:00 2001
+From 4a126add81918a2ba39e9e65378b578467c94e69 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 27 Sep 2026 09:02:04 +0000
-Subject: [PATCH 223/267] dt-bindings: clock: g12a-clkc: add VPU clkb clock IDs
+Subject: [PATCH 223/269] dt-bindings: clock: g12a-clkc: add VPU clkb clock IDs
 
 Add IDs for the VPU clkb clock tree that clocks the video deinterlacer.
 

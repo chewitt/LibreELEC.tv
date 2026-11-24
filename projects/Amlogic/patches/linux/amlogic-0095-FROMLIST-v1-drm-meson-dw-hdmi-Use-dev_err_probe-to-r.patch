@@ -1,7 +1,7 @@
-From eefff1b443f0240c5d1008cb8133391360045aeb Mon Sep 17 00:00:00 2001
+From 1684273756370981d282a34f6cacc8c9524816ca Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:38 +0000
-Subject: [PATCH 095/267] FROMLIST(v1): drm/meson: dw-hdmi: Use dev_err_probe()
+Subject: [PATCH 095/269] FROMLIST(v1): drm/meson: dw-hdmi: Use dev_err_probe()
  to report errors
 
 Change to use dev_err_probe() to report bind() errors consistently.

@@ -1,7 +1,7 @@
-From 6d65e5639c7c71d3085b8d77743ef293e3c8723b Mon Sep 17 00:00:00 2001
+From 774464f46bb6c7fcb0969bb72a2f312f946335ae Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 9 Feb 2023 10:11:39 +0000
-Subject: [PATCH 145/267] WIP: arm64: dts: meson-gxm-tx9-pro: support the fd628
+Subject: [PATCH 145/269] WIP: arm64: dts: meson-gxm-tx9-pro: support the fd628
  display
 
 The TX9-Pro has an FD628 display. Add support using the tm166xx

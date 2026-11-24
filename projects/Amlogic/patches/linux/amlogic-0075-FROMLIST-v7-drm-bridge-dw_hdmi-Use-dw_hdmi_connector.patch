@@ -1,7 +1,7 @@
-From d986d72649ad097aff1bbbec063ad398cf47485a Mon Sep 17 00:00:00 2001
+From 46cf05711acf9aaf89a7c09be793540f69e51d84 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:49 +0000
-Subject: [PATCH 075/267] FROMLIST(v7): drm: bridge: dw_hdmi: Use
+Subject: [PATCH 075/269] FROMLIST(v7): drm: bridge: dw_hdmi: Use
  dw_hdmi_connector_status_update()
 
 Update connector EDID and CEC phys addr from detect and force funcs to

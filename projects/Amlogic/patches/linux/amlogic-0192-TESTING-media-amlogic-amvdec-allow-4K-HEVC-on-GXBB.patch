@@ -1,7 +1,7 @@
-From 35da1995f4a0b2b1ad9de06c4f410ef69cf06845 Mon Sep 17 00:00:00 2001
+From 8b5e05bbe01fa0c088ad952929d3ece7de7f9882 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 2 Oct 2026 20:34:43 +0000
-Subject: [PATCH 192/267] TESTING: media: amlogic: amvdec: allow 4K HEVC on
+Subject: [PATCH 192/269] TESTING: media: amlogic: amvdec: allow 4K HEVC on
  GXBB
 
 GXBB caps HEVC at 1920x1088. Raise it to the GXL limit of 4096x2304 so

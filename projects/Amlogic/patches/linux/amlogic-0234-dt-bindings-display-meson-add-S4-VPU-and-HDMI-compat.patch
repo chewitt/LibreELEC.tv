@@ -1,7 +1,7 @@
-From ad88f57f5f6d4dd3b9e0d0eff470f3a76c13a3be Mon Sep 17 00:00:00 2001
+From 2b9b6182136486c23577c021ce7bd3a7f924bf6f Mon Sep 17 00:00:00 2001
 From: Ao Xu <ao.xu@amlogic.com>
 Date: Mon, 2 Feb 2026 10:56:14 +0800
-Subject: [PATCH 234/267] dt-bindings: display: meson: add S4 VPU and HDMI
+Subject: [PATCH 234/269] dt-bindings: display: meson: add S4 VPU and HDMI
  compatibles
 
 The S4 VPU splits the HIU registers into clkctrl, pwrctrl and sysctrl

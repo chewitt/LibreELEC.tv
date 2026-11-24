@@ -1,7 +1,7 @@
-From efe0705dbd8efcaf6210664d37809ebcdf9538ed Mon Sep 17 00:00:00 2001
+From bf6f1974cb0aed87ebaf04f2f2608e82f84ccdd2 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 16:39:38 +0000
-Subject: [PATCH 206/267] drm/bridge: dw-hdmi: support HBR on the SPDIF audio
+Subject: [PATCH 206/269] drm/bridge: dw-hdmi: support HBR on the SPDIF audio
  input
 
 An HBR stream (TrueHD, DTS-HD MA) arrives on the SPDIF input as eight

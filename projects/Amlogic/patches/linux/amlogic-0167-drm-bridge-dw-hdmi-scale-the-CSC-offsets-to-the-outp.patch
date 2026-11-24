@@ -1,7 +1,7 @@
-From 9d636fad2c7ffecda189b8a9e2665b96509633af Mon Sep 17 00:00:00 2001
+From 16a27eaf7505f8bcbcbf9a226f2fd8219702e7de Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 26 Sep 2026 16:14:30 +0000
-Subject: [PATCH 167/267] drm/bridge: dw-hdmi: scale the CSC offsets to the
+Subject: [PATCH 167/269] drm/bridge: dw-hdmi: scale the CSC offsets to the
  output color depth
 
 The CSC coefficients are gains and do not depend on the color depth,

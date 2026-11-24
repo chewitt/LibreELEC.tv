@@ -1,7 +1,7 @@
-From 4d6911f72c1c21dfbdbe74d47150973941c11ae0 Mon Sep 17 00:00:00 2001
+From 1283e368b9c233e2d423040ed41e48e2335335e1 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 157/267] drm/meson: vclk: bound the G12A HDMI PLL lock retries
+Subject: [PATCH 157/269] drm/meson: vclk: bound the G12A HDMI PLL lock retries
 
 The G12A HDMI PLL is reset until it reports lock. If the analog
 settings do not suit the requested VCO the loop never ends and the

@@ -1,7 +1,7 @@
-From 951653bea57b25442e298a1064b670516cdf3413 Mon Sep 17 00:00:00 2001
+From 30d63ee176b2b6f7a0052aa8dcb3e40e51c2b212 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:48:05 +0100
-Subject: [PATCH 030/267] FROMGIT(7.4): drm/panfrost: Avoid cache flush after
+Subject: [PATCH 030/269] FROMGIT(7.4): drm/panfrost: Avoid cache flush after
  perfcnt sample in fully coherent systems
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

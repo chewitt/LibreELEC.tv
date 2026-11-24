@@ -1,7 +1,7 @@
-From dd040a4a370ffff56cd7625fdbb74dd5d0b3a2b1 Mon Sep 17 00:00:00 2001
+From 3312c317e0131ea8ad5e3693684579dd87665df9 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jean-Fran=C3=A7ois=20Lessard?= <jefflessard3@gmail.com>
 Date: Fri, 21 Nov 2025 09:59:07 -0500
-Subject: [PATCH 105/267] FROMLIST(v6): auxdisplay: TM16xx: Add support for
+Subject: [PATCH 105/269] FROMLIST(v6): auxdisplay: TM16xx: Add support for
  SPI-based controllers
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

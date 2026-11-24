@@ -1,7 +1,7 @@
-From fe5ae0d23c502e0ab0233e3dfc9753370a4f43f3 Mon Sep 17 00:00:00 2001
+From d67f48f84565eaa44f2b7996644d130245be9651 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Thu, 20 Aug 2026 15:04:49 +0100
-Subject: [PATCH 015/267] FROMGIT(7.4): drm/panfrost: Remove unnecessary header
+Subject: [PATCH 015/269] FROMGIT(7.4): drm/panfrost: Remove unnecessary header
  file include
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -1,7 +1,7 @@
-From d28f3001126aafb7ecaaf8f27ed224e64ac7f77f Mon Sep 17 00:00:00 2001
+From 3d092138207e302a457ef9eb6374495949764546 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 12 Sep 2026 15:17:18 +0000
-Subject: [PATCH 159/267] drm/meson: vclk: add GXL/GXM HDMI PLL settings for
+Subject: [PATCH 159/269] drm/meson: vclk: add GXL/GXM HDMI PLL settings for
  the deep color VCOs
 
 Add the GXL/GXM m/frac values for the 3712.5 MHz and 4455 MHz deep color

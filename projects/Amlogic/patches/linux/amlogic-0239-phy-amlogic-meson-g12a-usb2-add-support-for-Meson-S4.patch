@@ -1,7 +1,7 @@
-From 829455ea6579bee3e02cf4e28ab43a8647625356 Mon Sep 17 00:00:00 2001
+From 9524a0db862254aa3735fb2cdf4a2f871e561470 Mon Sep 17 00:00:00 2001
 From: devmfc <devmfc@mvand.net>
 Date: Mon, 2 Feb 2026 10:56:19 +0800
-Subject: [PATCH 239/267] phy: amlogic: meson-g12a-usb2: add support for Meson
+Subject: [PATCH 239/269] phy: amlogic: meson-g12a-usb2: add support for Meson
  S4
 
 Add support for Meson S4 SoC family to USB2 phy. The S4 PHY is a variant

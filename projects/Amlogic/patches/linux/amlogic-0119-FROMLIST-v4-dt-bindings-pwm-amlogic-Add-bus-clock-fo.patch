@@ -1,7 +1,7 @@
-From b35647a3f2bf779761556e865070324c7a334af0 Mon Sep 17 00:00:00 2001
+From e96003e443ced7a0bff5e2af25b79771f79eaffe Mon Sep 17 00:00:00 2001
 From: Ronald Claveau <linux-kernel-dev@aliel.fr>
 Date: Thu, 1 Oct 2026 18:55:34 +0200
-Subject: [PATCH 119/267] FROMLIST(v4): dt-bindings: pwm: amlogic: Add bus
+Subject: [PATCH 119/269] FROMLIST(v4): dt-bindings: pwm: amlogic: Add bus
  clock for S4 like
 
 The T7, A1, C3, and S4 PWM controllers have a bus system clock in

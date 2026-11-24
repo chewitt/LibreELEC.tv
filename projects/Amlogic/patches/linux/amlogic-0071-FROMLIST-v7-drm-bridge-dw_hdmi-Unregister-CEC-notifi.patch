@@ -1,7 +1,7 @@
-From fc84af74c43a64b12b47df04d4acb241aa0e20c9 Mon Sep 17 00:00:00 2001
+From c05b5119e9621100b421c77ae1081d85fa4324e7 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:45 +0000
-Subject: [PATCH 071/267] FROMLIST(v7): drm: bridge: dw_hdmi: Unregister CEC
+Subject: [PATCH 071/269] FROMLIST(v7): drm: bridge: dw_hdmi: Unregister CEC
  notifier during connector cleanup
 
 The CEC notifier is being unregistered when the bridge detach,

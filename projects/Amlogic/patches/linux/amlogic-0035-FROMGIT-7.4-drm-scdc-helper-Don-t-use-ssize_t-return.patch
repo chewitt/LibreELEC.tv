@@ -1,7 +1,7 @@
-From 20be6c83dd1bf48ded5cf418edd2898b72295296 Mon Sep 17 00:00:00 2001
+From f44f6c8ec5330647b2a44031f28b5d37f100a4b3 Mon Sep 17 00:00:00 2001
 From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
 Date: Fri, 24 Jul 2026 16:22:36 +0200
-Subject: [PATCH 035/267] FROMGIT(7.4): drm/scdc-helper: Don't use ssize_t
+Subject: [PATCH 035/269] FROMGIT(7.4): drm/scdc-helper: Don't use ssize_t
  return type for scdc_read/write
 
 drm_scdc_read and drm_scdc_write, both of which are only used within

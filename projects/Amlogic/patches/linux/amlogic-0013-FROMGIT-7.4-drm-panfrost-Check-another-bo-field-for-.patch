@@ -1,7 +1,7 @@
-From 3f5a79398489dfb9cace61cf25e2c62e77f0eae1 Mon Sep 17 00:00:00 2001
+From 5e42c5d25cf4203911898b0dfea9b5251f72bf7d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Thu, 20 Aug 2026 15:04:47 +0100
-Subject: [PATCH 013/267] FROMGIT(7.4): drm/panfrost: Check another bo field
+Subject: [PATCH 013/269] FROMGIT(7.4): drm/panfrost: Check another bo field
  for cache option query
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

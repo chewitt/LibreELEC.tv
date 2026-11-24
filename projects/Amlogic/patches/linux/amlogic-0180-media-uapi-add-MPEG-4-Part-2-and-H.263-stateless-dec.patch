@@ -1,7 +1,7 @@
-From be70fc4f34565c1ed2ef717f11990d8bee0404e8 Mon Sep 17 00:00:00 2001
+From 75c45fce1fe94f5f2c1bf6dc14693655084baadd Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Tue, 10 Nov 2026 09:26:00 +0000
-Subject: [PATCH 180/267] media: uapi: add MPEG-4 Part 2 and H.263 stateless
+Subject: [PATCH 180/269] media: uapi: add MPEG-4 Part 2 and H.263 stateless
  decoder support
 
 Add the V4L2_PIX_FMT_MPEG4_SLICE and V4L2_PIX_FMT_H263_SLICE pixel

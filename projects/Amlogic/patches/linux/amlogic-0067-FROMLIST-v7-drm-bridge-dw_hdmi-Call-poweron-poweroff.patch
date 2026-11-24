@@ -1,7 +1,7 @@
-From 46c39eac086fe107ff4adde9a631a64b56a150ec Mon Sep 17 00:00:00 2001
+From 30acbcad384434f7fbafbbf1b079784ae1eba889 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:41 +0000
-Subject: [PATCH 067/267] FROMLIST(v7): drm: bridge: dw_hdmi: Call
+Subject: [PATCH 067/269] FROMLIST(v7): drm: bridge: dw_hdmi: Call
  poweron/poweroff from atomic enable/disable
 
 Change to only call poweron/poweroff from atomic_enable/atomic_disable

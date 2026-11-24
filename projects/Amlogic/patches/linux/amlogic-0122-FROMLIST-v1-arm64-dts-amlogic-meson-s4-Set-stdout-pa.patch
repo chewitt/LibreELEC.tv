@@ -1,7 +1,7 @@
-From a8853b7bca9565addb8c10d81b18ee3fce293f62 Mon Sep 17 00:00:00 2001
+From abf4dbca28168912971fa4f0db17931857938c2b Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Tue, 29 Sep 2026 04:34:00 +0000
-Subject: [PATCH 122/267] FROMLIST(v1): arm64: dts: amlogic: meson-s4: Set
+Subject: [PATCH 122/269] FROMLIST(v1): arm64: dts: amlogic: meson-s4: Set
  stdout-path to uart_b
 
 If stdout-path is not set then bootloaders such as U-Boot may fail to

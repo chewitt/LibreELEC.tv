@@ -1,7 +1,7 @@
-From 7f040523455e687ac4ed9a848727b0d7eeda21cc Mon Sep 17 00:00:00 2001
+From 3deca7b4fd870905d8012f0c0ca8798fac5e9638 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 153/267] drm/bridge: dw-hdmi: list deep color output formats
+Subject: [PATCH 153/269] drm/bridge: dw-hdmi: list deep color output formats
  before RGB888
 
 The bridge chain selects the first output format that every bridge can

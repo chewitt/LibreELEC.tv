@@ -1,7 +1,7 @@
-From 7ef3f0febc3662b20d92ec42e3cfbb06a5dc5c6d Mon Sep 17 00:00:00 2001
+From bf80686e56dc0d4b2debcdaa4043cd72f5e5591e Mon Sep 17 00:00:00 2001
 From: Carlo Caione <ccaione@baylibre.com>
 Date: Thu, 22 Oct 2026 17:57:26 +0200
-Subject: [PATCH 129/267] FROMLIST(v1): MAINTAINERS: cover all the headers in
+Subject: [PATCH 129/269] FROMLIST(v1): MAINTAINERS: cover all the headers in
  ARM/Amlogic Meson SoC CLOCK FRAMEWORK
 
 The ARM/Amlogic Meson SoC CLOCK FRAMEWORK section was written when the

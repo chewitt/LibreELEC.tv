@@ -1,7 +1,7 @@
-From cee06b7214f66914ffd2f641c4bc68d5170ab22a Mon Sep 17 00:00:00 2001
+From 8b38e0eb7b34198c75faafd06f75923d48bb0b23 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 24 Jun 2026 12:14:24 +0000
-Subject: [PATCH 148/267] WIP: arm64: dts: amlogic: split Odroid-C2 board into
+Subject: [PATCH 148/269] WIP: arm64: dts: amlogic: split Odroid-C2 board into
  a .dtsi
 
 Split Odroid-C2 into a dtsi and minimal dts containing only the audio

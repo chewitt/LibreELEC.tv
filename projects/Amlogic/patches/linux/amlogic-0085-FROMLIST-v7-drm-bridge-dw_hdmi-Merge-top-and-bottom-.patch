@@ -1,7 +1,7 @@
-From b65d01ab51d774252eecd1bac5a60bbc3204009f Mon Sep 17 00:00:00 2001
+From bb2d48a1ead5477911a51335239009674005d4d7 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:59 +0000
-Subject: [PATCH 085/267] FROMLIST(v7): drm: bridge: dw_hdmi: Merge top and
+Subject: [PATCH 085/269] FROMLIST(v7): drm: bridge: dw_hdmi: Merge top and
  bottom half IRQ handlers
 
 The bottom half IRQ handler only modify delay of or queue a delayed work

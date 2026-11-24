@@ -1,7 +1,7 @@
-From e2e625b0b237bc54184aa13309b2fda85f77d385 Mon Sep 17 00:00:00 2001
+From 6740b92b784526858ec9d86dd8f92ffb7a20bb68 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:47:54 +0100
-Subject: [PATCH 019/267] FROMGIT(7.4): drm/panfrost: Move lock and modparam
+Subject: [PATCH 019/269] FROMGIT(7.4): drm/panfrost: Move lock and modparam
  initialisations into their subsystems
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

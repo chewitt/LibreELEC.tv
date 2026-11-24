@@ -1,7 +1,7 @@
-From 6de916db67a57765b61fa2d3db74c7716825054e Mon Sep 17 00:00:00 2001
+From 38ee3b2e8badc599595c856330b7482467d15eb6 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 27 Sep 2026 11:23:16 +0000
-Subject: [PATCH 225/267] dt-bindings: media: add the Amlogic G12A video
+Subject: [PATCH 225/269] dt-bindings: media: add the Amlogic G12A video
  deinterlacer
 
 Add a binding for the video deinterlacer of the Amlogic G12A, G12B, SM1

@@ -1,7 +1,7 @@
-From e26a2dfd6b5cd368ec7ea30a4b7083f804ff54f3 Mon Sep 17 00:00:00 2001
+From ab59adcd346bd13d2f2b538c33710b777f509395 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 16:39:38 +0000
-Subject: [PATCH 205/267] drm/bridge: dw-hdmi: support the SPDIF audio input
+Subject: [PATCH 205/269] drm/bridge: dw-hdmi: support the SPDIF audio input
 
 The controller can sample audio from its I2S or SPDIF input, but only
 I2S is driven: hw_params rejects HDMI_SPDIF and the codec registers no

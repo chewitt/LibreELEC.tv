@@ -1,7 +1,7 @@
-From 2cf8d08f8b14e474757e7946b2f53867e85383d2 Mon Sep 17 00:00:00 2001
+From c821ba90dc1be25a96f5ebb314d0af51976b3e46 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:42 +0000
-Subject: [PATCH 068/267] FROMLIST(v7): drm: bridge: dw_hdmi: Use passed mode
+Subject: [PATCH 068/269] FROMLIST(v7): drm: bridge: dw_hdmi: Use passed mode
  instead of stored previous_mode
 
 Use the passed mode instead of mixing use of passed mode and the stored

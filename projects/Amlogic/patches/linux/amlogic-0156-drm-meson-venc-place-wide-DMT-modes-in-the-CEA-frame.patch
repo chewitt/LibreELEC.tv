@@ -1,7 +1,7 @@
-From f79e1b030be0a77a135339d043149e09a510e2b2 Mon Sep 17 00:00:00 2001
+From 84ec7ba0152bfc5882183ec68ee70a0867c90a8a Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Wed, 2 Sep 2026 17:30:00 -0700
-Subject: [PATCH 156/267] drm/meson: venc: place wide DMT modes in the CEA
+Subject: [PATCH 156/269] drm/meson: venc: place wide DMT modes in the CEA
  frame phase
 
 Non-CEA modes wider than 1920 pixels scan out horizontally wrapped when

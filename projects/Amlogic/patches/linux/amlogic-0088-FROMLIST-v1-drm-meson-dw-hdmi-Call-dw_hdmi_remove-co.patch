@@ -1,7 +1,7 @@
-From fe1db32f55c095f7068635179533bcc2d78ce35e Mon Sep 17 00:00:00 2001
+From b7922eb9495fe950234f786764f805a5e501e5df Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:31 +0000
-Subject: [PATCH 088/267] FROMLIST(v1): drm/meson: dw-hdmi: Call
+Subject: [PATCH 088/269] FROMLIST(v1): drm/meson: dw-hdmi: Call
  dw_hdmi_remove() consistently
 
 dw-hdmi export two similar pair of functions to probe()/remove() and

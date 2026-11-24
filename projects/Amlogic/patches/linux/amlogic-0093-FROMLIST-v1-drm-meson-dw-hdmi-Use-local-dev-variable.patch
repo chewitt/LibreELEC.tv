@@ -1,7 +1,7 @@
-From f13926ed0c77b50bd154fc5b2f92823e671e34a9 Mon Sep 17 00:00:00 2001
+From 259bc08ee1a9bf7ebfd0e875197581b8355da297 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:36 +0000
-Subject: [PATCH 093/267] FROMLIST(v1): drm/meson: dw-hdmi: Use local dev
+Subject: [PATCH 093/269] FROMLIST(v1): drm/meson: dw-hdmi: Use local dev
  variable consistently in bind()
 
 Replace indirect struct device accesses via pdev->dev with the local dev

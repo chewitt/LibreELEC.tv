@@ -1,7 +1,7 @@
-From d9906be4fde8eb63ca2cc5e1863c253843734ae9 Mon Sep 17 00:00:00 2001
+From 61ed1b35655284cd312799b10c4c7688c5d29a92 Mon Sep 17 00:00:00 2001
 From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
 Date: Fri, 24 Jul 2026 16:22:40 +0200
-Subject: [PATCH 039/267] FROMGIT(7.4): drm/display: hdmi-state-helper: Init
+Subject: [PATCH 039/269] FROMGIT(7.4): drm/display: hdmi-state-helper: Init
  SCDC debugfs for HDMI
 
 Initialise the SCDC debugfs file for connectors that call the HDMI state

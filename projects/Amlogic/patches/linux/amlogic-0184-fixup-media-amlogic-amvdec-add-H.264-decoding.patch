@@ -1,7 +1,7 @@
-From 5252a7d0a960dcf1ea2620357a51bee2d207a993 Mon Sep 17 00:00:00 2001
+From 6ea6cf959f0e302016686edb4f10cd06f491885a Mon Sep 17 00:00:00 2001
 From: Andreas Baierl <ichgeh@imkreisrum.de>
 Date: Fri, 6 Nov 2026 18:06:51 +0100
-Subject: [PATCH 184/267] fixup! media: amlogic: amvdec: add H.264 decoding
+Subject: [PATCH 184/269] fixup! media: amlogic: amvdec: add H.264 decoding
 
 media: amlogic: amvdec: h264: abort on an unexpected status of a frame
 

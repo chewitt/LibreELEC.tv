@@ -1,7 +1,7 @@
-From 025deb8ed60ad41d2062070a9442d4c791d08ffd Mon Sep 17 00:00:00 2001
+From 717c3758672b17200ee84bb3de5484b03aed6ed0 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:47 +0300
-Subject: [PATCH 059/267] FROMGIT(7.4): drm/display: hdmi-state-helper: Sync
+Subject: [PATCH 059/269] FROMGIT(7.4): drm/display: hdmi-state-helper: Sync
  SCDC state on hotplug
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

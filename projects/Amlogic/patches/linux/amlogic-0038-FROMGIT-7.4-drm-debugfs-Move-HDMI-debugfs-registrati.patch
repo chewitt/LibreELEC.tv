@@ -1,7 +1,7 @@
-From 756bf25b81a2e522f76ad0b80e92fae5a89d68b3 Mon Sep 17 00:00:00 2001
+From f6a9bf3aa90377ec45401dc6dec4471e2a4926b7 Mon Sep 17 00:00:00 2001
 From: Nicolas Frattaroli <nicolas.frattaroli@collabora.com>
 Date: Fri, 24 Jul 2026 16:22:39 +0200
-Subject: [PATCH 038/267] FROMGIT(7.4): drm/debugfs: Move HDMI debugfs
+Subject: [PATCH 038/269] FROMGIT(7.4): drm/debugfs: Move HDMI debugfs
  registration to state helper
 
 The HDMI debugfs files are only useful for connectors that already make
@@ -400,7 +400,7 @@ index 97253d631b2b..91844a396a2b 100644
  	.fill_modes		= drm_helper_probe_single_connector_modes,
  	.reset			= sun4i_hdmi_connector_reset,
 diff --git a/drivers/gpu/drm/vc4/vc4_hdmi.c b/drivers/gpu/drm/vc4/vc4_hdmi.c
-index d4672aa81d85..caaa096fe04d 100644
+index f2043f907dc5..856481bd2879 100644
 --- a/drivers/gpu/drm/vc4/vc4_hdmi.c
 +++ b/drivers/gpu/drm/vc4/vc4_hdmi.c
 @@ -513,6 +513,7 @@ static void vc4_hdmi_connector_reset(struct drm_connector *connector)

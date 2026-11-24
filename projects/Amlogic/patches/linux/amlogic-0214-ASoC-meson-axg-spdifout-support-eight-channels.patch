@@ -1,7 +1,7 @@
-From 0426f8202fc724dd2ae7461965618c794f9f5b93 Mon Sep 17 00:00:00 2001
+From cb5f0edeed35566b395060199a20c310e56bc962 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Thu, 17 Sep 2026 05:53:11 +0000
-Subject: [PATCH 214/267] ASoC: meson: axg-spdifout: support eight channels
+Subject: [PATCH 214/269] ASoC: meson: axg-spdifout: support eight channels
 
 The S/PDIF output advertises two channels, but it also feeds the HDMI
 transmitter, and an HBR stream is eight channels of IEC61937 at 192 kHz

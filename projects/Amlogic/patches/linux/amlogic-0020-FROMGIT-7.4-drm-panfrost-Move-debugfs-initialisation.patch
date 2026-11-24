@@ -1,7 +1,7 @@
-From 87a7381aa08e89944b38378b70f9ae9b6cfe2032 Mon Sep 17 00:00:00 2001
+From 548829cad5860186004d3a110b1895cbf4f7acc0 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:47:55 +0100
-Subject: [PATCH 020/267] FROMGIT(7.4): drm/panfrost: Move debugfs
+Subject: [PATCH 020/269] FROMGIT(7.4): drm/panfrost: Move debugfs
  initialisation to relevant subsystems
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

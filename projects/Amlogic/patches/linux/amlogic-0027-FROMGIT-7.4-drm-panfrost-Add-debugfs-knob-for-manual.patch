@@ -1,7 +1,7 @@
-From 433ccfbd44cca4bc83231ed4f7b9e8525bc1f3a1 Mon Sep 17 00:00:00 2001
+From f0d5b4168f8ea18cf77090cf5ea68634242c7d5e Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:48:02 +0100
-Subject: [PATCH 027/267] FROMGIT(7.4): drm/panfrost: Add debugfs knob for
+Subject: [PATCH 027/269] FROMGIT(7.4): drm/panfrost: Add debugfs knob for
  manually triggering a GPU reset
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

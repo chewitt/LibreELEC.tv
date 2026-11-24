@@ -1,7 +1,7 @@
-From c94a0aa561ba07235615f285ae16038a2a85c14c Mon Sep 17 00:00:00 2001
+From 8a4170cefea3536810d100ba3d6eb248faaa23ce Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jean-Fran=C3=A7ois=20Lessard?= <jefflessard3@gmail.com>
 Date: Fri, 21 Nov 2025 09:59:05 -0500
-Subject: [PATCH 103/267] FROMLIST(v6): auxdisplay: TM16xx: Add keypad support
+Subject: [PATCH 103/269] FROMLIST(v6): auxdisplay: TM16xx: Add keypad support
  for scanning matrix keys
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

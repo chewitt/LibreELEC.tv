@@ -1,7 +1,7 @@
-From fd9504a09160d2125ee488a1ed7203ebe795e779 Mon Sep 17 00:00:00 2001
+From 3cca0d13f608e75ce12abbc29beb807248775924 Mon Sep 17 00:00:00 2001
 From: Carlo Caione <ccaione@baylibre.com>
 Date: Thu, 22 Oct 2026 22:10:34 +0200
-Subject: [PATCH 128/267] FROMLIST(v1): clk: meson: s4: fix ENCP clock
+Subject: [PATCH 128/269] FROMLIST(v1): clk: meson: s4: fix ENCP clock
  selection
 
 The ENCP clock uses ENCT's settings by mistake. Change the selector

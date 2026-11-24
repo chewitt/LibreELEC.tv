@@ -1,7 +1,7 @@
-From c452c5495d8f4b9cd4f66dd4cb53e60f160a7f2d Mon Sep 17 00:00:00 2001
+From 033dfabdc542bd94075a4aa445abd497ba642371 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:52 +0000
-Subject: [PATCH 078/267] FROMLIST(v7): drm: bridge: dw_hdmi: Update EDID and
+Subject: [PATCH 078/269] FROMLIST(v7): drm: bridge: dw_hdmi: Update EDID and
  CEC phys addr in bridge detect()
 
 Update EDID and CEC phys addr in the bridge detect() func to closely

@@ -1,7 +1,7 @@
-From ccb036801c1ede1005c8cab36b96d102d7ca84c3 Mon Sep 17 00:00:00 2001
+From 4cd9b88a2cf089c50594aaeb6154e936a4f3bbf4 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 18 Sep 2026 16:36:01 +0000
-Subject: [PATCH 217/267] clk: meson: axg-audio: let a master clock retune
+Subject: [PATCH 217/269] clk: meson: axg-audio: let a master clock retune
  hifi_pll for its rate
 
 The master clock muxes do not propagate rate requests, so each master

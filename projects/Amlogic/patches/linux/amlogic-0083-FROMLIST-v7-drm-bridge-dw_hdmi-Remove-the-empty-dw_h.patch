@@ -1,7 +1,7 @@
-From 21f0ddd2b6385326be1a81f29334eab977605ba5 Mon Sep 17 00:00:00 2001
+From e0ef682b88cf2fc42f5aae7d2441e8d5d4388091 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:57 +0000
-Subject: [PATCH 083/267] FROMLIST(v7): drm: bridge: dw_hdmi: Remove the empty
+Subject: [PATCH 083/269] FROMLIST(v7): drm: bridge: dw_hdmi: Remove the empty
  dw_hdmi_setup_rx_sense()
 
 The dw_hdmi_setup_rx_sense() helper is empty and no longer needed after

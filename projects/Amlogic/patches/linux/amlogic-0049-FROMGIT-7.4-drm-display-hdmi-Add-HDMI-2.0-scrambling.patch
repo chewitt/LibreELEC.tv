@@ -1,7 +1,7 @@
-From e42f2ed1aff3779c53e3275337b1e1bcd682277e Mon Sep 17 00:00:00 2001
+From af67fb6d4e30dca93aa52f62bda94e65f5191eba Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:34 +0300
-Subject: [PATCH 049/267] FROMGIT(7.4): drm/display: hdmi: Add HDMI 2.0
+Subject: [PATCH 049/269] FROMGIT(7.4): drm/display: hdmi: Add HDMI 2.0
  scrambling management helpers
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

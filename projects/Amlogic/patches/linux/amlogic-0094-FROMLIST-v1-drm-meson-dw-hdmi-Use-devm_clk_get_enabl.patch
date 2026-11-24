@@ -1,7 +1,7 @@
-From ab3a1cb9b6c259ae017c32783b041e35ac693a6d Mon Sep 17 00:00:00 2001
+From 78c6741fdd49db983fa0db246661598e11ab6141 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:37 +0000
-Subject: [PATCH 094/267] FROMLIST(v1): drm/meson: dw-hdmi: Use
+Subject: [PATCH 094/269] FROMLIST(v1): drm/meson: dw-hdmi: Use
  devm_clk_get_enabled() helper
 
 Change to use the devm_clk_get_enabled() helper instead of using an

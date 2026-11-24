@@ -1,7 +1,7 @@
-From f9b914462ab9809b0a962b8f246d3e1aaa108294 Mon Sep 17 00:00:00 2001
+From a0ce4e94af2cc110ae43fc290b48d56a84c6bff1 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:49 +0300
-Subject: [PATCH 061/267] FROMGIT(7.4): drm/display: bridge_connector: Switch
+Subject: [PATCH 061/269] FROMGIT(7.4): drm/display: bridge_connector: Switch
  to .force_ctx() connector helper
 
 Turn drm_bridge_connector_force() into a .force_ctx() implementation and

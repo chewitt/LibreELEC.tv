@@ -1,7 +1,7 @@
-From 27c0f171cd11da14455f1d636d8761e4753a1251 Mon Sep 17 00:00:00 2001
+From 452aaa6ca7f7010454fe3ce9b3e1863fcafdb399 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Tue, 10 Nov 2026 09:26:00 +0000
-Subject: [PATCH 179/267] media: uapi: add VC-1 stateless decoder pixel format
+Subject: [PATCH 179/269] media: uapi: add VC-1 stateless decoder pixel format
  and controls
 
 Add the V4L2_PIX_FMT_VC1_SLICE pixel format and the compound controls

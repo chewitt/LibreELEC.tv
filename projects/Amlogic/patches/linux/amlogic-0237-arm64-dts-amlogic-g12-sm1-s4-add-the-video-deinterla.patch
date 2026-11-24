@@ -1,7 +1,7 @@
-From b906c6d9d030249ba08d340428be3a35ec755ae2 Mon Sep 17 00:00:00 2001
+From e40d7a4505dc24e93320f318d31ed8605e8fde1c Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 27 Sep 2026 11:23:16 +0000
-Subject: [PATCH 237/267] arm64: dts: amlogic: g12/sm1/s4: add the video
+Subject: [PATCH 237/269] arm64: dts: amlogic: g12/sm1/s4: add the video
  deinterlacer
 
 Add the video deinterlacer node, with the G12B and SM1 compatibles and

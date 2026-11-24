@@ -1,7 +1,7 @@
-From d8682051180db7097937d35b917ca7d8633212f3 Mon Sep 17 00:00:00 2001
+From 2df1d277b6cbe073724b8b2049d36fafa145d036 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:48:06 +0100
-Subject: [PATCH 031/267] FROMGIT(7.4): drm/panfrost: Introduce a reset lock
+Subject: [PATCH 031/269] FROMGIT(7.4): drm/panfrost: Introduce a reset lock
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

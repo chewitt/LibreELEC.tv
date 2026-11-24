@@ -1,7 +1,7 @@
-From e031fe4c12132531a62b7d4b33c64859b0f4bc2a Mon Sep 17 00:00:00 2001
+From c34e3b4b66e1cdd8127c826221e16477e3fb981c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jean-Fran=C3=A7ois=20Lessard?= <jefflessard3@gmail.com>
 Date: Fri, 21 Nov 2025 09:59:01 -0500
-Subject: [PATCH 100/267] FROMLIST(v6): dt-bindings: vendor-prefixes: Add
+Subject: [PATCH 100/269] FROMLIST(v6): dt-bindings: vendor-prefixes: Add
  fdhisi, titanmec, princeton, winrise, wxicore
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

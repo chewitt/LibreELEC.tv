@@ -1,7 +1,7 @@
-From c9022449690ba090f0e02413d6120f107c404b4a Mon Sep 17 00:00:00 2001
+From 4696e83575451b64d131b514b7f45dcc2d10db96 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 3 Oct 2026 14:46:23 +0000
-Subject: [PATCH 246/267] arm64: dts: amlogic: meson-s4: add the thermal sensor
+Subject: [PATCH 246/269] arm64: dts: amlogic: meson-s4: add the thermal sensor
 
 Add the SoC thermal sensor, which takes its calibration from the secure
 monitor, and a thermal zone with trip points of 85C passive, 95C hot

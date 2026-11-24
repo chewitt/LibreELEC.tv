@@ -1,7 +1,7 @@
-From 2904188cc400ecd3186c025366f729bdfe2e367b Mon Sep 17 00:00:00 2001
+From d9fda8bb0fa6ee9372a1e50663e257b1fda3635c Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 27 Sep 2026 09:02:04 +0000
-Subject: [PATCH 224/267] clk: meson: g12a: add the VPU clkb clock
+Subject: [PATCH 224/269] clk: meson: g12a: add the VPU clkb clock
 
 The video deinterlacer is clocked by VPU clkb, which is not modelled, so
 a driver cannot enable it or set its rate.

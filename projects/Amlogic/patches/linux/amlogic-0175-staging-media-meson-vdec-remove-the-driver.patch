@@ -1,7 +1,7 @@
-From 443f625d16781b16ca5c63c23f8773807e31bf57 Mon Sep 17 00:00:00 2001
+From deb191207a0b5d60cee72d10617a9d98b9cfb876 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Sat, 26 Sep 2026 09:14:35 -0700
-Subject: [PATCH 175/267] staging: media: meson: vdec: remove the driver
+Subject: [PATCH 175/269] staging: media: meson: vdec: remove the driver
 
 Remove the staging decoder to make room for the Amlogic platform
 driver and its stateless request API.

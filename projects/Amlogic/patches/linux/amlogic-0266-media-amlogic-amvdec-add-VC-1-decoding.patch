@@ -1,7 +1,7 @@
-From 74782d76a21bdf4b2d736fa6b4cd127bd46556e1 Mon Sep 17 00:00:00 2001
+From 81206538033358ec521495cad96ccf846ef9ce7e Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 10 Nov 2026 11:26:45 +0000
-Subject: [PATCH 266/267] media: amlogic: amvdec: add VC-1 decoding
+Subject: [PATCH 266/269] media: amlogic: amvdec: add VC-1 decoding
 
 Add stateless VC-1 (Simple, Main and Advanced profile) decoding up to
 1920x1088 on VDEC_1 for GXBB to SM1 with the open amrisc-vdec VC-1

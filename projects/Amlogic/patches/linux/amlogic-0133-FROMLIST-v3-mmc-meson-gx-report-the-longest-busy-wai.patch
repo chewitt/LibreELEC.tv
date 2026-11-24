@@ -1,7 +1,7 @@
-From 55edf22742db84b224d0bdb91cd931a5e88944fe Mon Sep 17 00:00:00 2001
+From acdcbe9555beba15f547baca09cbc62fb88fe33b Mon Sep 17 00:00:00 2001
 From: Igor Velkov <iav@iav.lv>
 Date: Fri, 9 Oct 2026 17:03:00 +0000
-Subject: [PATCH 133/267] FROMLIST(v3): mmc: meson-gx: report the longest busy
+Subject: [PATCH 133/269] FROMLIST(v3): mmc: meson-gx: report the longest busy
  wait the controller can do
 
 The driver does not set max_busy_timeout, so the core takes the host

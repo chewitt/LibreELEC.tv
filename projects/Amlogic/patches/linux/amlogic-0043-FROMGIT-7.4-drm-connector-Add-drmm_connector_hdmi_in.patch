@@ -1,7 +1,7 @@
-From b0aa4654d2f516740ddbf17cb0c1bbee9fee0d49 Mon Sep 17 00:00:00 2001
+From 0ef8b81e67ff5be6b2e3fa41104459fadc0412c9 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:28 +0300
-Subject: [PATCH 043/267] FROMGIT(7.4): drm/connector: Add
+Subject: [PATCH 043/269] FROMGIT(7.4): drm/connector: Add
  drmm_connector_hdmi_init() with new signature
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

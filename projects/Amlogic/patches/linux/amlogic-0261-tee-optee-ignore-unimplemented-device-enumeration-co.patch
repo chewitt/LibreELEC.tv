@@ -1,7 +1,7 @@
-From b9cc6f12d17bf14f8806d8b402934cfa2f43a50b Mon Sep 17 00:00:00 2001
+From 4f0cdbc5d762c8b8704ef6fe32ecbb1cd13fbcfe Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 7 Oct 2026 04:14:16 +0000
-Subject: [PATCH 261/267] tee: optee: ignore unimplemented device enumeration
+Subject: [PATCH 261/269] tee: optee: ignore unimplemented device enumeration
  commands
 
 Older OP-TEE releases, such as the 3.8 build in Amlogic BL32 blobs,

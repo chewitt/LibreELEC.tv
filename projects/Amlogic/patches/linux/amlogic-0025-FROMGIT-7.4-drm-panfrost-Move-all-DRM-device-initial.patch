@@ -1,7 +1,7 @@
-From 0edf80d6fd9273adba6151439063e8e3626f03b8 Mon Sep 17 00:00:00 2001
+From e12421936307d23e7d0a4ed5ddd65003f0daede8 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:48:00 +0100
-Subject: [PATCH 025/267] FROMGIT(7.4): drm/panfrost: Move all DRM device
+Subject: [PATCH 025/269] FROMGIT(7.4): drm/panfrost: Move all DRM device
  initialisation into device_init()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

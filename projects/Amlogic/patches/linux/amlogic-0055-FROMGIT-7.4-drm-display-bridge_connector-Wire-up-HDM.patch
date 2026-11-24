@@ -1,7 +1,7 @@
-From 0fbabd37c7940def3aeeb32d52864cf10be7fd72 Mon Sep 17 00:00:00 2001
+From 9a603fd56a17522e1771a54576150552334b7a7a Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:43 +0300
-Subject: [PATCH 055/267] FROMGIT(7.4): drm/display: bridge_connector: Wire up
+Subject: [PATCH 055/269] FROMGIT(7.4): drm/display: bridge_connector: Wire up
  HDMI 2.0 scrambler callbacks
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

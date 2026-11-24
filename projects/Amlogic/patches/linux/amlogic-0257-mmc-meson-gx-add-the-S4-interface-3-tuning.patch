@@ -1,7 +1,7 @@
-From 60f4fb664475323ba8e93791047a378c481c4770 Mon Sep 17 00:00:00 2001
+From 8cef4de9ca252df4e04775791c8b0f2f2adbed72 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 17:23:43 +0000
-Subject: [PATCH 257/267] mmc: meson-gx: add the S4 interface 3 tuning
+Subject: [PATCH 257/269] mmc: meson-gx: add the S4 interface 3 tuning
 
 The S4 controllers sample the bus through a second interface, enabled
 with SD_EMMC_INTF3, whose receive clock delay line has to be tuned for

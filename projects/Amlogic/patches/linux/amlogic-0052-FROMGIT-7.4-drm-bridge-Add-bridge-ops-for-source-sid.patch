@@ -1,7 +1,7 @@
-From caa9bdcb3d8c291a77e2b1f7dfe171a8df44d028 Mon Sep 17 00:00:00 2001
+From 63f875488733fdb486f04ee4977e07a90cc7de5a Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:40 +0300
-Subject: [PATCH 052/267] FROMGIT(7.4): drm/bridge: Add bridge ops for
+Subject: [PATCH 052/269] FROMGIT(7.4): drm/bridge: Add bridge ops for
  source-side HDMI 2.0 scrambling
 
 Bridges advertising HDMI 2.0 must be able to enable and disable

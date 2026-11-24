@@ -1,7 +1,7 @@
-From 0ae043bfed54a6dc5f32da683150267f3cb25429 Mon Sep 17 00:00:00 2001
+From e476addee1891e7127020a01911fa3a4a0bbd51d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Adri=C3=A1n=20Larumbe?= <adrian.larumbe@collabora.com>
 Date: Mon, 12 Oct 2026 15:47:57 +0100
-Subject: [PATCH 022/267] FROMGIT(7.4): drm/panfrost: Consolidate device clock
+Subject: [PATCH 022/269] FROMGIT(7.4): drm/panfrost: Consolidate device clock
  management and reset
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

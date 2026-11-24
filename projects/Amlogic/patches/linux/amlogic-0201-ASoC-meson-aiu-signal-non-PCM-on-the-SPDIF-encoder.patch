@@ -1,7 +1,7 @@
-From 376abaedd8e2754145bc7a2615bfdd494738b35a Mon Sep 17 00:00:00 2001
+From 9be87fb3e68c30182713526a704687fc0900fbdd Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Mon, 14 Sep 2026 16:38:01 +0000
-Subject: [PATCH 201/267] ASoC: meson: aiu: signal non-PCM on the SPDIF encoder
+Subject: [PATCH 201/269] ASoC: meson: aiu: signal non-PCM on the SPDIF encoder
 
 The SPDIF encoder always signals linear PCM. The channel status is built
 from the hardware parameters by snd_pcm_create_iec958_consumer_hw_params(),

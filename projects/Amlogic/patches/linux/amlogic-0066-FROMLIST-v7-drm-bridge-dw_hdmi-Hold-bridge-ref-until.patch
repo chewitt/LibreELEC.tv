@@ -1,7 +1,7 @@
-From 362ef54ce8a1204170eb21817d56cc2f040dead3 Mon Sep 17 00:00:00 2001
+From 49db3dd31c98f24358b5981ac6b7a5a34400c975 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 18:01:40 +0000
-Subject: [PATCH 066/267] FROMLIST(v7): drm: bridge: dw_hdmi: Hold bridge ref
+Subject: [PATCH 066/269] FROMLIST(v7): drm: bridge: dw_hdmi: Hold bridge ref
  until connector cleanup
 
 drmres connector cleanup typically run after devres has released the

@@ -1,7 +1,7 @@
-From ebb934ddff92fe484d558ac39f277f06034af8e3 Mon Sep 17 00:00:00 2001
+From 333f0e918ab5aca99cea96c8fbe0ff32475f661f Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 30 Sep 2026 12:41:56 +0000
-Subject: [PATCH 218/267] clk: meson: gxbb: keep the S/PDIF master clock off
+Subject: [PATCH 218/269] clk: meson: gxbb: keep the S/PDIF master clock off
  MPLL0
 
 The IEC958 master clock mux picks the closest parent for each rate.

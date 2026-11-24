@@ -1,7 +1,7 @@
-From 1b01d204a35201f369c8e9178b11fe57d547c733 Mon Sep 17 00:00:00 2001
+From 4761b9a56fea0dec444653cbf2c2ad940d605623 Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:44 +0300
-Subject: [PATCH 056/267] FROMGIT(7.4): drm/display: hdmi-state-helper: Add
+Subject: [PATCH 056/269] FROMGIT(7.4): drm/display: hdmi-state-helper: Add
  source TMDS rate validation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

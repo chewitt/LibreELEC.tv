@@ -1,7 +1,7 @@
-From b0656d3503fc2665179c13a063d710b719f9a641 Mon Sep 17 00:00:00 2001
+From cc28ced6cfeb5d3635d9fa00e115ea8a9bb5486b Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:48 +0300
-Subject: [PATCH 060/267] FROMGIT(7.4): drm/display: hdmi-state-helper: Set
+Subject: [PATCH 060/269] FROMGIT(7.4): drm/display: hdmi-state-helper: Set
  HDMI scrambling requirement
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

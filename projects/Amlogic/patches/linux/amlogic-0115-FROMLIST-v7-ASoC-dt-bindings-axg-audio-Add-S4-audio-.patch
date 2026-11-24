@@ -1,7 +1,7 @@
-From 08481e77b445c8d58442f13eccf75cdd9c4d205d Mon Sep 17 00:00:00 2001
+From 04be6dfdea05c481f6f8ed904233782d481d78ae Mon Sep 17 00:00:00 2001
 From: Jiebing Chen <jiebing.chen@amlogic.com>
 Date: Wed, 21 Oct 2026 15:08:29 +0800
-Subject: [PATCH 115/267] FROMLIST(v7): ASoC: dt-bindings: axg-audio: Add S4
+Subject: [PATCH 115/269] FROMLIST(v7): ASoC: dt-bindings: axg-audio: Add S4
  audio tocodec
 
 Add S4 SoC tocodec compatibility support.

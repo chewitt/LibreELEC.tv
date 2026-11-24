@@ -1,7 +1,7 @@
-From 2c8cb0adbb6cfdcbff79ab95c44b103c5fba21c2 Mon Sep 17 00:00:00 2001
+From 48f41ad1b43b1a91c1ce721fb121e86b9d8932a3 Mon Sep 17 00:00:00 2001
 From: Gus Bourg <gus@bourg.net>
 Date: Tue, 10 Nov 2026 09:26:00 +0000
-Subject: [PATCH 177/267] media: Documentation: biblio: add VC-1, MPEG-4 Part 2
+Subject: [PATCH 177/269] media: Documentation: biblio: add VC-1, MPEG-4 Part 2
  and H.263
 
 Add bibliography entries for SMPTE 421M (VC-1), ISO/IEC 14496-2

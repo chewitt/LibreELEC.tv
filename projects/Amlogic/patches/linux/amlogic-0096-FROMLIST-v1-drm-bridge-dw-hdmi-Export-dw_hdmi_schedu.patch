@@ -1,7 +1,7 @@
-From e6eef7a167f79ce7071cbbdacfb3d6b715643531 Mon Sep 17 00:00:00 2001
+From 05e7dd8f4cf0221baabf64e2e9957744ac28629a Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 18 May 2026 19:47:39 +0000
-Subject: [PATCH 096/267] FROMLIST(v1): drm/bridge: dw-hdmi: Export
+Subject: [PATCH 096/269] FROMLIST(v1): drm/bridge: dw-hdmi: Export
  dw_hdmi_schedule_hpd_work() helper
 
 Export a dw_hdmi_schedule_hpd_work() helper that schedule the HPD

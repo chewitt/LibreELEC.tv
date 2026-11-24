@@ -1,7 +1,7 @@
-From 621b90406a287ccd9f5b316571ca5e20a13e6379 Mon Sep 17 00:00:00 2001
+From 984d6950b638445098a71c6136f273db3fdf8eae Mon Sep 17 00:00:00 2001
 From: Igor Velkov <iav@iav.lv>
 Date: Mon, 19 Oct 2026 21:52:01 +0000
-Subject: [PATCH 124/267] FROMLIST(v1): arm64: dts: amlogic:
+Subject: [PATCH 124/269] FROMLIST(v1): arm64: dts: amlogic:
  meson-sm1-odroid-hc4: wire the RTC alarm interrupt
 
 The PCF8563 on the OLED/RTC add-on board drives its interrupt output

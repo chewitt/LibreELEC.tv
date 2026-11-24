@@ -1,7 +1,7 @@
-From 5c95f6a14a065d967d5143fbc77be31b50ebbc1d Mon Sep 17 00:00:00 2001
+From d41e8213e83d86f105b130097ffb8c01ba71935a Mon Sep 17 00:00:00 2001
 From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
 Date: Tue, 1 Sep 2026 21:50:32 +0300
-Subject: [PATCH 047/267] FROMGIT(7.4): drm/display: scdc-helper: Add macro for
+Subject: [PATCH 047/269] FROMGIT(7.4): drm/display: scdc-helper: Add macro for
  connector-prefixed debug messages
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
