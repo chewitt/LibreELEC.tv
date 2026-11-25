@@ -1,7 +1,7 @@
-From 85af7afe1619b3ce0970abaa2751694434a2e083 Mon Sep 17 00:00:00 2001
+From 99560183fde92df0c4617f8edbd18eeccb6a578f Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 3 Oct 2026 17:45:44 +0000
-Subject: [PATCH 32/43] WIP: phy: meson-g12a-usb2: add support for Meson S4
+Subject: [PATCH 32/44] WIP: phy: meson-g12a-usb2: add support for Meson S4
 
 The S4 USB2 PHY is a variant of the A1 PHY. It also selects the MPLL DCO
 clock and uses the A1 calibration settings, with a lower edge drive

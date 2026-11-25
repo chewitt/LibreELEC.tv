@@ -1,7 +1,7 @@
 From 2af25e89f04cfda9b26ac2d84f15032aa4bf18b8 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Thu, 13 Aug 2026 16:54:28 -0400
-Subject: [PATCH 09/43] FROMGIT: clk: meson: Support power-of-two dividers
+Subject: [PATCH 09/44] FROMGIT: clk: meson: Support power-of-two dividers
 
 Several s4 clocks use power-of-two dividers. Add support for them.
 

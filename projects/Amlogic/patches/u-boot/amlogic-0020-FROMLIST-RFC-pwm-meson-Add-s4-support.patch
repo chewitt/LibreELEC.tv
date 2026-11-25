@@ -1,7 +1,7 @@
-From ab7676b60e8246305949cd6b2d5059fe64fbf91e Mon Sep 17 00:00:00 2001
+From 8a57f39b67758531024dc9acc3796e3210372c98 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Mon, 28 Sep 2026 17:13:25 -0400
-Subject: [PATCH 20/43] FROMLIST(RFC): pwm: meson: Add s4 support
+Subject: [PATCH 20/44] FROMLIST(RFC): pwm: meson: Add s4 support
 
 On s4, the devicetree clocks are the direct inputs to the PWMs, so we
 don't need to configure the clocks in the driver. Instead, we just need

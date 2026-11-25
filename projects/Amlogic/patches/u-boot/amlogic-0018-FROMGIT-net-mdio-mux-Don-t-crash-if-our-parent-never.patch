@@ -1,8 +1,8 @@
-From 2e1275826867ee38a507c7c95805706dd4a47f82 Mon Sep 17 00:00:00 2001
+From 5012ef7c6c93a5290410c0fb325728012004d7ae Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Mon, 28 Sep 2026 17:20:08 -0400
-Subject: [PATCH 16/43] FROMLIST(v2): net: mdio-mux: Don't crash if our parent
- never shows up
+Subject: [PATCH 18/44] FROMGIT: net: mdio-mux: Don't crash if our parent never
+ shows up
 
 The parent MDIO bus may never show up (such as if there is an error
 while probing it). Make sure to return an error instead of crashing.

@@ -1,7 +1,7 @@
 From 08d0219ec3e20737420cdb17f9043ea278273b4e Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Fri, 14 Aug 2026 10:09:44 -0400
-Subject: [PATCH 12/43] FROMGIT: serial: meson: Add s4 support
+Subject: [PATCH 12/44] FROMGIT: serial: meson: Add s4 support
 
 No new features, just a different compatible.
 

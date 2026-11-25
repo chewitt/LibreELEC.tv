@@ -1,7 +1,7 @@
-From d80159169078f7b8a3c04bc46b39b420b55ad586 Mon Sep 17 00:00:00 2001
+From cee35104b77006423bac3ae0d1f99bcde6fed5ae Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:55:18 +0000
-Subject: [PATCH 27/43] WIP: ARM: meson: include the types that mem.h uses
+Subject: [PATCH 27/44] WIP: ARM: meson: include the types that mem.h uses
 
 mem.h declares meson_board_add_reserved_memory() with u64 arguments
 but does not include linux/types.h, so it only builds when an earlier

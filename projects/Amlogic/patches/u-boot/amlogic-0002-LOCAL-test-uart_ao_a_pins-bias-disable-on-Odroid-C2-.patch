@@ -1,7 +1,7 @@
 From 695cd76e9683e10e17365dc1a1dc2d8b579f8e64 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 8 Oct 2024 06:48:13 +0000
-Subject: [PATCH 02/43] LOCAL: test uart_ao_a_pins bias disable on Odroid C2
+Subject: [PATCH 02/44] LOCAL: test uart_ao_a_pins bias disable on Odroid C2
  and WeTek Hub
 
 This resolves reports of non-booting C2 boards. The long term fix

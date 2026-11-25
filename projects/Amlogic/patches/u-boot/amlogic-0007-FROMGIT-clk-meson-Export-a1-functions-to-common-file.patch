@@ -1,7 +1,7 @@
 From 907d83d6b3064e1bbf6e28d334a67b53568e63f0 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Thu, 13 Aug 2026 16:36:56 -0400
-Subject: [PATCH 07/43] FROMGIT: clk: meson: Export a1 functions to common file
+Subject: [PATCH 07/44] FROMGIT: clk: meson: Export a1 functions to common file
 
 Export several useful functions from a1 to a common file. These will be
 used for s4 support.

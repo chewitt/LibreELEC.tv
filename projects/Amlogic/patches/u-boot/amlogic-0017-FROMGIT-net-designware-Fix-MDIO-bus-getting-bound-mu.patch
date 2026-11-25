@@ -1,8 +1,8 @@
-From f205060342daf4171794677ba225e258061fba55 Mon Sep 17 00:00:00 2001
+From 32d87310c99e637ff8b3f5f86564af8118e6689c Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Mon, 28 Sep 2026 17:29:52 -0400
-Subject: [PATCH 19/43] FROMLIST(v2): net: designware: Fix MDIO bus getting
- bound multiple times
+Subject: [PATCH 17/44] FROMGIT: net: designware: Fix MDIO bus getting bound
+ multiple times
 
 designware_eth_probe may be called multiple times for a given device.
 such as if the first probe (or post_probe) fails for whatever reason.
@@ -25,20 +25,6 @@ designware_eth_probe.
 
 Fixes: 5160b4567c71 ("net: designware: add DM_MDIO support")
 Signed-off-by: Sean Anderson <sanderson@brivo.com>
-Series-changes: 2
-- Fix warnings about mdio_err and dw_mdio_init not being used
-- Fix missing else clause when bitbang MDIO is enabled
-
-Series-version: 2
-Series-to: Jerome Forissier <jerome.forissier@arm.com>
-Series-cc: Tom Rini <trini@konsulko.com>
-Series-cc: Neil Armstrong <neil.armstrong@linaro.org>
-Series-cc: Ramon Fried <rfried.dev@gmail.com>
-Series-to: u-boot@lists.u-boot-project.org
-Series-cc: u-boot-amlogic@groups.io
-Cover-letter:
-net: designware: Fix MDIO bus getting bound multiple times
-END
 ---
  drivers/net/designware.c    | 28 +++++++++++++++-------------
  drivers/net/designware.h    |  1 +

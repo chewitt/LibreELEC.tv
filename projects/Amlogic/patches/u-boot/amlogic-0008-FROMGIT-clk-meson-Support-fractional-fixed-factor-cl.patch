@@ -1,7 +1,7 @@
 From 5470fd5b65674ad1fb9efc562fabbcc0c9275933 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Thu, 13 Aug 2026 16:45:11 -0400
-Subject: [PATCH 08/43] FROMGIT: clk: meson: Support fractional fixed-factor
+Subject: [PATCH 08/44] FROMGIT: clk: meson: Support fractional fixed-factor
  clocks
 
 One of the s4 clocks has a non-integer divisor (2.5). Add support for

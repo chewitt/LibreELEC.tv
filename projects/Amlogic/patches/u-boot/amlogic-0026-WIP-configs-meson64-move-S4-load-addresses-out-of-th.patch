@@ -1,7 +1,7 @@
-From 8ebff35a63a9862d97e16279a64b35f589e6f94d Mon Sep 17 00:00:00 2001
+From 35e6ed6d32a6ab9a2a021f5cfad93b1c682b7965 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 3 Oct 2026 13:32:36 +0000
-Subject: [PATCH 26/43] WIP: configs: meson64: move S4 load addresses out of
+Subject: [PATCH 26/44] WIP: configs: meson64: move S4 load addresses out of
  the secmon carveout
 
 S4 reserves 0x05000000-0x083fffff for the secure monitor, and the

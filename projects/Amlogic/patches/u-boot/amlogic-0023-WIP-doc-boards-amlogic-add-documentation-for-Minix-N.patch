@@ -1,7 +1,7 @@
-From b10fa9f04d8efa3abb018ae09a009ab429ed620c Mon Sep 17 00:00:00 2001
+From 1325937d97045a80374accc21fd34450dd8c6bc2 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:50:16 +0000
-Subject: [PATCH 23/43] WIP: doc: boards: amlogic: add documentation for Minix
+Subject: [PATCH 23/44] WIP: doc: boards: amlogic: add documentation for Minix
  Neo U9-H
 
 Add build instructions for the Minix Neo U9-H board, list them in the

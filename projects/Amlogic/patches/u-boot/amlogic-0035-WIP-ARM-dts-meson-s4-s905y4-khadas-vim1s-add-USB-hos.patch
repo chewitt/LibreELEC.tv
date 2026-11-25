@@ -1,7 +1,7 @@
-From b2b3984eebec17251cc24e80eb215214ad5692aa Mon Sep 17 00:00:00 2001
+From 6831643cec8efd36a66759564be1a5aa71269f06 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 3 Oct 2026 17:45:44 +0000
-Subject: [PATCH 35/43] WIP: ARM: dts: meson-s4-s905y4-khadas-vim1s: add USB
+Subject: [PATCH 35/44] WIP: ARM: dts: meson-s4-s905y4-khadas-vim1s: add USB
  host
 
 The upstream S4 DT has no USB nodes yet. Add the USB2 PHYs and the

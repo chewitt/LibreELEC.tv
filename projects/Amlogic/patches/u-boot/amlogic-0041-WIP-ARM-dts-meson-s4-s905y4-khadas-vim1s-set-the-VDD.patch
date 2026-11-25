@@ -1,7 +1,7 @@
-From 71255dbfb268b624271a160c3588fcca754c4879 Mon Sep 17 00:00:00 2001
+From 1d8ea15bb89b44c6e2cd98312a65e42843a7a8c2 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 01:50:51 +0000
-Subject: [PATCH 41/43] WIP: ARM: dts: meson-s4-s905y4-khadas-vim1s: set the
+Subject: [PATCH 41/44] WIP: ARM: dts: meson-s4-s905y4-khadas-vim1s: set the
  VDDCPU boot voltage
 
 BL2 leaves VDDCPU at its 799mV power-up value, which the vendor OPP

@@ -1,7 +1,7 @@
-From 03c6578470dcc2bfccabef40fbe9f43a5c9d2fe9 Mon Sep 17 00:00:00 2001
+From de4ff2d1b9f7a87302bf28b82fc9415de8f6a383 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 01:50:50 +0000
-Subject: [PATCH 39/43] WIP: power: regulator: pwm: support pwm-dutycycle-range
+Subject: [PATCH 39/44] WIP: power: regulator: pwm: support pwm-dutycycle-range
 
 The pwm-regulator binding describes the duty cycle at the minimum and
 maximum voltages with pwm-dutycycle-range, which boards whose output

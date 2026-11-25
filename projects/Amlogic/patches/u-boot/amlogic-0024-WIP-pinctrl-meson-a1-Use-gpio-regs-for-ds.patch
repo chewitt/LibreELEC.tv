@@ -1,7 +1,7 @@
-From 45dbd8c7dec1afcf8795c0c1af192fefac293c3b Mon Sep 17 00:00:00 2001
+From 9a4a0e5c9f69d077676c3c769ab67aa15cb7e378 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Thu, 13 Aug 2026 17:13:45 -0400
-Subject: [PATCH 24/43] WIP: pinctrl: meson: a1: Use gpio regs for ds
+Subject: [PATCH 24/44] WIP: pinctrl: meson: a1: Use gpio regs for ds
 
 On newer SoCs, the drivestrength registers are included with the rest of
 the GPIO registers. Linux has a rather complex system that uses a helper

@@ -1,7 +1,7 @@
-From e245317ec8113269376e7c89f14be69f9468e1fd Mon Sep 17 00:00:00 2001
+From 69a59965eadcab63aba63c4073e177ffa5172bd0 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:50:43 +0000
-Subject: [PATCH 28/43] WIP: ARM: meson: s4: reserve the secure firmware memory
+Subject: [PATCH 28/44] WIP: ARM: meson: s4: reserve the secure firmware memory
  zones
 
 The S4 board code left meson_init_reserved_memory() empty, so U-Boot

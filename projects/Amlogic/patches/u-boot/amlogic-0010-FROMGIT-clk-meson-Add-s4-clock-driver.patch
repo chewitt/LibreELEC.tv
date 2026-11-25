@@ -1,7 +1,7 @@
 From bdb1a7e3c7cbae6177b7b0cb3cafc36ddff13875 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Thu, 13 Aug 2026 17:09:10 -0400
-Subject: [PATCH 10/43] FROMGIT: clk: meson: Add s4 clock driver
+Subject: [PATCH 10/44] FROMGIT: clk: meson: Add s4 clock driver
 
 Add a clock driver to support for the "s4" series of SoCs (S805X2 and
 S905Y4). I've added most of the clocks necessary at boot, although a few

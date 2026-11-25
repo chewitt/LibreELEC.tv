@@ -1,7 +1,7 @@
 From ebd5129843bf5b58f3de1c597c104c8509d6e721 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Wed, 12 Aug 2026 12:39:37 -0400
-Subject: [PATCH 14/43] FROMGIT: watchdog: meson_gxbb: Add support for s4/t7
+Subject: [PATCH 14/44] FROMGIT: watchdog: meson_gxbb: Add support for s4/t7
  SoCs
 
 These SoCs have an almost identical watchdog to other meson SoCs, except

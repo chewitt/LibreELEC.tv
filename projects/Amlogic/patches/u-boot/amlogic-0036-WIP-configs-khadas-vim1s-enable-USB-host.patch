@@ -1,7 +1,7 @@
-From 4526871e37a2af7062a9aaf7e68c396d66c9a401 Mon Sep 17 00:00:00 2001
+From 8ecfd889306234988565629e82cfacc949e39ccd Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:52:11 +0000
-Subject: [PATCH 36/43] WIP: configs: khadas-vim1s: enable USB host
+Subject: [PATCH 36/44] WIP: configs: khadas-vim1s: enable USB host
 
 Enable the USB host stack with storage and keyboard support, the S4
 USB2 PHY and DWC3 glue drivers, and the secure power domains the USB

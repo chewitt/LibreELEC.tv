@@ -1,7 +1,7 @@
-From b174f771f1eb02d7b6756df743d84b2056eaff8c Mon Sep 17 00:00:00 2001
+From 7ded1fb95bf9ddb7b3a44894532385baf52d2a8d Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 12:38:52 +0000
-Subject: [PATCH 40/43] WIP: power: regulator: pwm: use the channel from the
+Subject: [PATCH 40/44] WIP: power: regulator: pwm: use the channel from the
  pwms specifier
 
 pwm_regulator_of_to_plat() reads the period and polarity from the pwms

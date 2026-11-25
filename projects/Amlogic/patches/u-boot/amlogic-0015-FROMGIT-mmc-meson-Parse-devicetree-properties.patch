@@ -1,7 +1,7 @@
 From c92b7d8ff96292e4562b57809841e1976b349847 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Thu, 13 Aug 2026 17:12:54 -0400
-Subject: [PATCH 15/43] FROMGIT: mmc: meson: Parse devicetree properties
+Subject: [PATCH 15/44] FROMGIT: mmc: meson: Parse devicetree properties
 
 Parse devicetree properties so things like max-frequency are respected.
 

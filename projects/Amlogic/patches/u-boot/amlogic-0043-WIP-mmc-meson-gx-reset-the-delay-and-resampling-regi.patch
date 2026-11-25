@@ -1,7 +1,7 @@
-From c98e949ed85d353b68df3da50b31b39032b36840 Mon Sep 17 00:00:00 2001
+From a9dcc6830e391f81e6685f1371ebbef77df01263 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 17:55:39 +0000
-Subject: [PATCH 43/43] WIP: mmc: meson-gx: reset the delay and resampling
+Subject: [PATCH 43/44] WIP: mmc: meson-gx: reset the delay and resampling
  registers
 
 The bootloader stages that run before U-Boot can leave the controller

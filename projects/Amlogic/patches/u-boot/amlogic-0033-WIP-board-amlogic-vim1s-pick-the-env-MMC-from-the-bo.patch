@@ -1,7 +1,7 @@
-From c081ac2381ad5e7213eb81725a8926d6f913c91f Mon Sep 17 00:00:00 2001
+From eaf885394e83acbb2b338f0da3f200e8128a62ae Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:51:20 +0000
-Subject: [PATCH 33/43] WIP: board: amlogic: vim1s: pick the env MMC from the
+Subject: [PATCH 33/44] WIP: board: amlogic: vim1s: pick the env MMC from the
  boot device
 
 Select the environment MMC device from the boot device as the VIM3

@@ -1,7 +1,7 @@
-From fd723e018fb371439cec06700a1affd9b99584af Mon Sep 17 00:00:00 2001
+From 872f915b95326a8988e5986d49083836ca510331 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:51:00 +0000
-Subject: [PATCH 30/43] WIP: ARM: meson: s4: read the DRAM size from the secure
+Subject: [PATCH 30/44] WIP: ARM: meson: s4: read the DRAM size from the secure
  status
 
 BL2 reports the DRAM size in SYSCTRL secure status REG4, in 16MiB units

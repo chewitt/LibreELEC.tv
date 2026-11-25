@@ -1,7 +1,7 @@
-From 69bbe7fa336270c299f49bbc01ee770b7ffde5a1 Mon Sep 17 00:00:00 2001
+From 84bd65145c10bbf910505f7fa7e65aa40fb96b2f Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:50:15 +0000
-Subject: [PATCH 22/43] WIP: ARM: dts: add support for Minix Neo U9-H
+Subject: [PATCH 22/44] WIP: ARM: dts: add support for Minix Neo U9-H
 
 The board device tree comes from dts/upstream, so only add the
 u-boot.dtsi file, which includes the common GXL U-Boot additions.

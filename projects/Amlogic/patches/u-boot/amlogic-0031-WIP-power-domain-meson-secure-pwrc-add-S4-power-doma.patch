@@ -1,7 +1,7 @@
-From 682fdfcea86a38c1347ca4de71d3694ac1694168 Mon Sep 17 00:00:00 2001
+From a7e85485ebb7ea9a039a6aee8cd88afa5f73d2a2 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sat, 3 Oct 2026 17:45:44 +0000
-Subject: [PATCH 31/43] WIP: power: domain: meson-secure-pwrc: add S4 power
+Subject: [PATCH 31/44] WIP: power: domain: meson-secure-pwrc: add S4 power
  domains
 
 Add the S4 secure power domains, as listed by the Linux driver, so

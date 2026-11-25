@@ -1,7 +1,7 @@
 From 229e9c0b4c6e20cd85da47bd190ac6b4f633d226 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Fri, 14 Aug 2026 10:10:31 -0400
-Subject: [PATCH 13/43] FROMGIT: reset: meson: Add s4 support
+Subject: [PATCH 13/44] FROMGIT: reset: meson: Add s4 support
 
 Add s4 support. There are no new features, so just define the layout
 info.

@@ -1,7 +1,7 @@
-From bd8b1faec1266af12cac9142569d0fa283c5efe8 Mon Sep 17 00:00:00 2001
+From 3e61fcff4357eff608e3f5f345edfb72c9f1750e Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:52:11 +0000
-Subject: [PATCH 37/43] WIP: configs: khadas-vim1s: enable the debug UART
+Subject: [PATCH 37/44] WIP: configs: khadas-vim1s: enable the debug UART
 
 Enable the early debug UART with its announcement, as the G12 Khadas
 boards do. The earlier boot stages have already set up the console UART,

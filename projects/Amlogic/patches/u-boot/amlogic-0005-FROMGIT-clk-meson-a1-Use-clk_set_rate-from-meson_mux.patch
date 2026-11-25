@@ -1,7 +1,7 @@
 From 18dbb27e02c957be66e92f1be55ff8ac9521a3e5 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Thu, 13 Aug 2026 16:11:27 -0400
-Subject: [PATCH 05/43] FROMGIT: clk: meson: a1: Use clk_set_rate from
+Subject: [PATCH 05/44] FROMGIT: clk: meson: a1: Use clk_set_rate from
  meson_mux_set_rate
 
 This function is useful for other drivers, but it's tied to the a1's

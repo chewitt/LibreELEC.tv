@@ -1,7 +1,7 @@
-From f67b3c886705c431a439b5700f0bd55db98042fd Mon Sep 17 00:00:00 2001
+From 1008e8cb1c8661323abfb9d387fb133e3fd66905 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:50:43 +0000
-Subject: [PATCH 29/43] WIP: ARM: meson: s4: report the boot device
+Subject: [PATCH 29/44] WIP: ARM: meson: s4: report the boot device
 
 meson_get_boot_device() returned -ENOSYS on S4, so board code could not
 tell whether it booted from eMMC or SD. The boot ROM reports the boot

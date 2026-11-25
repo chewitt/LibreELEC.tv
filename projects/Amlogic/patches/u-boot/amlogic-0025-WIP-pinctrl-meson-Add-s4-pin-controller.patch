@@ -1,7 +1,7 @@
-From a50e6d5e85f070b68be1725afa372af788fcf760 Mon Sep 17 00:00:00 2001
+From e1f42e0ecc150712f921c8227548a4f9a3827b21 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Fri, 14 Aug 2026 10:06:33 -0400
-Subject: [PATCH 25/43] WIP: pinctrl: meson: Add s4 pin controller
+Subject: [PATCH 25/44] WIP: pinctrl: meson: Add s4 pin controller
 
 Add pinctrl support for the s4. This is a direct adaptation of Linux
 commit 775214d389c25 ("pinctrl: meson: add pinctrl driver support for

@@ -1,7 +1,7 @@
-From 09e680b281e8be3f6a2f2aa759c980306c56eb16 Mon Sep 17 00:00:00 2001
+From f28404c28b479d40dcc0c38cfd2b81f4a0626be4 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 9 Oct 2026 09:51:27 +0000
-Subject: [PATCH 34/43] WIP: board: amlogic: vim1s: keep a MAC address set in
+Subject: [PATCH 34/44] WIP: board: amlogic: vim1s: keep a MAC address set in
  the environment
 
 misc_init_r() always overwrote ethaddr with the address derived from

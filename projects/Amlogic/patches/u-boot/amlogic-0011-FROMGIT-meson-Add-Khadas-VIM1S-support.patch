@@ -1,7 +1,7 @@
 From cdb154d10e77c0790b053c0a762d193d90b7ef99 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Fri, 14 Aug 2026 16:16:58 -0400
-Subject: [PATCH 11/43] FROMGIT: meson: Add Khadas VIM1S support
+Subject: [PATCH 11/44] FROMGIT: meson: Add Khadas VIM1S support
 
 This adds basic support for the Khadas VIM1S [1]. I have tested the
 following features when booting from the SD card:

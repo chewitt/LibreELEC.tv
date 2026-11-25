@@ -1,7 +1,7 @@
-From 1d87b8b3c22dd90f76c9b68c6334ba108b1e8cbc Mon Sep 17 00:00:00 2001
+From 90169d7e05b5ff5f15e36f450816eed65e617db3 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Mon, 28 Sep 2026 17:21:13 -0400
-Subject: [PATCH 17/43] FROMLIST(v2): net: mdio-mux: Remove ourselves when our
+Subject: [PATCH 19/44] FROMGIT: net: mdio-mux: Remove ourselves when our
  parent is removed
 
 Normally, all child devices are removed before their parent is removed.

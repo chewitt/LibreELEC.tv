@@ -1,7 +1,7 @@
 From ce1d22b32736e7947dd28334212326dd701f223b Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Thu, 13 Aug 2026 16:34:17 -0400
-Subject: [PATCH 06/43] FROMGIT: clk: meson: Use soc-specific naming for common
+Subject: [PATCH 06/44] FROMGIT: clk: meson: Use soc-specific naming for common
  functions
 
 In preparation for moving a1 versions of several common functions into a

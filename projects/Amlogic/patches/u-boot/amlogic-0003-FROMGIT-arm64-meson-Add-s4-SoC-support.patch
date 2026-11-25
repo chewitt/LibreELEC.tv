@@ -1,7 +1,7 @@
 From 27e02612d4ed294c5907c794a5a5a5aff703b508 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Fri, 14 Aug 2026 16:16:49 -0400
-Subject: [PATCH 03/43] FROMGIT: arm64: meson: Add s4 SoC support
+Subject: [PATCH 03/44] FROMGIT: arm64: meson: Add s4 SoC support
 
 Add support for amlogic s4 (S805X2/S905W2/S905Y4) SoCs. These are very
 similar to other recent SoCs, with the exception of a workaround for

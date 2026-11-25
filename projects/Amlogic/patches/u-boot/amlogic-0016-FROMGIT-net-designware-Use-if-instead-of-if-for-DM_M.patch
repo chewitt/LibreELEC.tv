@@ -1,17 +1,12 @@
-From 11aec070a544b17ce397cc442cee0e7aad04426f Mon Sep 17 00:00:00 2001
+From 6ef8a62b3eb1cdfed3ccee78e8acab038fde9873 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Wed, 30 Sep 2026 16:53:08 -0400
-Subject: [PATCH 18/43] FROMLIST(v2): net: designware: Use if instead of #if
- for DM_MDIO
+Subject: [PATCH 16/44] FROMGIT: net: designware: Use if instead of #if for
+ DM_MDIO
 
 Where possible, convert ifdefs on DM_MDIO into ifs.
 
 Signed-off-by: Sean Anderson <sanderson@brivo.com>
-Commit-changes: 2
-- New
-
-Cover-changes: 2
-- Use if instead of #if for DM_MDIO
 ---
  drivers/net/designware.c | 49 ++++++++++++++++++++--------------------
  1 file changed, 24 insertions(+), 25 deletions(-)

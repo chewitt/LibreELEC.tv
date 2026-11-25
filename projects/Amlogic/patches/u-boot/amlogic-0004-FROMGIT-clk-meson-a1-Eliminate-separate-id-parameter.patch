@@ -1,7 +1,7 @@
 From 50692182025ef2a99993474e9171e2b9451dded5 Mon Sep 17 00:00:00 2001
 From: Sean Anderson <sanderson@brivo.com>
 Date: Thu, 13 Aug 2026 15:59:45 -0400
-Subject: [PATCH 04/43] FROMGIT: clk: meson: a1: Eliminate separate id
+Subject: [PATCH 04/44] FROMGIT: clk: meson: a1: Eliminate separate id
  parameter
 
 Instead of passing a struct clk (containing the device and an unrelated

@@ -1,7 +1,7 @@
-From 8f08feea2e2c064532b6aff5be6e97878539d4f5 Mon Sep 17 00:00:00 2001
+From 811f3002fdd23ef16ede4901db8230be68aa2365 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Sun, 4 Oct 2026 15:10:28 +0000
-Subject: [PATCH 42/43] WIP: ARM: dts: meson-s4-s905y4-khadas-vim1s: let the SD
+Subject: [PATCH 42/44] WIP: ARM: dts: meson-s4-s905y4-khadas-vim1s: let the SD
  supply power off
 
 The SD card supply is always on, so u-boot cannot power cycle the card
